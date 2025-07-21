@@ -1,0 +1,18 @@
+# AI/ML Profile - Tools for AI and machine learning workflows
+name: ai-ml
+description: AI/ML focused tools with memory and data processing
+services:
+  - filesystem
+  - memory
+  - postgres
+  - google-drive
+settings:
+  auto_start: false
+  restart_policy: on-failure
+  memory_limit: 4g
+  cpu_limit: 2
+environment:
+  # ML workspace configuration
+  ML_WORKSPACE: ${HOME}/ml-projects
+  MODEL_CACHE_DIR: ${HOME}/.cache/models
+  DATA_DIR: ${HOME}/datasets

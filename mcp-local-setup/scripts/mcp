@@ -1,0 +1,160 @@
+#!/bin/bash
+# MCP Platform CLI Wrapper
+# This script provides basic MCP functionality without requiring Node.js
+
+set -e
+
+MCP_HOME="${MCP_HOME:-$HOME/.mcp-platform}"
+DOCKER_COMPOSE_FILE="$MCP_HOME/docker-compose.yml"
+PROFILE_MANAGER="$MCP_HOME/scripts/profile-manager.sh"
+REGISTRY_MANAGER="$MCP_HOME/scripts/registry-manager.js"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Check if Docker is available
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}Error: Docker is not installed${NC}"
+        echo "Please install Docker: https://docs.docker.com/get-docker/"
+        exit 1
+    fi
+}
+
+# Main command processing
+case "${1:-help}" in
+    start)
+        check_docker
+        echo -e "${BLUE}Starting MCP services...${NC}"
+        cd "$MCP_HOME" && docker compose up -d
+        echo -e "${GREEN}✓ MCP services started${NC}"
+        ;;
+        
+    stop)
+        check_docker
+        echo -e "${BLUE}Stopping MCP services...${NC}"
+        cd "$MCP_HOME" && docker compose down
+        echo -e "${GREEN}✓ MCP services stopped${NC}"
+        ;;
+        
+    restart)
+        check_docker
+        echo -e "${BLUE}Restarting MCP services...${NC}"
+        cd "$MCP_HOME" && docker compose restart
+        echo -e "${GREEN}✓ MCP services restarted${NC}"
+        ;;
+        
+    status|ps)
+        check_docker
+        echo -e "${BLUE}MCP Services Status:${NC}"
+        echo ""
+        cd "$MCP_HOME" && docker compose ps
+        ;;
+        
+    logs)
+        check_docker
+        shift
+        cd "$MCP_HOME" && docker compose logs "$@"
+        ;;
+        
+    list|ls)
+        if [ -x "$REGISTRY_MANAGER" ] && command -v node &> /dev/null; then
+            node "$REGISTRY_MANAGER" list
+        else
+            echo -e "${BLUE}Available MCP Services:${NC}"
+            echo ""
+            echo "  filesystem    - File system operations"
+            echo "  git          - Git repository operations"
+            echo "  playwright   - Browser automation"
+            echo "  postgres     - PostgreSQL database access"
+            echo "  github       - GitHub API integration"
+            echo "  slack        - Slack messaging"
+            echo "  memory       - Knowledge graph storage"
+            echo ""
+            echo -e "${YELLOW}Install Node.js for full CLI features${NC}"
+        fi
+        ;;
+        
+    profile)
+        if [ -x "$PROFILE_MANAGER" ]; then
+            shift
+            bash "$PROFILE_MANAGER" "$@"
+        else
+            echo -e "${RED}Profile manager not found${NC}"
+            exit 1
+        fi
+        ;;
+        
+    install)
+        if [ -z "$2" ]; then
+            echo -e "${RED}Usage: mcp install <service-name>${NC}"
+            exit 1
+        fi
+        echo -e "${YELLOW}Service installation requires the full CLI${NC}"
+        echo "Run the installer to set up the complete MCP platform:"
+        echo "  curl -fsSL https://your-domain/install.sh | bash"
+        ;;
+        
+    config)
+        echo -e "${BLUE}MCP Configuration${NC}"
+        echo ""
+        echo "MCP_HOME: $MCP_HOME"
+        echo "Config file: $MCP_HOME/.env"
+        echo ""
+        if [ -f "$MCP_HOME/.env" ]; then
+            echo "Environment variables:"
+            cat "$MCP_HOME/.env" | grep -v '^#' | grep -v '^$' | sed 's/=.*/=***/'
+        else
+            echo -e "${YELLOW}No .env file found${NC}"
+        fi
+        ;;
+        
+    dashboard)
+        echo -e "${BLUE}Opening MCP dashboard...${NC}"
+        echo "Dashboard URL: http://localhost:8080/dashboard/"
+        echo ""
+        # Try to open in browser
+        if command -v xdg-open &> /dev/null; then
+            xdg-open "http://localhost:8080/dashboard/"
+        elif command -v open &> /dev/null; then
+            open "http://localhost:8080/dashboard/"
+        elif command -v start &> /dev/null; then
+            start "http://localhost:8080/dashboard/"
+        else
+            echo "Please open the URL in your browser"
+        fi
+        ;;
+        
+    help|--help|-h|*)
+        echo -e "${BLUE}MCP Platform CLI${NC}"
+        echo ""
+        echo "Usage: mcp <command> [options]"
+        echo ""
+        echo "Commands:"
+        echo "  start              Start MCP services"
+        echo "  stop               Stop MCP services"
+        echo "  restart            Restart MCP services"
+        echo "  status, ps         Show service status"
+        echo "  logs [service]     View service logs"
+        echo "  list, ls           List available services"
+        echo "  profile <cmd>      Manage profiles"
+        echo "  install <service>  Install a service (requires full CLI)"
+        echo "  config             Show configuration"
+        echo "  dashboard          Open web dashboard"
+        echo "  help               Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  mcp start                    # Start all services"
+        echo "  mcp logs playwright -f       # Follow playwright logs"
+        echo "  mcp profile list             # List profiles"
+        echo "  mcp profile switch dev       # Switch to dev profile"
+        echo ""
+        if ! command -v node &> /dev/null; then
+            echo -e "${YELLOW}Note: Install Node.js for advanced features${NC}"
+        fi
+        ;;
+esac

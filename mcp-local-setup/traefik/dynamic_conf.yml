@@ -1,0 +1,26 @@
+http:
+  routers:
+    # Dashboard router
+    dashboard:
+      rule: "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+      service: api@internal
+    
+  middlewares:
+    # WebSocket headers middleware
+    websocket-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          Access-Control-Allow-Origin: "*"
+          Access-Control-Allow-Methods: "GET, POST, PUT, DELETE, OPTIONS"
+          Access-Control-Allow-Headers: "*"
+    
+    # Strip prefix for clean routing
+    strip-mcp:
+      stripPrefix:
+        prefixes:
+          - "/mcp"
+    
+  services:
+    # Services configured via Docker labels

@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - --entrypoints.web.address=:8080
+      - --providers.docker
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic_conf.yml:/etc/traefik/dynamic/dynamic_conf.yml:ro
+
+  # Example third‑party MCP server
+  code_indexer:
+    image: ghcr.io/thirdparty/mcp-code-indexer:latest
+    labels:
+      - "traefik.http.routers.code_indexer.rule=PathPrefix(`/mcp/code-indexer`)"
+      - "traefik.http.services.code_indexer.loadbalancer.server.port=8080"
+    networks:
+      - web
+
+  notes_parser:
+    image: ghcr.io/another/mcp-notes-parser:latest
+    labels:
+      - "traefik.http.routers.notes_parser.rule=PathPrefix(`/mcp/notes-parser`)"
+      - "traefik.http.services.notes_parser.loadbalancer.server.port=8080"
+    networks:
+      - web
+
+  # Playwright MCP server
+  playwright_mcp:
+    build:
+      context: ../playwright-mcp
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.http.routers.playwright_mcp.rule=PathPrefix(`/mcp/playwright`)"
+      - "traefik.http.services.playwright_mcp.loadbalancer.server.port=3000"
+    environment:
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    volumes:
+      - playwright-browsers:/ms-playwright
+    networks:
+      - web
+
+networks:
+  web:
+    external: false
+
+volumes:
+  playwright-browsers:

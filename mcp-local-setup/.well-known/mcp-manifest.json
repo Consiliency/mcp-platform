@@ -1,0 +1,16 @@
+{
+  "services": {
+    "code-indexer": {
+      "description": "Splits source code into semantic chunks",
+      "url": "http://localhost:8080/mcp/code-indexer"
+    },
+    "notes-parser": {
+      "description": "Indexes and retrieves meeting transcripts",
+      "url": "http://localhost:8080/mcp/notes-parser"
+    },
+    "playwright": {
+      "description": "Browser automation and testing with Playwright",
+      "url": "http://localhost:8080/mcp/playwright"
+    }
+  }
+}

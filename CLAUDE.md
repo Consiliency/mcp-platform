@@ -1,0 +1,1 @@
+- Anytime you improve a method, class, or file, or make alterations, always re-use the existing method, function, or file name as opposed to creating a new one.

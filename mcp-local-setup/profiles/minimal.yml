@@ -1,0 +1,12 @@
+# Minimal Profile - Essential services only
+name: minimal
+description: Minimal setup with just filesystem access
+services:
+  - filesystem
+settings:
+  auto_start: true
+  restart_policy: no
+  memory_limit: 512m
+environment:
+  # Restricted to home directory only
+  WORKSPACE_ROOT: ${HOME}

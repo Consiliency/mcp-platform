@@ -1,0 +1,18 @@
+# Development Profile - Tools for software development
+name: development
+description: Complete development environment with code, git, and testing tools
+services:
+  - filesystem
+  - git
+  - github
+  - playwright
+  - postgres
+settings:
+  auto_start: true
+  restart_policy: unless-stopped
+  memory_limit: 2g
+environment:
+  # Default development paths
+  WORKSPACE_ROOT: ${HOME}/projects
+  GIT_AUTHOR_NAME: ${USER}
+  GIT_AUTHOR_EMAIL: ${USER}@localhost
