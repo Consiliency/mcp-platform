@@ -3,7 +3,7 @@
  * Tests authentication, authorization, rate limiting, and SSL/TLS
  */
 
-const SecurityInterface = require('../../interfaces/security.interface');
+const SecurityImplementation = require('../../security');
 
 // Increase timeout for integration tests
 jest.setTimeout(60000);
@@ -14,14 +14,12 @@ describe('Security Integration Tests', () => {
     let testApiKey;
 
     beforeAll(async () => {
-        // TODO: Initialize security implementation
-        // security = new SecurityImplementation();
-        // await security.initialize();
+        security = new SecurityImplementation();
+        await security.initialize();
     });
 
     afterAll(async () => {
-        // TODO: Cleanup
-        // await security.cleanup();
+        await security.cleanup();
     });
 
     describe('Authentication Flow', () => {
