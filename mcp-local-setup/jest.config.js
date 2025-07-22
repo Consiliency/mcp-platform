@@ -1,5 +1,10 @@
 module.exports = {
   testEnvironment: 'node',
+  testTimeout: 30000,
+  maxWorkers: 1,
+  clearMocks: true,
+  restoreMocks: true,
+  verbose: true,
   testMatch: [
     '**/tests/**/*.test.js',
     '**/deploy/tests/**/*.test.js'
@@ -12,6 +17,11 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  testTimeout: 30000,
-  verbose: true
+  modulePathIgnorePatterns: [
+    '<rootDir>/worktrees/'
+  ],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/worktrees/'
+  ]
 };
