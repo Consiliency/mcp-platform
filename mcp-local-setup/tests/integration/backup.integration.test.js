@@ -3,7 +3,8 @@
  * Tests full platform backup, selective backup, scheduling, and cross-version compatibility
  */
 
-const BackupInterface = require('../../interfaces/backup.interface');
+const BackupManager = require('../../scripts/backup-manager');
+const DataManager = require('../../scripts/data-manager');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -12,19 +13,38 @@ jest.setTimeout(120000); // 2 minutes for backup operations
 
 describe('Backup & Restore Integration Tests', () => {
     let backup;
+    let dataManager;
     let testBackupId;
     let testScheduleId;
     const testServiceName = 'test-backup-service';
 
     beforeAll(async () => {
-        // TODO: Initialize backup implementation
-        // backup = new BackupImplementation();
-        // await backup.initialize();
+        // Initialize backup implementation
+        backup = new BackupManager();
+        await backup.initialize();
+        
+        // Initialize data manager
+        dataManager = new DataManager();
+        await dataManager.initialize();
     });
 
     afterAll(async () => {
-        // TODO: Cleanup test backups and schedules
-        // await backup.cleanup();
+        // Cleanup test backups and schedules
+        if (backup) {
+            // Clean up all test backups
+            const backups = await backup.listBackups();
+            for (const b of backups) {
+                if (b.description && b.description.includes('Test')) {
+                    await backup.deleteBackup(b.id);
+                }
+            }
+            
+            // Clean up all test schedules
+            const schedules = await backup.getSchedules();
+            for (const s of schedules) {
+                await backup.deleteSchedule(s.id);
+            }
+        }
     });
 
     describe('Full Platform Backup', () => {
