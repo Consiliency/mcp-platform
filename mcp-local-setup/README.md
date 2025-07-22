@@ -1,64 +1,46 @@
-# MCP Local Development Setup
+# MCP Platform
 
-## Prerequisites
-- Docker & Docker Compose installed (WSL2 or native)
-- Git
+A comprehensive platform for running Model Context Protocol (MCP) servers locally with Docker, supporting multiple AI coding assistants.
 
-## Installation
-1. **Clone the repo**:
-   ```bash
-   git clone https://your-repo-url/mcp-local-setup.git
-   cd mcp-local-setup
-   ```
+## 🚀 Quick Start
 
-2. **Start services**:
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Access the dashboard** in your browser at:
-   ```
-   http://localhost:8080/dashboard/index.html
-   ```
-
-4. **MCP Manifest** is available at:
-   ```
-   http://localhost:8080/.well-known/mcp-manifest.json
-   ```
-
-## CLI Aliases (WSL)
-
-Add to `~/.bashrc` or `~/.zshrc`:
-
+**Linux/WSL:**
 ```bash
-alias mcp-code-indexer='curl -X POST http://localhost:8080/mcp/code-indexer'
-alias mcp-notes-parser='curl -X POST http://localhost:8080/mcp/notes-parser'
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
-Reload shell:
-```bash
-source ~/.bashrc
+**Windows PowerShell:**
+```powershell
+iwr -useb https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.ps1 | iex
 ```
 
-Now you can:
+## 📋 Basic Usage
+
 ```bash
-cat example.py | mcp-code-indexer
+mcp start          # Start all services
+mcp dashboard      # Open web dashboard
+mcp list           # See available services
+mcp health         # Check service health
 ```
 
-## Adding Your Own MCP Server
+## 📚 Documentation
 
-1. Build or clone your MCP project into this directory.
-2. Add a service entry in `docker-compose.yml` with the same label convention:
-   ```yaml
-   labels:
-     - "traefik.http.routers.<your_svc>.rule=PathPrefix(`/mcp/<your-svc>`)"
-     - "traefik.http.services.<your_svc>.loadbalancer.server.port=8080"
-   ```
-3. Update `.well-known/mcp-manifest.json` with name, description, and URL.
-4. `docker-compose up -d` auto‑deploys it behind Traefik.
+For detailed documentation, see:
+- **[README-ENHANCED.md](README-ENHANCED.md)** - Complete feature guide and usage instructions
+- **[ROADMAP.md](../specs/ROADMAP.md)** - Development roadmap and progress tracking
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Contribution guidelines
+- **[CLAUDE.md](CLAUDE.md)** - AI assistant guidelines
 
-## Included Services
+## 🆕 Version 1.0 Features
 
-- **code-indexer**: Splits source code into semantic chunks
-- **notes-parser**: Indexes and retrieves meeting transcripts
-- **playwright**: Browser automation and testing with Playwright (see [PLAYWRIGHT-MCP-README.md](PLAYWRIGHT-MCP-README.md))
+- Health monitoring system with dashboard
+- Example MCP services (echo, todo, weather)
+- Comprehensive test suite (unit, integration, E2E)
+- Enhanced service management and registry
+- Profile-based service configuration
+
+## 🔗 Resources
+
+- [GitHub Repository](https://github.com/Consiliency/mcp-platform)
+- [MCP Specification](https://modelcontextprotocol.io)
+- [Report Issues](https://github.com/Consiliency/mcp-platform/issues)

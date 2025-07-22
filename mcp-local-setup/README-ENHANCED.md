@@ -1,6 +1,8 @@
 # MCP Platform - Enhanced Local Development Environment
 
-A comprehensive, easy-to-install platform for running Model Context Protocol (MCP) servers locally with support for multiple AI coding assistants and cross-platform compatibility.
+A comprehensive, production-ready platform for running Model Context Protocol (MCP) servers locally with support for multiple AI coding assistants, health monitoring, and cross-platform compatibility.
+
+**Current Version: v1.0** (Phase 2 Complete - Developer Experience)
 
 ## 🚀 Quick Start
 
@@ -8,12 +10,12 @@ A comprehensive, easy-to-install platform for running Model Context Protocol (MC
 
 **Linux/WSL:**
 ```bash
-curl -fsSL https://your-domain/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 **Windows PowerShell:**
 ```powershell
-iwr -useb https://your-domain/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.ps1 | iex
 ```
 
 ### Start Using MCP
@@ -22,6 +24,14 @@ mcp start          # Start all services
 mcp dashboard      # Open web dashboard
 mcp list           # See available services
 ```
+
+## 🆕 What's New in v1.0
+
+- **Health Monitoring System** - Real-time service health checks with dashboard
+- **Example Services** - Three production-ready example MCP services
+- **Comprehensive Testing** - Full test suite with Jest (unit, integration, E2E)
+- **Service Management** - Advanced lifecycle management with dependency resolution
+- **Enhanced Registry** - Service dependencies, validators, and migration system
 
 ## 🎯 Key Features
 
@@ -82,14 +92,37 @@ All services accessible via unified endpoints:
 ```
 mcp-platform/
 ├── cli/                    # Advanced CLI tool
+│   └── commands/          # Modular CLI commands
 ├── profiles/              # Service profiles
 │   ├── default.yml
 │   ├── development.yml
-│   └── ai-ml.yml
-├── registry/              # Service catalog
-│   └── mcp-catalog.json
+│   ├── ai-ml.yml
+│   └── minimal.yml
+├── registry/              # Service catalog & validators
+│   ├── mcp-catalog.json
+│   ├── enhanced-catalog.json
+│   ├── validators/
+│   └── migrations/
 ├── scripts/               # Management scripts
+│   ├── service-manager.js
+│   └── service-health-monitor.js
 ├── templates/             # Docker templates
+│   ├── npm.Dockerfile
+│   ├── python.Dockerfile
+│   └── custom.Dockerfile
+├── examples/              # Example MCP services
+│   ├── echo-mcp/
+│   ├── todo-mcp/
+│   └── weather-mcp/
+├── tests/                 # Test infrastructure
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── docker/                # Docker configurations
+│   └── health-check/
+├── dashboard/             # Web dashboards
+│   └── health/
+├── interfaces/            # Service interfaces
 ├── traefik/              # Reverse proxy config
 └── docker-compose.yml    # Generated dynamically
 ```
@@ -155,6 +188,13 @@ mcp status             # Show service status
 mcp logs [service]     # View logs
 ```
 
+### Health Monitoring (NEW)
+```bash
+mcp health             # Show system health overview
+mcp health --all       # Show all services health details
+mcp health <service>   # Show specific service health
+```
+
 ### Service Management
 ```bash
 mcp list               # List available services
@@ -176,6 +216,14 @@ mcp profile edit       # Edit profile
 mcp config             # Show configuration
 mcp config --generate  # Generate client configs
 mcp interactive        # Interactive mode
+
+# Service lifecycle management (NEW)
+node scripts/service-manager.js start <service>
+node scripts/service-manager.js stop <service>
+node scripts/service-manager.js restart <service>
+
+# Health monitoring daemon (NEW)
+node scripts/service-health-monitor.js run --auto-restart
 ```
 
 ## 🔍 Troubleshooting
@@ -233,11 +281,37 @@ docker compose ps      # Direct Docker status
 
 MIT License - See LICENSE file
 
+## 🧪 Testing
+
+Run the comprehensive test suite:
+```bash
+npm test               # Run all tests
+npm run test:unit      # Unit tests only
+npm run test:integration # Integration tests
+npm run test:e2e       # End-to-end tests
+npm run test:coverage  # Test coverage report
+```
+
+## 📊 Health Dashboard
+
+Access the health monitoring dashboard at:
+```
+http://localhost:8080/health
+```
+
+Features:
+- Real-time service status
+- Response time tracking
+- Auto-refresh every 30 seconds
+- Individual service health details
+
 ## 🔗 Resources
 
 - [MCP Specification](https://modelcontextprotocol.io)
 - [Docker Documentation](https://docs.docker.com)
-- [Report Issues](https://github.com/your-repo/mcp-platform/issues)
+- [GitHub Repository](https://github.com/Consiliency/mcp-platform)
+- [Report Issues](https://github.com/Consiliency/mcp-platform/issues)
+- [Roadmap](https://github.com/Consiliency/mcp-platform/blob/main/specs/ROADMAP.md)
 
 ---
 
