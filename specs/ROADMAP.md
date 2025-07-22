@@ -40,17 +40,17 @@ Tasks are organized by directory/component to allow parallel development:
 ## Phase 2: Developer Experience (Target: v1.0)
 
 ### Service Health & Monitoring
-- [ ] **INFRA-2.1**: Health check endpoint system (`docker/health-check/`)
+- [x] **INFRA-2.1**: Health check endpoint system (`docker/health-check/`)
   - Create base health check service
   - Add health check routes to Traefik
   - Define health check protocol
 
-- [ ] **CLI-2.1**: Health status commands (`cli/commands/health.js`)
+- [x] **CLI-2.1**: Health status commands (`cli/commands/health.js`)
   - `mcp health` - Show all service health
   - `mcp health <service>` - Show specific service health
   - Color-coded status output
 
-- [ ] **DASHBOARD-2.1**: Health monitoring dashboard (`dashboard/health/`)
+- [x] **DASHBOARD-2.1**: Health monitoring dashboard (`dashboard/health/`)
   - Real-time health status display
   - Service uptime tracking
   - Resource usage metrics
