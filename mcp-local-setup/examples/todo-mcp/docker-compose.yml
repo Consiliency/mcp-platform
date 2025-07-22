@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: todo-postgres
+    environment:
+      POSTGRES_USER: todouser
+      POSTGRES_PASSWORD: todopass
+      POSTGRES_DB: todos
+    ports:
+      - "5432:5432"
+    volumes:
+      - todo_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todouser -d todos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  todo-mcp:
+    build: .
+    container_name: todo-mcp-service
+    ports:
+      - "3011:3011"
+    environment:
+      PORT: 3011
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: todos
+      DB_USER: todouser
+      DB_PASSWORD: todopass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  todo_postgres_data:
