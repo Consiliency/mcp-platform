@@ -4,9 +4,19 @@ module.exports = {
   maxWorkers: 1,
   clearMocks: true,
   restoreMocks: true,
+  verbose: true,
   testMatch: [
-    '**/tests/**/*.test.js'
+    '**/tests/**/*.test.js',
+    '**/deploy/tests/**/*.test.js'
   ],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    'deploy/**/*.js',
+    '!**/node_modules/**',
+    '!**/tests/**'
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
   modulePathIgnorePatterns: [
     '<rootDir>/worktrees/'
   ],
