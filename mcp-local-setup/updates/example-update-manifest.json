@@ -1,0 +1,34 @@
+{
+  "version": "1.1.0",
+  "releaseDate": "2024-01-15T10:00:00Z",
+  "channel": "stable",
+  "changes": [
+    "Added automatic update mechanism",
+    "Improved service dependency resolution",
+    "Enhanced rollback capabilities",
+    "Fixed various bugs in service management"
+  ],
+  "requirements": {
+    "minVersion": "1.0.0",
+    "dependencies": []
+  },
+  "breakingChanges": [],
+  "services": {
+    "filesystem": {
+      "fromVersion": "1.0.0",
+      "toVersion": "1.1.0",
+      "changes": [
+        "Improved file watching performance",
+        "Added support for symbolic links"
+      ]
+    },
+    "git": {
+      "fromVersion": "1.0.0",
+      "toVersion": "1.0.1",
+      "changes": [
+        "Fixed issue with large repositories",
+        "Improved clone performance"
+      ]
+    }
+  }
+}

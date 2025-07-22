@@ -4,6 +4,9 @@
  */
 
 const UpdateInterface = require('../../interfaces/update.interface');
+const UpdateManager = require('../../scripts/update-manager');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Increase timeout for integration tests
 jest.setTimeout(120000); // 2 minutes for update operations
@@ -14,15 +17,20 @@ describe('Update Mechanism Integration Tests', () => {
     let availableUpdate;
 
     beforeAll(async () => {
-        // TODO: Initialize update implementation
-        // updater = new UpdateImplementation();
-        // await updater.initialize();
-        // currentVersion = await updater.getCurrentVersion();
+        // Initialize update implementation
+        updater = new UpdateManager();
+        await updater.initialize();
+        currentVersion = await updater.getCurrentVersion();
     });
 
     afterAll(async () => {
-        // TODO: Cleanup
-        // await updater.cleanup();
+        // Cleanup test files
+        const updateDir = path.join(__dirname, '..', '..', 'updates');
+        try {
+            await fs.rm(path.join(updateDir, 'temp'), { recursive: true, force: true });
+        } catch (error) {
+            // Ignore if temp directory doesn't exist
+        }
     });
 
     describe('Platform Self-Update', () => {
