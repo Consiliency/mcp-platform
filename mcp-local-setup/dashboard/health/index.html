@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Health Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .status-healthy { background: #22c55e; }
+        .status-degraded { background: #f59e0b; }
+        .status-unhealthy { background: #ef4444; }
+        .status-unknown { background: #6b7280; }
+        
+        .system-overview {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .metric-card {
+            background: #262626;
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 36px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .service-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .service-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        
+        .service-details {
+            display: grid;
+            gap: 8px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .refresh-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .refresh-button:hover {
+            background: #2563eb;
+        }
+        
+        .refresh-button:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+        }
+        
+        .last-update {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            background: #dc2626;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4b5563;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .checks-list {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #333;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <span class="status-indicator" id="systemStatus"></span>
+                MCP Health Monitor
+            </h1>
+            <div>
+                <span class="last-update" id="lastUpdate">Never updated</span>
+                <button class="refresh-button" onclick="refreshHealth()">Refresh</button>
+            </div>
+        </header>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="system-overview">
+            <h2>System Overview</h2>
+            <div class="overview-grid" id="overviewGrid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading health data...</p>
+                </div>
+            </div>
+        </div>
+        
+        <h2 style="margin-bottom: 20px;">Services</h2>
+        <div class="services-grid" id="servicesGrid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading services...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const HEALTH_API_URL = window.location.origin + '/health';
+        let refreshInterval;
+        
+        async function fetchHealth() {
+            try {
+                const [systemResponse, servicesResponse] = await Promise.all([
+                    fetch(HEALTH_API_URL),
+                    fetch(HEALTH_API_URL + '/services')
+                ]);
+                
+                if (!systemResponse.ok || !servicesResponse.ok) {
+                    throw new Error('Failed to fetch health data');
+                }
+                
+                const systemHealth = await systemResponse.json();
+                const servicesHealth = await servicesResponse.json();
+                
+                return { systemHealth, servicesHealth };
+            } catch (error) {
+                console.error('Health fetch error:', error);
+                throw error;
+            }
+        }
+        
+        function updateSystemOverview(health) {
+            const systemStatus = document.getElementById('systemStatus');
+            systemStatus.className = 'status-indicator status-' + health.status;
+            
+            const overviewGrid = document.getElementById('overviewGrid');
+            overviewGrid.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Services</div>
+                    <div class="metric-value">${health.services.total}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Healthy</div>
+                    <div class="metric-value" style="color: #22c55e">${health.services.healthy}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Degraded</div>
+                    <div class="metric-value" style="color: #f59e0b">${health.services.degraded}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Unhealthy</div>
+                    <div class="metric-value" style="color: #ef4444">${health.services.unhealthy}</div>
+                </div>
+            `;
+        }
+        
+        function updateServicesGrid(services) {
+            const servicesGrid = document.getElementById('servicesGrid');
+            servicesGrid.innerHTML = '';
+            
+            for (const [serviceId, health] of Object.entries(services)) {
+                const serviceCard = createServiceCard(serviceId, health);
+                servicesGrid.appendChild(serviceCard);
+            }
+        }
+        
+        function createServiceCard(serviceId, health) {
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            
+            const checksHtml = health.details && health.details.checks ? 
+                `<div class="checks-list">
+                    ${Object.entries(health.details.checks).map(([check, status]) => 
+                        `<div class="check-item">
+                            <span class="status-indicator status-${status}"></span>
+                            ${check}: ${status}
+                        </div>`
+                    ).join('')}
+                </div>` : '';
+            
+            card.innerHTML = `
+                <div class="service-header">
+                    <div class="service-name">${serviceId}</div>
+                    <div class="service-status">
+                        <span class="status-indicator status-${health.status}"></span>
+                        ${health.status}
+                    </div>
+                </div>
+                <div class="service-details">
+                    <div class="detail-row">
+                        <span>Response Time:</span>
+                        <span>${health.responseTime || 'N/A'} ms</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Last Check:</span>
+                        <span>${new Date(health.lastCheck).toLocaleTimeString()}</span>
+                    </div>
+                    ${health.message ? `
+                    <div class="detail-row">
+                        <span>Message:</span>
+                        <span>${health.message}</span>
+                    </div>` : ''}
+                    ${checksHtml}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        function updateLastUpdate() {
+            const lastUpdateEl = document.getElementById('lastUpdate');
+            lastUpdateEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+        }
+        
+        async function refreshHealth() {
+            const button = document.querySelector('.refresh-button');
+            button.disabled = true;
+            
+            try {
+                const { systemHealth, servicesHealth } = await fetchHealth();
+                updateSystemOverview(systemHealth);
+                updateServicesGrid(servicesHealth);
+                updateLastUpdate();
+            } catch (error) {
+                showError('Failed to fetch health data. Please try again.');
+            } finally {
+                button.disabled = false;
+            }
+        }
+        
+        // Initialize
+        refreshHealth();
+        
+        // Auto-refresh every 30 seconds
+        refreshInterval = setInterval(refreshHealth, 30000);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

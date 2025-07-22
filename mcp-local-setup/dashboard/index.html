@@ -7,9 +7,31 @@
     body { font-family: sans-serif; padding: 2rem; }
     .service { margin-bottom: 1.5rem; }
     .service input, .service button { width: 100%; margin-top: 0.5rem; }
+    .nav-bar { 
+      background: #f0f0f0; 
+      padding: 1rem; 
+      margin: -2rem -2rem 2rem -2rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .nav-bar a {
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+    }
+    .nav-bar a:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
+  <div class="nav-bar">
+    <a href="/">Services</a>
+    <a href="/health">Health Monitor</a>
+    <a href="/dashboard/">Traefik Dashboard</a>
+  </div>
   <h1>MCP Services Dashboard</h1>
   <div id="services"></div>
   <script>

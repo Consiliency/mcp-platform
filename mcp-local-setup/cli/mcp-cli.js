@@ -13,6 +13,7 @@ const inquirer = require('inquirer');
 const ora = require('ora');
 const yaml = require('js-yaml');
 const os = require('os');
+const { addHealthCommand } = require('./commands/health');
 
 // Configuration
 const MCP_HOME = process.env.MCP_HOME || path.join(process.env.HOME, '.mcp-platform');
@@ -696,6 +697,9 @@ program
             process.exit(1);
         }
     });
+
+// Add health command
+addHealthCommand(program);
 
 // Parse arguments
 program.parse();

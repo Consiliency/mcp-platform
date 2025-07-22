@@ -1,0 +1,16 @@
+{
+  "name": "mcp-health-check",
+  "version": "1.0.0",
+  "description": "Health check service for MCP Platform",
+  "main": "health-service.js",
+  "scripts": {
+    "start": "node health-service.js",
+    "dev": "node --watch health-service.js"
+  },
+  "keywords": ["mcp", "health", "monitoring"],
+  "author": "MCP Platform",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

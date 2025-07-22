@@ -5,6 +5,12 @@ http:
       rule: "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
       service: api@internal
     
+    # Health check router
+    health:
+      rule: "PathPrefix(`/health`)"
+      service: health-service
+      priority: 100
+    
   middlewares:
     # WebSocket headers middleware
     websocket-headers:
@@ -24,3 +30,8 @@ http:
     
   services:
     # Services configured via Docker labels
+    # Health check service
+    health-service:
+      loadBalancer:
+        servers:
+          - url: "http://health-check:3999"
