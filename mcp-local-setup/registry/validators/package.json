@@ -1,0 +1,26 @@
+{
+  "name": "mcp-registry-validators",
+  "version": "1.0.0",
+  "description": "Validators for MCP service registry",
+  "main": "index.js",
+  "scripts": {
+    "validate:schema": "node schema-validator.js",
+    "validate:deps": "node dependency-validator.js",
+    "validate:versions": "node version-validator.js",
+    "validate:all": "npm run validate:schema -- ../enhanced-catalog.json && npm run validate:deps -- ../enhanced-catalog.json && npm run validate:versions -- ../enhanced-catalog.json"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "semver": "^7.5.4"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "mcp",
+    "validation",
+    "schema",
+    "dependencies"
+  ],
+  "author": "",
+  "license": "MIT"
+}

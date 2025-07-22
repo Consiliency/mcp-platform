@@ -1,0 +1,542 @@
+{
+  "version": "2.0",
+  "updated": "2025-01-22",
+  "schemaVersion": "enhanced-service.schema.json",
+  "categories": {
+    "development": {
+      "name": "Development Tools",
+      "description": "Tools for software development and coding"
+    },
+    "data": {
+      "name": "Data Access",
+      "description": "Tools for accessing and managing data"
+    },
+    "ai-ml": {
+      "name": "AI/ML Tools",
+      "description": "Machine learning and AI-related tools"
+    },
+    "cloud": {
+      "name": "Cloud Services",
+      "description": "Cloud platform integrations"
+    },
+    "custom": {
+      "name": "Custom Tools",
+      "description": "User-created custom MCP servers"
+    }
+  },
+  "servers": [
+    {
+      "id": "filesystem",
+      "name": "Filesystem",
+      "description": "Access and manipulate files and directories on the local system",
+      "version": "1.0.0",
+      "category": "data",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-filesystem",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-filesystem"
+          }
+        }
+      },
+      "config": {
+        "port": 3001,
+        "environment": {
+          "MCP_MODE": "http"
+        },
+        "volumes": [
+          "${HOME}:/workspace:ro"
+        ],
+        "capabilities": ["read", "write", "list"]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["filesystem", "storage", "io"]
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "description": "Perform Git operations on repositories",
+      "version": "1.0.0",
+      "category": "development",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-git",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-git"
+          }
+        }
+      },
+      "config": {
+        "port": 3002,
+        "environment": {
+          "MCP_MODE": "http"
+        },
+        "volumes": [
+          "${HOME}/repos:/repos"
+        ]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["git", "vcs", "version-control"]
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "description": "Browser automation and testing with Playwright",
+      "version": "1.0.0",
+      "category": "development",
+      "source": {
+        "type": "local",
+        "path": "../playwright-mcp"
+      },
+      "docker": {
+        "build": {
+          "context": "../playwright-mcp",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3003,
+        "environment": {
+          "PLAYWRIGHT_BROWSERS_PATH": "/ms-playwright"
+        },
+        "volumes": [
+          "playwright-browsers:/ms-playwright"
+        ]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "10s",
+        "retries": 3,
+        "startPeriod": "60s"
+      },
+      "lifecycle": {
+        "startupTimeout": "120s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["browser", "automation", "testing", "e2e"]
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "description": "Query and manage PostgreSQL databases",
+      "version": "1.0.0",
+      "category": "data",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-postgres",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-postgres"
+          }
+        }
+      },
+      "config": {
+        "port": 3004,
+        "environment": {
+          "MCP_MODE": "http",
+          "POSTGRES_URL": "${POSTGRES_URL}"
+        },
+        "env_required": ["POSTGRES_URL"]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["database", "sql", "postgres", "rdbms"]
+    },
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "description": "Access and manage Google Drive files",
+      "version": "1.0.0",
+      "category": "cloud",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-gdrive",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-gdrive"
+          }
+        }
+      },
+      "config": {
+        "port": 3005,
+        "environment": {
+          "MCP_MODE": "http",
+          "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+          "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
+        },
+        "env_required": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+        "volumes": [
+          "gdrive-auth:/auth"
+        ]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "10s",
+        "retries": 3,
+        "startPeriod": "45s"
+      },
+      "lifecycle": {
+        "startupTimeout": "90s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["cloud", "storage", "google", "drive"]
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "description": "Interact with GitHub repositories, issues, and pull requests",
+      "version": "1.0.0",
+      "category": "development",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-github",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-github"
+          }
+        }
+      },
+      "config": {
+        "port": 3006,
+        "environment": {
+          "MCP_MODE": "http",
+          "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+        },
+        "env_required": ["GITHUB_TOKEN"]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "10s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["github", "vcs", "collaboration", "issues", "pr"]
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "description": "Read and send messages in Slack",
+      "version": "1.0.0",
+      "category": "data",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-slack",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-slack"
+          }
+        }
+      },
+      "config": {
+        "port": 3007,
+        "environment": {
+          "MCP_MODE": "http",
+          "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+        },
+        "env_required": ["SLACK_BOT_TOKEN"]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "10s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["messaging", "slack", "chat", "communication"]
+    },
+    {
+      "id": "memory",
+      "name": "Memory",
+      "description": "Simple knowledge graph memory for storing and retrieving information",
+      "version": "1.0.0",
+      "category": "ai-ml",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-memory",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-memory"
+          }
+        }
+      },
+      "config": {
+        "port": 3008,
+        "environment": {
+          "MCP_MODE": "http"
+        },
+        "volumes": [
+          "memory-data:/data"
+        ]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["memory", "knowledge-graph", "ai", "ml", "storage"]
+    },
+    {
+      "id": "echo-mcp",
+      "name": "Echo MCP",
+      "description": "Simple echo server for testing MCP protocol implementations",
+      "version": "0.1.0",
+      "category": "custom",
+      "source": {
+        "type": "local",
+        "path": "../../../mcp-examples/mcp-local-setup/examples/echo-mcp"
+      },
+      "docker": {
+        "build": {
+          "context": "../../../mcp-examples/mcp-local-setup/examples/echo-mcp",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3009,
+        "environment": {
+          "MCP_MODE": "http",
+          "NODE_ENV": "production"
+        }
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "15s",
+        "timeout": "5s",
+        "retries": 3,
+        "startPeriod": "10s"
+      },
+      "lifecycle": {
+        "startupTimeout": "30s",
+        "shutdownGracePeriod": "10s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["test", "echo", "example", "development"]
+    },
+    {
+      "id": "todo-mcp",
+      "name": "Todo MCP",
+      "description": "Todo list management with PostgreSQL backend",
+      "version": "0.1.0",
+      "category": "custom",
+      "source": {
+        "type": "local",
+        "path": "../../../mcp-examples/mcp-local-setup/examples/todo-mcp"
+      },
+      "docker": {
+        "build": {
+          "context": "../../../mcp-examples/mcp-local-setup/examples/todo-mcp",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3010,
+        "environment": {
+          "MCP_MODE": "http",
+          "NODE_ENV": "production",
+          "DATABASE_URL": "${TODO_DATABASE_URL}"
+        },
+        "env_required": ["TODO_DATABASE_URL"]
+      },
+      "dependencies": ["postgres"],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "30s",
+        "timeout": "5s",
+        "retries": 3,
+        "startPeriod": "45s"
+      },
+      "lifecycle": {
+        "startupTimeout": "90s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["todo", "task-management", "postgres", "example"]
+    },
+    {
+      "id": "weather-mcp",
+      "name": "Weather MCP",
+      "description": "Weather information service using external weather APIs",
+      "version": "0.1.0",
+      "category": "custom",
+      "source": {
+        "type": "local",
+        "path": "../../../mcp-examples/mcp-local-setup/examples/weather-mcp"
+      },
+      "docker": {
+        "build": {
+          "context": "../../../mcp-examples/mcp-local-setup/examples/weather-mcp",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3011,
+        "environment": {
+          "MCP_MODE": "http",
+          "NODE_ENV": "production",
+          "WEATHER_API_KEY": "${WEATHER_API_KEY}"
+        },
+        "env_required": ["WEATHER_API_KEY"]
+      },
+      "dependencies": [],
+      "healthCheck": {
+        "path": "/health",
+        "interval": "60s",
+        "timeout": "10s",
+        "retries": 3,
+        "startPeriod": "30s"
+      },
+      "lifecycle": {
+        "startupTimeout": "60s",
+        "shutdownGracePeriod": "30s",
+        "restartPolicy": "unless-stopped"
+      },
+      "clients": ["claude-code", "vs-code", "cursor"],
+      "tags": ["weather", "api", "external-service", "example"]
+    }
+  ],
+  "templates": {
+    "npm": {
+      "description": "Template for NPM-based MCP servers",
+      "dockerfile": "templates/npm.Dockerfile"
+    },
+    "python": {
+      "description": "Template for Python-based MCP servers",
+      "dockerfile": "templates/python.Dockerfile"
+    },
+    "custom": {
+      "description": "Template for custom MCP servers",
+      "dockerfile": "templates/custom.Dockerfile"
+    }
+  },
+  "versionCompatibility": {
+    "1.0.0": {
+      "minProtocolVersion": "1.0",
+      "maxProtocolVersion": "1.0",
+      "compatibleClients": {
+        "claude-code": ">=1.0.0",
+        "vs-code": ">=1.0.0",
+        "cursor": ">=1.0.0"
+      }
+    },
+    "0.1.0": {
+      "minProtocolVersion": "0.9",
+      "maxProtocolVersion": "1.0",
+      "compatibleClients": {
+        "claude-code": ">=0.9.0",
+        "vs-code": ">=0.9.0",
+        "cursor": ">=0.9.0"
+      },
+      "notes": "Beta version - may have breaking changes"
+    }
+  }
+}
