@@ -1,0 +1,45 @@
+{
+  "environment": "development",
+  "version": "1.0.0",
+  "server": {
+    "host": "localhost",
+    "port": 3000,
+    "protocol": "http"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "mcp_dev",
+    "user": "mcp_user",
+    "password": "${DB_PASSWORD}"
+  },
+  "logging": {
+    "level": "debug",
+    "format": "text",
+    "destination": "console"
+  },
+  "features": {
+    "debugMode": true,
+    "hotReload": true,
+    "strictValidation": false
+  },
+  "services": [
+    {
+      "name": "weather-mcp",
+      "enabled": true,
+      "config": {
+        "apiKey": "${WEATHER_API_KEY}",
+        "timeout": 5000
+      }
+    },
+    {
+      "name": "todo-mcp",
+      "enabled": true,
+      "config": {
+        "maxItems": 100,
+        "persistence": "memory"
+      }
+    }
+  ],
+  "createdAt": "2025-01-22T10:00:00Z"
+}
