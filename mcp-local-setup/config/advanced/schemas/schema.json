@@ -1,0 +1,92 @@
+{
+  "version": "1.0.0",
+  "properties": {
+    "environment": {
+      "type": "string",
+      "description": "Environment name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Configuration version"
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "Server host"
+        },
+        "port": {
+          "type": "number",
+          "description": "Server port"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Server protocol (http/https)"
+        }
+      }
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "Database host"
+        },
+        "port": {
+          "type": "number",
+          "description": "Database port"
+        },
+        "name": {
+          "type": "string",
+          "description": "Database name"
+        },
+        "user": {
+          "type": "string",
+          "description": "Database username"
+        },
+        "password": {
+          "type": "string",
+          "description": "Database password (use ${SECRET_NAME} for secrets)"
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "description": "Log level (debug, info, warn, error)"
+        },
+        "format": {
+          "type": "string",
+          "description": "Log format (json, text)"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Log destination (console, file, syslog)"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature flags"
+    },
+    "services": {
+      "type": "array",
+      "description": "MCP services configuration"
+    }
+  },
+  "required": ["environment", "version"],
+  "defaults": {
+    "logging": {
+      "level": "info",
+      "format": "json",
+      "destination": "console"
+    },
+    "server": {
+      "protocol": "http",
+      "port": 3000
+    }
+  }
+}

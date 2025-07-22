@@ -1,0 +1,55 @@
+{
+  "environment": "production",
+  "version": "1.0.0",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 443,
+    "protocol": "https"
+  },
+  "database": {
+    "host": "${DB_HOST}",
+    "port": 5432,
+    "name": "mcp_prod",
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}"
+  },
+  "logging": {
+    "level": "warn",
+    "format": "json",
+    "destination": "syslog"
+  },
+  "features": {
+    "debugMode": false,
+    "hotReload": false,
+    "strictValidation": true
+  },
+  "services": [
+    {
+      "name": "weather-mcp",
+      "enabled": true,
+      "config": {
+        "apiKey": "${WEATHER_API_KEY}",
+        "timeout": 10000,
+        "cache": true,
+        "cacheTTL": 3600
+      }
+    },
+    {
+      "name": "todo-mcp",
+      "enabled": true,
+      "config": {
+        "maxItems": 1000,
+        "persistence": "database",
+        "backupEnabled": true
+      }
+    }
+  ],
+  "security": {
+    "enableRateLimit": true,
+    "rateLimitWindow": 60000,
+    "rateLimitMax": 100,
+    "enableAuth": true,
+    "authProvider": "oauth2"
+  },
+  "createdAt": "2025-01-22T10:00:00Z"
+}
