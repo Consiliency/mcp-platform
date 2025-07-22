@@ -56,44 +56,44 @@ Tasks are organized by directory/component to allow parallel development:
   - Resource usage metrics
 
 ### Example Services
-- [ ] **EXAMPLE-2.1**: Echo MCP service (`examples/echo-mcp/`)
+- [x] **EXAMPLE-2.1**: Echo MCP service (`examples/echo-mcp/`)
   - Minimal Node.js MCP server
   - Basic request/response handling
   - Comprehensive README
 
-- [ ] **EXAMPLE-2.2**: Database MCP service (`examples/todo-mcp/`)
+- [x] **EXAMPLE-2.2**: Database MCP service (`examples/todo-mcp/`)
   - Python + PostgreSQL integration
   - CRUD operations example
   - Data persistence patterns
 
-- [ ] **EXAMPLE-2.3**: External API MCP service (`examples/weather-mcp/`)
+- [x] **EXAMPLE-2.3**: External API MCP service (`examples/weather-mcp/`)
   - API integration patterns
   - Caching strategies
   - Error handling examples
 
 ### Testing Infrastructure
-- [ ] **TEST-2.1**: Unit tests (`tests/unit/`)
+- [x] **TEST-2.1**: Unit tests (`tests/unit/`)
   - CLI command tests
   - Registry manager tests
   - Profile manager tests
 
-- [ ] **TEST-2.2**: Integration tests (`tests/integration/`)
+- [x] **TEST-2.2**: Integration tests (`tests/integration/`)
   - Service lifecycle tests
   - Profile switching tests
   - Cross-platform tests
 
-- [ ] **TEST-2.3**: E2E tests (`tests/e2e/`)
+- [x] **TEST-2.3**: E2E tests (`tests/e2e/`)
   - Full installation flow
   - Service deployment
   - Client configuration
 
 ### Service Management
-- [ ] **SCRIPT-2.1**: Service lifecycle manager (`scripts/service-manager.js`)
+- [x] **SCRIPT-2.1**: Service lifecycle manager (`scripts/service-manager.js`)
   - Start/stop individual services
   - Service dependency resolution
   - Graceful shutdown handling
 
-- [ ] **REGISTRY-2.1**: Enhanced service catalog (`registry/enhanced-catalog.json`)
+- [x] **REGISTRY-2.1**: Enhanced service catalog (`registry/enhanced-catalog.json`)
   - Service categories expansion
   - Dependency specifications
   - Version compatibility matrix
