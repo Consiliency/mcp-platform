@@ -1,0 +1,177 @@
+# Production Docker Ignore File
+# Excludes unnecessary files from Docker build context
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Dependencies
+node_modules/
+bower_components/
+vendor/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.cache/
+.pytest_cache/
+htmlcov/
+coverage/
+.coverage
+*.cover
+.hypothesis/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.project
+.classpath
+.settings/
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Documentation
+docs/
+*.md
+!README.md
+LICENSE
+
+# Test files
+test/
+tests/
+spec/
+__tests__/
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+.circleci/
+azure-pipelines.yml
+
+# Docker files (avoid recursive copies)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.pid
+*.seed
+*.pid.lock
+
+# OS files
+Desktop.ini
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Development tools
+.eslintrc*
+.prettierrc*
+.stylelintrc*
+.editorconfig
+tsconfig.json
+tslint.json
+jest.config.js
+webpack.config.js
+rollup.config.js
+babel.config.js
+.babelrc
+
+# Monitoring and logs
+logs/
+*.log
+.pm2/
+
+# Unnecessary for production
+examples/
+samples/
+demo/
+fixtures/
+mocks/
+stubs/
+
+# Large files
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.dmg
+*.iso
+*.jar
+*.war
+
+# Media files (unless needed)
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.ico
+
+# Database files
+*.sql
+*.sqlite
+*.db
+
+# Keep only necessary files
+!package.json
+!package-lock.json
+!yarn.lock
+!requirements.txt
+!go.mod
+!go.sum
+!Gemfile
+!Gemfile.lock
+!composer.json
+!composer.lock
