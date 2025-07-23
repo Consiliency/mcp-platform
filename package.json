@@ -9,10 +9,16 @@
     "test:sdk": "jest tests/integration/phase5/sdk-*.test.js"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.0"
+    "axios": "^1.11.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "pg": "^8.16.3",
+    "redis": "^5.6.1"
   },
   "devDependencies": {
-    "jest": "^29.0.0"
+    "jest": "^29.0.0",
+    "js-yaml": "^4.1.0",
+    "supertest": "^7.1.4"
   },
   "engines": {
     "node": ">=14.0.0"

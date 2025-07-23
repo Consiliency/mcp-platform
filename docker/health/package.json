@@ -1,0 +1,22 @@
+{
+  "name": "mcp-health-monitor",
+  "version": "1.0.0",
+  "description": "Health monitoring service for MCP platform",
+  "main": "health-monitor-server.js",
+  "scripts": {
+    "start": "node health-monitor-server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "redis": "^4.6.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
