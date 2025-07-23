@@ -1,1 +1,13 @@
 playwright-mcp/
+node_modules/
+logs/
+*.log
+.DS_Store
+coverage/
+.env
+.env.local
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

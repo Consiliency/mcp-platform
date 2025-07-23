@@ -1,12 +1,10 @@
-// Contract: Error Tracker
-// Purpose: Define the error tracking and reporting interface
-// Team responsible: Observability Team
-
 const crypto = require('crypto');
+const ErrorTrackerInterface = require('../../interfaces/phase6/error-tracker.interface');
 
-class ErrorTrackerInterface {
+class ErrorTracker extends ErrorTrackerInterface {
   constructor(config = {}) {
-    // config: { dsn?: string, environment: string, release?: string, sampleRate?: number }
+    super(config);
+    
     this.config = {
       dsn: config.dsn,
       environment: config.environment || 'development',
@@ -33,11 +31,8 @@ class ErrorTrackerInterface {
     // Alert rules
     this.alertRules = new Map();
   }
-
-  // Error capture
+  
   captureException(error, context = {}) {
-    // error: Error, context?: { user?: object, tags?: object, extra?: object }
-    // returns: { eventId: string }
     const eventId = this._generateEventId();
     
     // Check sample rate
@@ -75,10 +70,8 @@ class ErrorTrackerInterface {
     
     return { eventId };
   }
-
+  
   captureMessage(message, level = 'info', context = {}) {
-    // message: string, level: 'debug'|'info'|'warning'|'error'|'fatal', context?: object
-    // returns: { eventId: string }
     const eventId = this._generateEventId();
     
     // Check sample rate
@@ -112,26 +105,20 @@ class ErrorTrackerInterface {
     
     return { eventId };
   }
-
-  // Context management
+  
   setUser(user) {
-    // user: { id?: string, email?: string, username?: string, [key: string]: any }
     this.context.user = user;
   }
-
+  
   setTag(key, value) {
-    // key: string, value: string|number|boolean
     this.context.tags[key] = value;
   }
-
+  
   setContext(key, context) {
-    // key: string, context: object
     this.context.extra[key] = context;
   }
-
-  // Breadcrumbs
+  
   addBreadcrumb(breadcrumb) {
-    // breadcrumb: { message: string, category?: string, level?: string, data?: object }
     const crumb = {
       timestamp: new Date().toISOString(),
       message: breadcrumb.message,
@@ -147,11 +134,8 @@ class ErrorTrackerInterface {
       this.context.breadcrumbs.shift();
     }
   }
-
-  // Middleware
+  
   createErrorHandler(options = {}) {
-    // options?: { showStack?: boolean, shouldHandleError?: (error) => boolean }
-    // returns: Express/Koa error middleware function
     const {
       showStack = false,
       shouldHandleError = () => true
@@ -192,10 +176,8 @@ class ErrorTrackerInterface {
       res.status(statusCode).json(response);
     };
   }
-
+  
   createRequestHandler(options = {}) {
-    // options?: { include?: string[], exclude?: string[] }
-    // returns: Express/Koa middleware function
     const {
       include = [],
       exclude = []
@@ -221,17 +203,14 @@ class ErrorTrackerInterface {
         method: req.method,
         url: req.url,
         headers: this._filterHeaders(req.headers, include, exclude),
-        ip: req.ip || (req.connection && req.connection.remoteAddress) || 'unknown'
+        ip: req.ip || req.connection.remoteAddress
       });
       
       next();
     };
   }
-
-  // Performance monitoring
+  
   startTransaction(name, op) {
-    // name: string, op: string (e.g., 'http.server', 'db.query')
-    // returns: { finish: () => void, setTag: (key, value) => void }
     const transaction = {
       id: this._generateEventId(),
       name,
@@ -278,11 +257,8 @@ class ErrorTrackerInterface {
       }
     };
   }
-
-  // Alert configuration
+  
   async configureAlert(rule) {
-    // rule: { name: string, conditions: object, actions: object[] }
-    // returns: { alertId: string, enabled: boolean }
     const alertId = this._generateEventId();
     
     const alertConfig = {
@@ -301,11 +277,8 @@ class ErrorTrackerInterface {
       enabled: alertConfig.enabled
     };
   }
-
-  // Error boundaries (React)
+  
   createErrorBoundary(fallback) {
-    // fallback: React.Component
-    // returns: React.Component
     // This is a React-specific implementation
     // In a real implementation, this would return a React component
     class ErrorBoundary {
@@ -433,4 +406,4 @@ class ErrorTrackerInterface {
   }
 }
 
-module.exports = ErrorTrackerInterface;
+module.exports = ErrorTracker;

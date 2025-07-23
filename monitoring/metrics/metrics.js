@@ -1,13 +1,12 @@
-// Contract: Metrics Collector
-// Purpose: Define the metrics collection and export interface
-// Team responsible: Observability Team
-
 const client = require('prom-client');
 const express = require('express');
 
-class MetricsInterface {
+const MetricsInterface = require('../../interfaces/phase6/metrics.interface');
+
+class Metrics extends MetricsInterface {
   constructor(config = {}) {
-    // config: { prefix?: string, defaultLabels?: object, pushGateway?: string }
+    super(config);
+    
     this.config = {
       prefix: config.prefix || '',
       defaultLabels: config.defaultLabels || {},
@@ -31,11 +30,8 @@ class MetricsInterface {
       this.pushGateway = new client.Pushgateway(this.config.pushGateway, {}, this.register);
     }
   }
-
-  // Counter metrics
+  
   createCounter(name, help, labels = []) {
-    // name: string, help: string, labels?: string[]
-    // returns: { inc: (value?: number, labels?: object) => void }
     const metricName = this.config.prefix + name;
     
     const counter = new client.Counter({
@@ -57,11 +53,8 @@ class MetricsInterface {
       }
     };
   }
-
-  // Gauge metrics
+  
   createGauge(name, help, labels = []) {
-    // name: string, help: string, labels?: string[]
-    // returns: { set: (value: number, labels?: object) => void, inc: (value?: number) => void, dec: (value?: number) => void }
     const metricName = this.config.prefix + name;
     
     const gauge = new client.Gauge({
@@ -97,11 +90,8 @@ class MetricsInterface {
       }
     };
   }
-
-  // Histogram metrics
+  
   createHistogram(name, help, buckets = client.linearBuckets(0, 1, 10), labels = []) {
-    // name: string, help: string, buckets?: number[], labels?: string[]
-    // returns: { observe: (value: number, labels?: object) => void, startTimer: (labels?: object) => function }
     const metricName = this.config.prefix + name;
     
     const histogram = new client.Histogram({
@@ -131,11 +121,8 @@ class MetricsInterface {
       }
     };
   }
-
-  // Summary metrics
+  
   createSummary(name, help, percentiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999], labels = []) {
-    // name: string, help: string, percentiles?: number[], labels?: string[]
-    // returns: { observe: (value: number, labels?: object) => void, startTimer: (labels?: object) => function }
     const metricName = this.config.prefix + name;
     
     const summary = new client.Summary({
@@ -165,10 +152,8 @@ class MetricsInterface {
       }
     };
   }
-
-  // Built-in collectors
+  
   collectDefaultMetrics(options = {}) {
-    // options?: { prefix?: string, gcDurationBuckets?: number[], timeout?: number }
     const defaultOptions = {
       register: this.register,
       prefix: options.prefix || this.config.prefix,
@@ -178,11 +163,8 @@ class MetricsInterface {
     
     client.collectDefaultMetrics(defaultOptions);
   }
-
-  // HTTP metrics middleware
+  
   createHTTPMetricsMiddleware(options = {}) {
-    // options?: { includePath?: boolean, includeMethod?: boolean, buckets?: number[] }
-    // returns: Express/Koa middleware function
     const {
       includePath = true,
       includeMethod = true,
@@ -230,11 +212,8 @@ class MetricsInterface {
       next();
     };
   }
-
-  // Export metrics
+  
   async getMetrics(format = 'prometheus') {
-    // format?: 'prometheus' | 'json'
-    // returns: string (prometheus format) or object (json format)
     if (format === 'prometheus') {
       return await this.register.metrics();
     } else if (format === 'json') {
@@ -242,12 +221,7 @@ class MetricsInterface {
       const result = {};
       
       metrics.forEach(metric => {
-        // Strip prefix for JSON format to match test expectations
-        const name = metric.name.startsWith(this.config.prefix) 
-          ? metric.name.substring(this.config.prefix.length)
-          : metric.name;
-          
-        result[name] = {
+        result[metric.name] = {
           help: metric.help,
           type: metric.type,
           values: metric.values
@@ -259,11 +233,8 @@ class MetricsInterface {
       throw new Error(`Unsupported format: ${format}`);
     }
   }
-
-  // Metrics endpoint
+  
   createMetricsEndpoint(options = {}) {
-    // options?: { path?: string, auth?: boolean }
-    // returns: Express/Koa router
     const {
       path = '/metrics',
       auth = false
@@ -288,11 +259,8 @@ class MetricsInterface {
     
     return router;
   }
-
-  // Push to gateway (for batch jobs)
+  
   async pushMetrics(jobName, groupingKey = {}) {
-    // jobName: string, groupingKey?: object
-    // returns: { success: boolean, error?: string }
     if (!this.pushGateway) {
       return {
         success: false,
@@ -312,4 +280,4 @@ class MetricsInterface {
   }
 }
 
-module.exports = MetricsInterface;
+module.exports = Metrics;

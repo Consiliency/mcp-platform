@@ -1,15 +1,14 @@
-// Contract: Logger
-// Purpose: Define the structured logging interface
-// Team responsible: Observability Team
-
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 const fs = require('fs').promises;
 
-class LoggerInterface {
+const LoggerInterface = require('../../interfaces/phase6/logger.interface');
+
+class Logger extends LoggerInterface {
   constructor(config = {}) {
-    // config: { level: string, format: string, transports: object[], metadata?: object }
+    super(config);
+    
     this.config = {
       level: config.level || 'info',
       format: config.format || 'json',
@@ -18,9 +17,9 @@ class LoggerInterface {
       ...config
     };
     
+    this.winston = this._createWinstonLogger();
     this.timers = new Map();
     this.logDirectory = config.logDirectory || './logs';
-    this.winston = this._createWinstonLogger();
   }
   
   _createWinstonLogger() {
@@ -107,25 +106,20 @@ class LoggerInterface {
     
     return transports;
   }
-
-  // Logging methods
+  
   debug(message, meta = {}) {
-    // message: string, meta?: object
     this.winston.debug(message, meta);
   }
-
+  
   info(message, meta = {}) {
-    // message: string, meta?: object
     this.winston.info(message, meta);
   }
-
+  
   warn(message, meta = {}) {
-    // message: string, meta?: object
     this.winston.warn(message, meta);
   }
-
+  
   error(message, error, meta = {}) {
-    // message: string, error?: Error, meta?: object
     const errorMeta = { ...meta };
     
     if (error instanceof Error) {
@@ -139,23 +133,17 @@ class LoggerInterface {
     
     this.winston.error(message, errorMeta);
   }
-
-  // Child logger for request context
+  
   child(metadata) {
-    // metadata: object (e.g., { requestId: string, userId: string })
-    // returns: LoggerInterface instance with inherited metadata
     const childConfig = {
       ...this.config,
       metadata: { ...this.config.metadata, ...metadata }
     };
     
-    return new LoggerInterface(childConfig);
+    return new Logger(childConfig);
   }
-
-  // Performance logging
+  
   startTimer(label) {
-    // label: string
-    // returns: { end: (meta?: object) => void }
     const startTime = Date.now();
     const timerId = `${label}-${startTime}-${Math.random()}`;
     
@@ -178,11 +166,8 @@ class LoggerInterface {
       }
     };
   }
-
-  // Middleware
+  
   createRequestLogger(options = {}) {
-    // options: { skipPaths?: string[], includeBody?: boolean, includeHeaders?: boolean }
-    // returns: Express/Koa middleware function
     const {
       skipPaths = [],
       includeBody = false,
@@ -206,7 +191,7 @@ class LoggerInterface {
         method: req.method,
         path: req.path,
         query: req.query,
-        ip: req.ip || (req.connection && req.connection.remoteAddress) || 'unknown'
+        ip: req.ip || req.connection.remoteAddress
       };
       
       if (includeHeaders) {
@@ -238,11 +223,8 @@ class LoggerInterface {
       next();
     };
   }
-
-  // Log management
+  
   async query(options = {}) {
-    // options: { level?: string, from?: Date, to?: Date, limit?: number, filter?: object }
-    // returns: { logs: LogEntry[], total: number }
     const {
       level,
       from = new Date(Date.now() - 24 * 60 * 60 * 1000), // Default to last 24 hours
@@ -278,27 +260,18 @@ class LoggerInterface {
             // Check filters
             let matchesFilter = true;
             for (const [key, value] of Object.entries(filter)) {
-              // Check both in metadata and at root level (Winston might put it at root)
-              const hasValue = (log.metadata && log.metadata[key] === value) || log[key] === value;
-              if (!hasValue) {
+              if (log.metadata && log.metadata[key] !== value) {
                 matchesFilter = false;
                 break;
               }
             }
             
             if (matchesFilter) {
-              // Collect all metadata from various locations
-              const metadata = {
-                ...(log.metadata || {}),
-                ...(log.requestId ? { requestId: log.requestId } : {}),
-                ...(log.traceId ? { traceId: log.traceId } : {})
-              };
-              
               logs.push({
                 timestamp: log.timestamp,
                 level: log.level,
                 message: log.message,
-                metadata
+                metadata: log.metadata || {}
               });
             }
             
@@ -319,10 +292,8 @@ class LoggerInterface {
       total: logs.length
     };
   }
-
+  
   async rotate() {
-    // Trigger log rotation
-    // returns: { success: boolean, archivedFile?: string }
     try {
       // Winston daily-rotate-file handles rotation automatically
       // This method triggers manual rotation if needed
@@ -351,4 +322,4 @@ class LoggerInterface {
   }
 }
 
-module.exports = LoggerInterface;
+module.exports = Logger;
