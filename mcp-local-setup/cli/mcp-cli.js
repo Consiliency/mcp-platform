@@ -14,6 +14,7 @@ const ora = require('ora');
 const yaml = require('js-yaml');
 const os = require('os');
 const { addHealthCommand } = require('./commands/health');
+const PluginManager = require('./plugins/core/plugin-manager');
 
 // Configuration
 const MCP_HOME = process.env.MCP_HOME || path.join(process.env.HOME, '.mcp-platform');
@@ -701,10 +702,135 @@ program
 // Add health command
 addHealthCommand(program);
 
-// Parse arguments
-program.parse();
+// Plugin command group
+const plugin = program
+    .command('plugin')
+    .description('Manage CLI plugins');
 
-// Show help if no command provided
-if (!process.argv.slice(2).length) {
-    program.outputHelp();
-}
+plugin
+    .command('list')
+    .description('List installed plugins')
+    .action(async () => {
+        const pluginManager = new PluginManager();
+        const plugins = await pluginManager.listPlugins();
+        
+        if (plugins.length === 0) {
+            console.log(chalk.yellow('No plugins installed'));
+            return;
+        }
+        
+        console.log(chalk.blue('\nInstalled Plugins:\n'));
+        for (const plugin of plugins) {
+            console.log(`${chalk.green(plugin.name)} v${plugin.version} - ${plugin.description}`);
+        }
+    });
+
+plugin
+    .command('install <package>')
+    .description('Install a CLI plugin')
+    .action(async (packageName) => {
+        const spinner = ora(`Installing plugin ${packageName}...`).start();
+        
+        try {
+            const pluginManager = new PluginManager();
+            const result = await pluginManager.installPlugin(packageName);
+            
+            if (result.success) {
+                spinner.succeed(result.message);
+            } else {
+                spinner.fail(result.message);
+            }
+        } catch (error) {
+            spinner.fail(`Failed to install plugin: ${error.message}`);
+            process.exit(1);
+        }
+    });
+
+plugin
+    .command('update <name>')
+    .description('Update a CLI plugin')
+    .action(async (pluginName) => {
+        const spinner = ora(`Updating plugin ${pluginName}...`).start();
+        
+        try {
+            const pluginManager = new PluginManager();
+            const result = await pluginManager.updatePlugin(pluginName);
+            
+            if (result.success) {
+                spinner.succeed(result.message);
+            } else {
+                spinner.fail(result.message);
+            }
+        } catch (error) {
+            spinner.fail(`Failed to update plugin: ${error.message}`);
+            process.exit(1);
+        }
+    });
+
+plugin
+    .command('unload <name>')
+    .description('Unload a CLI plugin')
+    .action(async (pluginName) => {
+        const spinner = ora(`Unloading plugin ${pluginName}...`).start();
+        
+        try {
+            const pluginManager = new PluginManager();
+            await pluginManager.unloadPlugin(pluginName);
+            spinner.succeed(`Plugin ${pluginName} unloaded`);
+        } catch (error) {
+            spinner.fail(`Failed to unload plugin: ${error.message}`);
+            process.exit(1);
+        }
+    });
+
+// Initialize and load plugins
+(async () => {
+    try {
+        const pluginManager = new PluginManager();
+        
+        // Create context for plugins
+        const context = {
+            config: {},
+            logger: console,
+            api: {
+                // CLI API that plugins can use
+                runCommand,
+                fileExists,
+                loadCatalog,
+                getCurrentProfile,
+                listProfiles
+            }
+        };
+        
+        // Try to load SDK if available
+        try {
+            const SDKCoreInterface = require('../../interfaces/phase5/sdk-core.interface');
+            context.sdk = new SDKCoreInterface({ apiKey: process.env.MCP_API_KEY || 'default-key' });
+        } catch (error) {
+            // SDK not available yet - that's ok
+        }
+        
+        // Initialize plugin manager
+        await pluginManager.initialize(context);
+        
+        // Register plugin commands
+        pluginManager.registerCommands(program);
+        
+        // Parse arguments
+        program.parse();
+        
+        // Show help if no command provided
+        if (!process.argv.slice(2).length) {
+            program.outputHelp();
+        }
+    } catch (error) {
+        console.error(chalk.red('Failed to initialize plugins:', error.message));
+        
+        // Still parse arguments even if plugins fail to load
+        program.parse();
+        
+        if (!process.argv.slice(2).length) {
+            program.outputHelp();
+        }
+    }
+})();

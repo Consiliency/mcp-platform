@@ -1,0 +1,100 @@
+<idea-plugin>
+    <id>com.mcp.ide</id>
+    <name>MCP IDE Support</name>
+    <vendor>MCP Team</vendor>
+    
+    <description><![CDATA[
+        MCP (Model Context Protocol) support for IntelliJ IDEA.
+        <br/><br/>
+        Features:
+        <ul>
+            <li>Code completion for MCP services</li>
+            <li>Service health monitoring</li>
+            <li>Configuration validation</li>
+            <li>Hover documentation</li>
+            <li>Quick fixes</li>
+            <li>Debugging support</li>
+        </ul>
+    ]]></description>
+    
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Completion contributor -->
+        <completion.contributor 
+            language="JAVA" 
+            implementationClass="com.mcp.ide.MCPCompletionContributor"/>
+        
+        <!-- Annotator for diagnostics -->
+        <annotator 
+            language="JSON" 
+            implementationClass="com.mcp.ide.MCPConfigAnnotator"/>
+        
+        <!-- Documentation provider -->
+        <lang.documentationProvider 
+            language="JAVA" 
+            implementationClass="com.mcp.ide.MCPDocumentationProvider"/>
+        
+        <!-- File type for MCP config -->
+        <fileType 
+            name="MCP Config" 
+            implementationClass="com.mcp.ide.MCPConfigFileType"
+            fieldName="INSTANCE"
+            language="JSON"
+            extensions="mcp.json"/>
+        
+        <!-- Tool window for service management -->
+        <toolWindow 
+            id="MCP Services" 
+            anchor="right" 
+            factoryClass="com.mcp.ide.MCPToolWindowFactory"
+            icon="/icons/mcp.svg"/>
+        
+        <!-- Inspection for configuration validation -->
+        <localInspection 
+            language="JSON"
+            displayName="MCP configuration validation"
+            groupName="MCP"
+            enabledByDefault="true"
+            implementationClass="com.mcp.ide.MCPConfigInspection"/>
+        
+        <!-- Intention actions -->
+        <intentionAction>
+            <className>com.mcp.ide.InstallServiceIntention</className>
+            <category>MCP</category>
+        </intentionAction>
+        
+        <!-- Run configuration -->
+        <configurationType implementation="com.mcp.ide.MCPRunConfigurationType"/>
+        <runConfigurationProducer implementation="com.mcp.ide.MCPRunConfigurationProducer"/>
+    </extensions>
+    
+    <actions>
+        <group id="MCPActions" text="MCP" popup="true">
+            <action id="MCP.ShowServices" 
+                    class="com.mcp.ide.ShowServicesAction" 
+                    text="Show MCP Services"
+                    description="Show MCP services panel"/>
+            
+            <action id="MCP.InstallService" 
+                    class="com.mcp.ide.InstallServiceAction" 
+                    text="Install MCP Service"
+                    description="Install a new MCP service"/>
+            
+            <action id="MCP.RefreshServices" 
+                    class="com.mcp.ide.RefreshServicesAction" 
+                    text="Refresh Services"
+                    description="Refresh MCP services list"/>
+            
+            <separator/>
+            
+            <action id="MCP.StartDebugging" 
+                    class="com.mcp.ide.StartDebuggingAction" 
+                    text="Debug MCP Service"
+                    description="Start debugging an MCP service"/>
+                    
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>

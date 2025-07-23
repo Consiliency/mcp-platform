@@ -2,7 +2,7 @@
 // Purpose: Verify that CLI plugins can use SDK functionality
 // Components involved: SDK Core, CLI Plugin System
 
-const SDKCoreInterface = require('../../../interfaces/phase5/sdk-core.interface');
+const MockSDKCore = require('../../mocks/sdk-core.mock');
 const { CLIPluginInterface, CLIPluginLoader } = require('../../../interfaces/phase5/cli-plugin.interface');
 
 describe('SDK and CLI Plugin Integration', () => {
@@ -11,7 +11,7 @@ describe('SDK and CLI Plugin Integration', () => {
   let testPlugin;
 
   beforeEach(() => {
-    sdk = new SDKCoreInterface({ apiKey: 'test-key' });
+    sdk = new MockSDKCore({ apiKey: 'test-key' });
     pluginLoader = new CLIPluginLoader();
   });
 
@@ -89,14 +89,12 @@ describe('SDK and CLI Plugin Integration', () => {
 
   test('Plugin loader validates plugin interface implementation', async () => {
     // Given an invalid plugin
-    const invalidPlugin = {
-      // Missing required methods
-      getMetadata: () => ({ name: 'invalid' })
-    };
+    const path = require('path');
+    const invalidPluginPath = path.join(__dirname, '../../mocks/invalid-plugin.js');
 
     // When trying to load it
     try {
-      await pluginLoader.loadPlugin('/path/to/invalid-plugin');
+      await pluginLoader.loadPlugin(invalidPluginPath);
       fail('Should have thrown validation error');
     } catch (error) {
       // Then it should fail validation
@@ -126,6 +124,9 @@ describe('SDK and CLI Plugin Integration', () => {
     
     // Simulate service installation
     await sdk.installService('test-service', {});
+    
+    // Wait for async event to be processed
+    await new Promise(resolve => setTimeout(resolve, 150));
     
     // Then plugin should receive events
     expect(eventPlugin.eventLog).toContainEqual({

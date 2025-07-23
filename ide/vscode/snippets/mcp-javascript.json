@@ -1,0 +1,56 @@
+{
+  "MCP Connect Service": {
+    "prefix": "mcp-connect",
+    "body": [
+      "const ${1:service} = await mcp.connectService('${2:service-id}', {",
+      "  ${3:// configuration}",
+      "});"
+    ],
+    "description": "Connect to an MCP service"
+  },
+  "MCP Install Service": {
+    "prefix": "mcp-install",
+    "body": [
+      "await mcp.installService('${1:service-id}', {",
+      "  ${2:// configuration}",
+      "});"
+    ],
+    "description": "Install an MCP service"
+  },
+  "MCP List Services": {
+    "prefix": "mcp-list",
+    "body": [
+      "const services = await mcp.listServices({",
+      "  category: '${1:category}',",
+      "  status: '${2:available}'",
+      "});"
+    ],
+    "description": "List available MCP services"
+  },
+  "MCP Call Service": {
+    "prefix": "mcp-call",
+    "body": [
+      "const result = await mcp.callService('${1:service-id}', '${2:method}', {",
+      "  ${3:// parameters}",
+      "});"
+    ],
+    "description": "Call an MCP service method"
+  },
+  "MCP Service Configuration": {
+    "prefix": "mcp-config",
+    "body": [
+      "{",
+      "  \"services\": {",
+      "    \"${1:service-id}\": {",
+      "      \"enabled\": true,",
+      "      \"version\": \"${2:latest}\",",
+      "      \"config\": {",
+      "        ${3:// service-specific configuration}",
+      "      }",
+      "    }",
+      "  }",
+      "}"
+    ],
+    "description": "MCP service configuration template"
+  }
+}
