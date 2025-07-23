@@ -1,0 +1,18 @@
+{
+  "allow": [
+    "Bash(git worktree:*)",
+    "Bash(git branch:*)",
+    "Bash(git status:*)",
+    "Bash(git commit:*)",
+    "Bash(git push:*)",
+    "Bash(git merge:*)",
+    "Bash(cd worktrees/*)",
+    "Bash(ls worktrees/*)",
+    "Bash(mkdir worktrees/*)",
+    "Edit(worktrees/**)",
+    "Read(worktrees/**)",
+    "Bash(npm:*)",
+    "Bash(npm run:*)",
+    "Task"
+  ]
+}
