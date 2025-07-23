@@ -1,0 +1,6 @@
+{
+  "name": "mcp-cli-plugins-installed",
+  "version": "1.0.0",
+  "description": "Directory for installed MCP CLI plugins",
+  "private": true
+}
