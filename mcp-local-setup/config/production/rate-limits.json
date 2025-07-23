@@ -1,0 +1,218 @@
+{
+  "version": "1.0.0",
+  "description": "Production API rate limiting configuration",
+  "lastUpdated": "2025-01-23T00:00:00Z",
+  "global": {
+    "windowMs": 60000,
+    "message": "Too many requests, please try again later.",
+    "standardHeaders": true,
+    "legacyHeaders": false,
+    "skipSuccessfulRequests": false,
+    "skipFailedRequests": false
+  },
+  "tiers": {
+    "anonymous": {
+      "name": "Anonymous",
+      "description": "Unauthenticated requests",
+      "limits": {
+        "perMinute": 20,
+        "perHour": 100,
+        "perDay": 500
+      },
+      "burst": {
+        "enabled": true,
+        "max": 30,
+        "duration": 10000
+      }
+    },
+    "basic": {
+      "name": "Basic",
+      "description": "Authenticated users with basic tier",
+      "limits": {
+        "perMinute": 100,
+        "perHour": 1000,
+        "perDay": 10000
+      },
+      "burst": {
+        "enabled": true,
+        "max": 150,
+        "duration": 10000
+      }
+    },
+    "premium": {
+      "name": "Premium",
+      "description": "Premium tier users",
+      "limits": {
+        "perMinute": 1000,
+        "perHour": 10000,
+        "perDay": 100000
+      },
+      "burst": {
+        "enabled": true,
+        "max": 2000,
+        "duration": 10000
+      }
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "Enterprise customers",
+      "limits": {
+        "perMinute": 10000,
+        "perHour": 100000,
+        "perDay": 1000000
+      },
+      "burst": {
+        "enabled": true,
+        "max": 20000,
+        "duration": 10000
+      },
+      "custom": true
+    },
+    "internal": {
+      "name": "Internal",
+      "description": "Internal services and admin users",
+      "limits": {
+        "perMinute": -1,
+        "perHour": -1,
+        "perDay": -1
+      },
+      "burst": {
+        "enabled": false
+      },
+      "bypass": true
+    }
+  },
+  "endpoints": {
+    "/api/auth/login": {
+      "windowMs": 900000,
+      "max": 5,
+      "skipSuccessfulRequests": true,
+      "message": "Too many login attempts, please try again in 15 minutes"
+    },
+    "/api/auth/register": {
+      "windowMs": 3600000,
+      "max": 3,
+      "message": "Registration limit exceeded, please try again later"
+    },
+    "/api/auth/reset-password": {
+      "windowMs": 3600000,
+      "max": 3,
+      "message": "Password reset limit exceeded, please try again later"
+    },
+    "/api/weather/*": {
+      "costWeight": 2,
+      "cache": {
+        "enabled": true,
+        "ttl": 300000
+      }
+    },
+    "/api/ai/*": {
+      "costWeight": 10,
+      "requireAuth": true,
+      "minTier": "premium"
+    },
+    "/api/bulk/*": {
+      "costWeight": 5,
+      "requireAuth": true,
+      "minTier": "basic"
+    },
+    "/api/admin/*": {
+      "requireAuth": true,
+      "minTier": "internal",
+      "ipWhitelist": true
+    },
+    "/api/health": {
+      "bypass": true
+    },
+    "/api/metrics": {
+      "bypass": true,
+      "ipWhitelist": true
+    }
+  },
+  "costWeights": {
+    "GET": 1,
+    "POST": 2,
+    "PUT": 2,
+    "DELETE": 2,
+    "PATCH": 2
+  },
+  "headers": {
+    "limit": "X-RateLimit-Limit",
+    "remaining": "X-RateLimit-Remaining",
+    "reset": "X-RateLimit-Reset",
+    "retryAfter": "Retry-After",
+    "cost": "X-RateLimit-Cost"
+  },
+  "storage": {
+    "type": "redis",
+    "prefix": "rl:",
+    "resetExpiry": true
+  },
+  "bypasses": {
+    "ips": [],
+    "userAgents": [],
+    "apiKeys": []
+  },
+  "penalties": {
+    "enabled": true,
+    "violations": {
+      "3": {
+        "duration": 300000,
+        "message": "Rate limit violated multiple times, cooling off period applied"
+      },
+      "5": {
+        "duration": 3600000,
+        "message": "Excessive rate limit violations, extended cooling off period"
+      },
+      "10": {
+        "duration": 86400000,
+        "message": "Severe rate limit abuse detected, access restricted for 24 hours",
+        "notify": true
+      }
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics": [
+      "requests_total",
+      "requests_limited",
+      "unique_users",
+      "cost_per_user",
+      "violations_per_user"
+    ],
+    "alerts": {
+      "highViolationRate": {
+        "threshold": 0.1,
+        "window": 300000,
+        "channels": ["slack", "email"]
+      },
+      "ddosPattern": {
+        "threshold": 10000,
+        "window": 60000,
+        "channels": ["pagerduty", "slack"]
+      }
+    }
+  },
+  "adaptiveLimit": {
+    "enabled": true,
+    "algorithm": "token-bucket",
+    "adjustmentInterval": 300000,
+    "factors": {
+      "cpuUsage": 0.3,
+      "memoryUsage": 0.2,
+      "responseTime": 0.5
+    },
+    "thresholds": {
+      "reduce": {
+        "cpu": 80,
+        "memory": 85,
+        "responseTime": 1000
+      },
+      "increase": {
+        "cpu": 50,
+        "memory": 60,
+        "responseTime": 200
+      }
+    }
+  }
+}

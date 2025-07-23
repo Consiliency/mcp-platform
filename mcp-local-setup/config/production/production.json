@@ -1,0 +1,215 @@
+{
+  "environment": "production",
+  "version": "1.0.0",
+  "metadata": {
+    "description": "Production environment configuration",
+    "lastUpdated": "2025-01-23T00:00:00Z",
+    "maintainer": "ops@mcp-platform.com"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 443,
+    "protocol": "https",
+    "cluster": {
+      "enabled": true,
+      "workers": "auto"
+    },
+    "compression": {
+      "enabled": true,
+      "level": 6
+    },
+    "cors": {
+      "enabled": true,
+      "origins": ["https://app.mcp-platform.com"],
+      "credentials": true
+    }
+  },
+  "database": {
+    "primary": {
+      "host": "${DB_HOST}",
+      "port": 5432,
+      "database": "${DB_NAME}",
+      "user": "${DB_USER}",
+      "password": "${DB_PASSWORD}",
+      "ssl": {
+        "enabled": true,
+        "rejectUnauthorized": true
+      },
+      "pool": {
+        "min": 10,
+        "max": 100,
+        "idleTimeoutMillis": 30000
+      }
+    },
+    "replica": {
+      "enabled": true,
+      "hosts": ["${DB_REPLICA_HOST_1}", "${DB_REPLICA_HOST_2}"],
+      "loadBalancing": "round-robin"
+    }
+  },
+  "cache": {
+    "redis": {
+      "enabled": true,
+      "host": "${REDIS_HOST}",
+      "port": 6379,
+      "password": "${REDIS_PASSWORD}",
+      "cluster": true,
+      "ttl": 3600
+    },
+    "memory": {
+      "enabled": true,
+      "maxSize": "2GB",
+      "evictionPolicy": "lru"
+    }
+  },
+  "security": {
+    "rateLimit": {
+      "enabled": true,
+      "windowMs": 60000,
+      "max": 100,
+      "delayAfter": 50,
+      "delayMs": 500,
+      "skipSuccessfulRequests": false,
+      "keyGenerator": "ip"
+    },
+    "authentication": {
+      "enabled": true,
+      "providers": ["oauth2", "jwt", "apikey"],
+      "session": {
+        "secret": "${SESSION_SECRET}",
+        "maxAge": 86400000,
+        "secure": true,
+        "httpOnly": true,
+        "sameSite": "strict"
+      }
+    },
+    "encryption": {
+      "algorithm": "aes-256-gcm",
+      "keyRotation": {
+        "enabled": true,
+        "intervalDays": 90
+      }
+    },
+    "headers": {
+      "hsts": {
+        "enabled": true,
+        "maxAge": 31536000,
+        "includeSubDomains": true,
+        "preload": true
+      },
+      "csp": {
+        "enabled": true,
+        "directives": {
+          "defaultSrc": ["'self'"],
+          "scriptSrc": ["'self'", "'unsafe-inline'"],
+          "styleSrc": ["'self'", "'unsafe-inline'"],
+          "imgSrc": ["'self'", "data:", "https:"],
+          "connectSrc": ["'self'", "https://api.mcp-platform.com"]
+        }
+      }
+    }
+  },
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "provider": "prometheus",
+      "endpoint": "/metrics",
+      "interval": 10000
+    },
+    "logging": {
+      "level": "warn",
+      "format": "json",
+      "transports": ["console", "file", "syslog"],
+      "file": {
+        "filename": "/var/log/mcp/app.log",
+        "maxSize": "100m",
+        "maxFiles": 10,
+        "compress": true
+      },
+      "syslog": {
+        "host": "${SYSLOG_HOST}",
+        "port": 514,
+        "protocol": "tcp"
+      }
+    },
+    "tracing": {
+      "enabled": true,
+      "provider": "jaeger",
+      "endpoint": "${JAEGER_ENDPOINT}",
+      "sampleRate": 0.1
+    },
+    "healthCheck": {
+      "enabled": true,
+      "interval": 30000,
+      "timeout": 10000,
+      "retries": 3
+    }
+  },
+  "services": {
+    "weather-mcp": {
+      "enabled": true,
+      "url": "https://weather.mcp-platform.com",
+      "timeout": 10000,
+      "retries": 3,
+      "circuitBreaker": {
+        "enabled": true,
+        "threshold": 5,
+        "timeout": 60000
+      }
+    },
+    "todo-mcp": {
+      "enabled": true,
+      "url": "https://todo.mcp-platform.com",
+      "timeout": 5000,
+      "maxItems": 10000,
+      "backup": {
+        "enabled": true,
+        "schedule": "0 2 * * *",
+        "retention": 30
+      }
+    }
+  },
+  "deployment": {
+    "blueGreen": {
+      "enabled": true,
+      "healthCheckPath": "/health",
+      "warmupRequests": 100
+    },
+    "rollback": {
+      "enabled": true,
+      "automaticOnFailure": true,
+      "historyLimit": 10
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "schedule": {
+      "database": "0 2 * * *",
+      "files": "0 3 * * *",
+      "config": "0 4 * * 0"
+    },
+    "retention": {
+      "daily": 7,
+      "weekly": 4,
+      "monthly": 12
+    },
+    "storage": {
+      "type": "s3",
+      "bucket": "${BACKUP_S3_BUCKET}",
+      "encryption": true
+    }
+  },
+  "maintenance": {
+    "window": {
+      "start": "02:00",
+      "end": "04:00",
+      "timezone": "UTC",
+      "daysOfWeek": [0]
+    },
+    "notifications": {
+      "enabled": true,
+      "channels": ["email", "slack"],
+      "advanceNotice": 86400000
+    }
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "version": "1.0.0",
+  "description": "Production feature flags configuration",
+  "lastUpdated": "2025-01-23T00:00:00Z",
+  "flags": {
+    "core": {
+      "debugMode": {
+        "enabled": false,
+        "description": "Enable debug logging and development tools",
+        "rolloutPercentage": 0
+      },
+      "hotReload": {
+        "enabled": false,
+        "description": "Enable hot module reloading",
+        "rolloutPercentage": 0
+      },
+      "strictValidation": {
+        "enabled": true,
+        "description": "Enforce strict input validation",
+        "rolloutPercentage": 100
+      },
+      "experimentalFeatures": {
+        "enabled": false,
+        "description": "Enable experimental features",
+        "rolloutPercentage": 0,
+        "allowedUsers": []
+      }
+    },
+    "security": {
+      "rateLimit": {
+        "enabled": true,
+        "description": "Enable rate limiting for API endpoints",
+        "rolloutPercentage": 100,
+        "config": {
+          "default": 100,
+          "authenticated": 1000,
+          "premium": 10000
+        }
+      },
+      "twoFactorAuth": {
+        "enabled": true,
+        "description": "Enable two-factor authentication",
+        "rolloutPercentage": 100,
+        "mandatory": false
+      },
+      "apiKeyRotation": {
+        "enabled": true,
+        "description": "Automatic API key rotation",
+        "rolloutPercentage": 100,
+        "intervalDays": 90
+      },
+      "ipWhitelist": {
+        "enabled": false,
+        "description": "IP whitelist for admin access",
+        "rolloutPercentage": 0,
+        "whitelist": []
+      }
+    },
+    "services": {
+      "weatherApi": {
+        "enabled": true,
+        "description": "Weather API integration",
+        "rolloutPercentage": 100,
+        "fallbackEnabled": true
+      },
+      "todoSync": {
+        "enabled": true,
+        "description": "Todo item synchronization",
+        "rolloutPercentage": 100,
+        "realtime": true
+      },
+      "aiAssistant": {
+        "enabled": false,
+        "description": "AI-powered assistant features",
+        "rolloutPercentage": 0,
+        "betaUsers": []
+      },
+      "advancedAnalytics": {
+        "enabled": true,
+        "description": "Advanced analytics dashboard",
+        "rolloutPercentage": 50,
+        "features": ["usage", "performance", "errors"]
+      }
+    },
+    "performance": {
+      "caching": {
+        "enabled": true,
+        "description": "Response caching",
+        "rolloutPercentage": 100,
+        "strategies": ["memory", "redis", "cdn"]
+      },
+      "compression": {
+        "enabled": true,
+        "description": "Response compression",
+        "rolloutPercentage": 100,
+        "algorithms": ["gzip", "brotli"]
+      },
+      "lazyLoading": {
+        "enabled": true,
+        "description": "Lazy load modules and resources",
+        "rolloutPercentage": 100
+      },
+      "connectionPooling": {
+        "enabled": true,
+        "description": "Database connection pooling",
+        "rolloutPercentage": 100
+      }
+    },
+    "monitoring": {
+      "detailedMetrics": {
+        "enabled": true,
+        "description": "Collect detailed performance metrics",
+        "rolloutPercentage": 100
+      },
+      "errorTracking": {
+        "enabled": true,
+        "description": "Automatic error tracking and reporting",
+        "rolloutPercentage": 100,
+        "providers": ["sentry", "custom"]
+      },
+      "userBehaviorAnalytics": {
+        "enabled": false,
+        "description": "Track user behavior for analytics",
+        "rolloutPercentage": 0,
+        "anonymized": true
+      },
+      "realTimeAlerts": {
+        "enabled": true,
+        "description": "Real-time alerting for critical issues",
+        "rolloutPercentage": 100,
+        "channels": ["email", "slack", "pagerduty"]
+      }
+    },
+    "deployment": {
+      "canaryDeployment": {
+        "enabled": true,
+        "description": "Canary deployment strategy",
+        "rolloutPercentage": 10,
+        "autoRollback": true
+      },
+      "blueGreenDeployment": {
+        "enabled": true,
+        "description": "Blue-green deployment strategy",
+        "rolloutPercentage": 100
+      },
+      "featureGating": {
+        "enabled": true,
+        "description": "Gate features by user segments",
+        "rolloutPercentage": 100
+      },
+      "automaticRollback": {
+        "enabled": true,
+        "description": "Automatic rollback on deployment failure",
+        "rolloutPercentage": 100,
+        "errorThreshold": 5
+      }
+    },
+    "enterprise": {
+      "sso": {
+        "enabled": true,
+        "description": "Single Sign-On support",
+        "rolloutPercentage": 100,
+        "providers": ["saml", "oauth2", "ldap"]
+      },
+      "multiTenancy": {
+        "enabled": true,
+        "description": "Multi-tenant architecture",
+        "rolloutPercentage": 100
+      },
+      "auditLogging": {
+        "enabled": true,
+        "description": "Comprehensive audit logging",
+        "rolloutPercentage": 100,
+        "retention": 365
+      },
+      "dataResidency": {
+        "enabled": false,
+        "description": "Regional data residency compliance",
+        "rolloutPercentage": 0,
+        "regions": []
+      }
+    }
+  },
+  "overrides": {
+    "byUser": {},
+    "byTenant": {},
+    "byRegion": {}
+  },
+  "rolloutRules": {
+    "defaultStrategy": "percentage",
+    "strategies": {
+      "percentage": {
+        "seedValue": "userId"
+      },
+      "userList": {
+        "refreshInterval": 300000
+      },
+      "gradual": {
+        "incrementPerDay": 10
+      }
+    }
+  }
+}
