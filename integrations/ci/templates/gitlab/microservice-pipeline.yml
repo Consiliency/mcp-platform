@@ -1,0 +1,205 @@
+stages:
+  - build
+  - test
+  - security
+  - deploy
+  - rollback
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  REGISTRY: $CI_REGISTRY
+  IMAGE_NAME: $CI_REGISTRY_IMAGE
+  KUBERNETES_VERSION: "1.27.3"
+
+.docker-login: &docker-login
+  - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+
+.kubectl-setup: &kubectl-setup
+  - curl -LO "https://dl.k8s.io/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl"
+  - chmod +x kubectl
+  - mv kubectl /usr/local/bin/
+  - kubectl version --client
+
+# Build stage
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - *docker-login
+  script:
+    - docker build --pull -t "$IMAGE_NAME:$CI_COMMIT_SHA" .
+    - docker tag "$IMAGE_NAME:$CI_COMMIT_SHA" "$IMAGE_NAME:$CI_COMMIT_REF_SLUG"
+    - docker push "$IMAGE_NAME:$CI_COMMIT_SHA"
+    - docker push "$IMAGE_NAME:$CI_COMMIT_REF_SLUG"
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHA" "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:latest"
+      fi
+  artifacts:
+    reports:
+      dotenv: build.env
+    expire_in: 1 week
+
+# Test jobs
+test:unit:
+  stage: test
+  image: node:18
+  script:
+    - npm ci
+    - npm run test:unit
+  coverage: '/Coverage: \d+\.\d+%/'
+  artifacts:
+    reports:
+      junit: test-results/unit/*.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+
+test:integration:
+  stage: test
+  image: node:18
+  services:
+    - postgres:14
+    - redis:7
+  variables:
+    POSTGRES_DB: test_db
+    POSTGRES_USER: test_user
+    POSTGRES_PASSWORD: test_pass
+    REDIS_URL: redis://redis:6379
+  script:
+    - npm ci
+    - npm run test:integration
+  artifacts:
+    reports:
+      junit: test-results/integration/*.xml
+
+test:e2e:
+  stage: test
+  image: cypress/included:12.17.1
+  services:
+    - name: $IMAGE_NAME:$CI_COMMIT_SHA
+      alias: app
+  variables:
+    CYPRESS_baseUrl: http://app:3000
+  script:
+    - npm ci
+    - npm run test:e2e
+  artifacts:
+    when: always
+    paths:
+      - cypress/screenshots
+      - cypress/videos
+    expire_in: 1 week
+
+# Security scanning
+security:container-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL "$IMAGE_NAME:$CI_COMMIT_SHA"
+  allow_failure: true
+
+security:dependency-scan:
+  stage: security
+  image: node:18
+  script:
+    - npm audit --production --audit-level=high
+  allow_failure: true
+
+security:sast:
+  stage: security
+  include:
+    - template: Security/SAST.gitlab-ci.yml
+
+# Deployment jobs
+.deploy:
+  image: bitnami/kubectl:latest
+  before_script:
+    - *kubectl-setup
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+  script:
+    - kubectl set image deployment/$APP_NAME $APP_NAME=$IMAGE_NAME:$CI_COMMIT_SHA -n $KUBE_NAMESPACE
+    - kubectl rollout status deployment/$APP_NAME -n $KUBE_NAMESPACE
+    - kubectl get pods -n $KUBE_NAMESPACE
+
+deploy:staging:
+  extends: .deploy
+  stage: deploy
+  environment:
+    name: staging
+    url: https://staging.example.com
+  variables:
+    KUBE_NAMESPACE: staging
+    APP_NAME: microservice
+  only:
+    - develop
+  when: manual
+
+deploy:production:
+  extends: .deploy
+  stage: deploy
+  environment:
+    name: production
+    url: https://production.example.com
+  variables:
+    KUBE_NAMESPACE: production
+    APP_NAME: microservice
+  only:
+    - main
+  when: manual
+
+deploy:helm:
+  stage: deploy
+  image: alpine/helm:latest
+  before_script:
+    - *kubectl-setup
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+  script:
+    - |
+      helm upgrade --install $CI_PROJECT_NAME ./helm/app \
+        --set image.repository=$IMAGE_NAME \
+        --set image.tag=$CI_COMMIT_SHA \
+        --namespace $KUBE_NAMESPACE \
+        --create-namespace \
+        --wait
+  environment:
+    name: production
+    url: https://production.example.com
+  variables:
+    KUBE_NAMESPACE: production
+  only:
+    - tags
+
+# Rollback job
+rollback:
+  stage: rollback
+  image: bitnami/kubectl:latest
+  before_script:
+    - *kubectl-setup
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+  script:
+    - kubectl rollout undo deployment/$APP_NAME -n $KUBE_NAMESPACE
+    - kubectl rollout status deployment/$APP_NAME -n $KUBE_NAMESPACE
+  environment:
+    name: $CI_ENVIRONMENT_NAME
+  when: manual
+  only:
+    - main
+    - develop
+
+# Performance testing
+performance:
+  stage: test
+  image: grafana/k6:latest
+  script:
+    - k6 run --out json=k6-results.json performance/load-test.js
+  artifacts:
+    reports:
+      load_performance: k6-results.json
+  only:
+    - merge_requests
+    - main

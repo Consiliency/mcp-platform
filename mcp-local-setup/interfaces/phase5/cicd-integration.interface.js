@@ -69,4 +69,6 @@ class CICDIntegrationInterface {
   }
 }
 
-module.exports = CICDIntegrationInterface;
+// Export the actual implementation instead of the interface
+const CICDIntegration = require('../../../integrations/ci/CICDIntegration');
+module.exports = CICDIntegration;
