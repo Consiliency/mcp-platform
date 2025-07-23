@@ -1,0 +1,71 @@
+{
+  "popular-service": {
+    "tenants": {
+      "tenant-a": {
+        "calls": 130,
+        "totalDuration": 67357.98573663915,
+        "actions": {
+          "api_call": 130
+        }
+      },
+      "tenant-b": {
+        "calls": 130,
+        "totalDuration": 62435.05852766747,
+        "actions": {
+          "api_call": 130
+        }
+      },
+      "tenant-c": {
+        "calls": 130,
+        "totalDuration": 64509.670415538094,
+        "actions": {
+          "api_call": 130
+        }
+      }
+    },
+    "totalCalls": 390,
+    "actions": {
+      "api_call": 390
+    }
+  },
+  "test-service": {
+    "downloads": 0,
+    "views": 0,
+    "events": [
+      {
+        "type": "rating",
+        "timestamp": "2025-07-23T03:34:37.565Z",
+        "userId": "strict-corp",
+        "rating": 4
+      },
+      {
+        "type": "review",
+        "timestamp": "2025-07-23T03:34:37.565Z",
+        "userId": "strict-corp",
+        "reviewId": "e19fbcdc0a133bc6fe5af61fa4ec9c13",
+        "action": "create"
+      }
+    ],
+    "daily": {
+      "2025-07-23": {
+        "events": 2,
+        "downloads": 0,
+        "views": 0
+      }
+    },
+    "weekly": {
+      "2025-W30": {
+        "events": 2,
+        "downloads": 0,
+        "views": 0
+      }
+    },
+    "monthly": {
+      "2025-07": {
+        "events": 2,
+        "downloads": 0,
+        "views": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "enabled": false,
+  "channel": "stable",
+  "schedule": "0 3 * * 0",
+  "downloadOnly": false
+}

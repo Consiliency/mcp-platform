@@ -1,0 +1,14 @@
+{
+  "quotas": {
+    "storage": 104857600,
+    "mcpServers": 5,
+    "apiCalls": 10000
+  },
+  "monitoring": {
+    "enabled": true,
+    "checkInterval": 60000,
+    "lastCheck": "2025-07-23T03:44:34.728Z",
+    "violations": []
+  },
+  "updatedAt": "2025-07-23T03:44:34.728Z"
+}

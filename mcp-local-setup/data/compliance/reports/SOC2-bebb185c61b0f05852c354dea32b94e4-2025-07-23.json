@@ -1,0 +1,20 @@
+{
+  "id": "bebb185c61b0f05852c354dea32b94e4",
+  "type": "SOC2",
+  "tenantId": "regulated-corp",
+  "generatedAt": "2025-07-23T03:44:14.432Z",
+  "period": "monthly",
+  "sections": [
+    "marketplace_access_controls",
+    "data_encryption",
+    "access_control",
+    "security",
+    "availability",
+    "processing_integrity",
+    "confidentiality"
+  ],
+  "sectionNames": [],
+  "complianceScore": 0,
+  "status": "NON-COMPLIANT",
+  "executiveSummary": "SOC2 Compliance Report: NON-COMPLIANT. Score: 0%. Generated on 7/22/2025."
+}

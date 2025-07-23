@@ -1,0 +1,86 @@
+{
+  "test-service": {
+    "downloads": 0,
+    "views": 0,
+    "events": [
+      {
+        "type": "rating",
+        "timestamp": "2025-07-23T03:44:14.448Z",
+        "userId": "strict-corp",
+        "rating": 4,
+        "previousRating": 4
+      },
+      {
+        "type": "review",
+        "timestamp": "2025-07-23T03:44:14.449Z",
+        "userId": "strict-corp",
+        "reviewId": "b8496c1132c758b8ec35ac978bfd8e80",
+        "action": "update"
+      },
+      {
+        "type": "rating",
+        "timestamp": "2025-07-23T03:44:34.809Z",
+        "userId": "strict-corp",
+        "rating": 4,
+        "previousRating": 4
+      },
+      {
+        "type": "review",
+        "timestamp": "2025-07-23T03:44:34.809Z",
+        "userId": "strict-corp",
+        "reviewId": "197ece97b402086797787532f0a04b6b",
+        "action": "update"
+      }
+    ],
+    "daily": {
+      "2025-07-23": {
+        "events": 4,
+        "downloads": 0,
+        "views": 0
+      }
+    },
+    "weekly": {
+      "2025-W30": {
+        "events": 4,
+        "downloads": 0,
+        "views": 0
+      }
+    },
+    "monthly": {
+      "2025-07": {
+        "events": 4,
+        "downloads": 0,
+        "views": 0
+      }
+    }
+  },
+  "popular-service": {
+    "tenants": {
+      "tenant-a": {
+        "calls": 10,
+        "totalDuration": 4057.6309471890672,
+        "actions": {
+          "api_call": 10
+        }
+      },
+      "tenant-b": {
+        "calls": 10,
+        "totalDuration": 4774.490780667142,
+        "actions": {
+          "api_call": 10
+        }
+      },
+      "tenant-c": {
+        "calls": 10,
+        "totalDuration": 4013.401573535289,
+        "actions": {
+          "api_call": 10
+        }
+      }
+    },
+    "totalCalls": 30,
+    "actions": {
+      "api_call": 30
+    }
+  }
+}

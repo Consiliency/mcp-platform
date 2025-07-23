@@ -1,0 +1,16 @@
+{
+  "test-service": [
+    {
+      "id": "197ece97b402086797787532f0a04b6b",
+      "userId": "strict-corp",
+      "content": "Great service with minor issues",
+      "title": "",
+      "rating": 4,
+      "helpful": 0,
+      "notHelpful": 0,
+      "createdAt": "2025-07-23T03:34:37.563Z",
+      "updatedAt": "2025-07-23T03:44:34.806Z",
+      "edited": true
+    }
+  ]
+}

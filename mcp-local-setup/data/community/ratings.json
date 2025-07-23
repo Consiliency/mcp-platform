@@ -1,0 +1,11 @@
+{
+  "test-service": {
+    "total": 4,
+    "count": 1,
+    "average": 4,
+    "users": {
+      "strict-corp": 4
+    },
+    "lastUpdated": "2025-07-23T03:44:34.808Z"
+  }
+}
