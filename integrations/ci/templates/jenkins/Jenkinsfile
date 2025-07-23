@@ -1,0 +1,295 @@
+@Library('shared-pipeline-library') _
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:20.10-dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command:
+    - cat
+    tty: true
+  - name: helm
+    image: alpine/helm:latest
+    command:
+    - cat
+    tty: true
+  - name: node
+    image: node:18
+    command:
+    - cat
+    tty: true
+  volumes:
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
+"""
+        }
+    }
+
+    environment {
+        REGISTRY = credentials('docker-registry')
+        IMAGE_NAME = "${REGISTRY}/microservice"
+        KUBECONFIG = credentials('kubeconfig')
+        SONAR_TOKEN = credentials('sonar-token')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 1, unit: 'HOURS')
+        ansiColor('xterm')
+    }
+
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'staging', 'production'],
+            description: 'Deployment environment'
+        )
+        booleanParam(
+            name: 'RUN_TESTS',
+            defaultValue: true,
+            description: 'Run test suite'
+        )
+        booleanParam(
+            name: 'DEPLOY',
+            defaultValue: false,
+            description: 'Deploy after successful build'
+        )
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                    env.IMAGE_TAG = "${env.BRANCH_NAME}-${env.GIT_COMMIT_SHORT}-${env.BUILD_NUMBER}"
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                container('docker') {
+                    script {
+                        docker.withRegistry("https://${REGISTRY}", 'docker-credentials') {
+                            def app = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                            app.push()
+                            
+                            if (env.BRANCH_NAME == 'main') {
+                                app.push('latest')
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Test') {
+            when {
+                expression { params.RUN_TESTS }
+            }
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        container('node') {
+                            sh 'npm ci'
+                            sh 'npm run test:unit'
+                        }
+                    }
+                    post {
+                        always {
+                            junit 'test-results/unit/*.xml'
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'coverage',
+                                reportFiles: 'index.html',
+                                reportName: 'Coverage Report'
+                            ])
+                        }
+                    }
+                }
+
+                stage('Integration Tests') {
+                    steps {
+                        container('node') {
+                            sh 'npm run test:integration'
+                        }
+                    }
+                    post {
+                        always {
+                            junit 'test-results/integration/*.xml'
+                        }
+                    }
+                }
+
+                stage('Security Scan') {
+                    steps {
+                        container('docker') {
+                            sh """
+                                docker run --rm \
+                                    -v /var/run/docker.sock:/var/run/docker.sock \
+                                    aquasec/trivy:latest image \
+                                    --severity HIGH,CRITICAL \
+                                    ${IMAGE_NAME}:${IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
+
+                stage('SonarQube Analysis') {
+                    steps {
+                        container('node') {
+                            withSonarQubeEnv('SonarQube') {
+                                sh """
+                                    npm run sonar -- \
+                                        -Dsonar.projectKey=${JOB_NAME} \
+                                        -Dsonar.projectVersion=${IMAGE_TAG}
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                allOf {
+                    branch 'develop'
+                    expression { params.DEPLOY }
+                }
+            }
+            steps {
+                container('kubectl') {
+                    sh """
+                        kubectl set image deployment/microservice \
+                            microservice=${IMAGE_NAME}:${IMAGE_TAG} \
+                            -n staging
+                        
+                        kubectl rollout status deployment/microservice -n staging
+                    """
+                }
+            }
+            post {
+                success {
+                    slackSend(
+                        color: 'good',
+                        message: "Deployed to staging: ${IMAGE_NAME}:${IMAGE_TAG}"
+                    )
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                allOf {
+                    branch 'main'
+                    expression { params.DEPLOY }
+                }
+            }
+            input {
+                message "Deploy to production?"
+                ok "Deploy"
+                parameters {
+                    string(
+                        name: 'APPROVAL_TICKET',
+                        defaultValue: '',
+                        description: 'Change approval ticket number'
+                    )
+                }
+            }
+            steps {
+                container('helm') {
+                    sh """
+                        helm upgrade --install microservice ./helm/app \
+                            --set image.repository=${IMAGE_NAME} \
+                            --set image.tag=${IMAGE_TAG} \
+                            --namespace production \
+                            --wait \
+                            --timeout 10m
+                    """
+                }
+            }
+            post {
+                success {
+                    slackSend(
+                        color: 'good',
+                        message: "Deployed to production: ${IMAGE_NAME}:${IMAGE_TAG}"
+                    )
+                }
+                failure {
+                    script {
+                        if (input(message: 'Rollback?', ok: 'Yes')) {
+                            container('helm') {
+                                sh 'helm rollback microservice -n production'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Post-Deploy Tests') {
+            when {
+                expression { params.DEPLOY }
+            }
+            steps {
+                container('node') {
+                    sh """
+                        export TEST_URL=https://${params.ENVIRONMENT}.example.com
+                        npm run test:smoke
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "Pipeline completed successfully!"
+            // Update deployment tracking
+            build job: 'update-deployment-tracker', parameters: [
+                string(name: 'SERVICE', value: 'microservice'),
+                string(name: 'VERSION', value: "${IMAGE_TAG}"),
+                string(name: 'ENVIRONMENT', value: params.ENVIRONMENT),
+                string(name: 'STATUS', value: 'SUCCESS')
+            ]
+        }
+        failure {
+            emailext(
+                subject: "Build Failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+                body: "Build failed. Check console output at ${env.BUILD_URL}",
+                recipientProviders: [developers(), requestor()]
+            )
+        }
+    }
+}
