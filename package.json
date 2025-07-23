@@ -1,0 +1,33 @@
+{
+  "name": "@mcp/sdk",
+  "version": "1.0.0",
+  "description": "MCP SDK for building applications with Model Context Protocol services",
+  "main": "sdk/core/index.js",
+  "scripts": {
+    "test": "jest",
+    "test:integration": "jest tests/integration/phase5/",
+    "test:sdk": "jest tests/integration/phase5/sdk-*.test.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/modelcontextprotocol/sdk"
+  },
+  "keywords": [
+    "mcp",
+    "sdk",
+    "modelcontextprotocol",
+    "ai",
+    "llm"
+  ],
+  "author": "MCP Team",
+  "license": "MIT"
+}
