@@ -1,0 +1,446 @@
+# Dependency Scanning Workflow
+# Monitors and reports on dependency vulnerabilities and updates
+# 
+# @module .github/workflows/dependency-check.yml
+# @assigned-to CI/CD Team
+
+name: Dependency Check
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'requirements.txt'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - '**/pom.xml'
+      - '**/build.gradle'
+      - '.github/workflows/dependency-check.yml'
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Daily at 8 AM UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  security-events: write
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  GO_VERSION: '1.21'
+
+jobs:
+  # Node.js dependency scanning
+  node-dependencies:
+    name: Node.js Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --no-audit
+        
+      - name: Run npm audit
+        id: npm_audit
+        run: |
+          # Run audit and capture output
+          npm audit --json > npm-audit-report.json || true
+          
+          # Generate human-readable report
+          npm audit > npm-audit-report.txt 2>&1 || true
+          
+          # Extract vulnerability counts
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit-report.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' npm-audit-report.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' npm-audit-report.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' npm-audit-report.json)
+          
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+          echo "low=$LOW" >> $GITHUB_OUTPUT
+          
+      - name: Check for outdated packages
+        run: |
+          npm outdated --json > npm-outdated.json || true
+          npm outdated > npm-outdated.txt || true
+          
+      - name: Run Snyk test
+        if: env.SNYK_TOKEN != ''
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          npx snyk test --json > snyk-npm-report.json || true
+          npx snyk test > snyk-npm-report.txt || true
+          
+      - name: Upload npm reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-dependency-reports
+          path: |
+            npm-audit-report.*
+            npm-outdated.*
+            snyk-npm-report.*
+          retention-days: 30
+          
+      - name: Comment PR with npm audit results
+        if: github.event_name == 'pull_request' && (steps.npm_audit.outputs.critical != '0' || steps.npm_audit.outputs.high != '0')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ steps.npm_audit.outputs.critical }};
+            const high = ${{ steps.npm_audit.outputs.high }};
+            const moderate = ${{ steps.npm_audit.outputs.moderate }};
+            const low = ${{ steps.npm_audit.outputs.low }};
+            
+            const comment = `## 🔍 NPM Dependency Scan Results
+            
+            | Severity | Count |
+            |----------|-------|
+            | Critical | ${critical} |
+            | High | ${high} |
+            | Moderate | ${moderate} |
+            | Low | ${low} |
+            
+            ${critical > 0 || high > 0 ? '⚠️ **Action Required**: Please fix critical and high vulnerabilities before merging.' : '✅ No critical or high vulnerabilities found.'}
+            
+            Run \`npm audit fix\` to automatically fix some issues, or check the detailed report in the workflow artifacts.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  # Python dependency scanning
+  python-dependencies:
+    name: Python Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install safety pip-audit
+          
+      - name: Run Safety check
+        id: safety_check
+        run: |
+          safety check --json > safety-report.json || true
+          safety check > safety-report.txt || true
+          
+          # Count vulnerabilities
+          VULN_COUNT=$(jq 'length' safety-report.json 2>/dev/null || echo "0")
+          echo "vulnerabilities=$VULN_COUNT" >> $GITHUB_OUTPUT
+          
+      - name: Run pip-audit
+        run: |
+          pip-audit --format json > pip-audit-report.json || true
+          pip-audit > pip-audit-report.txt || true
+          
+      - name: Check for outdated packages
+        run: |
+          pip list --outdated --format json > pip-outdated.json || true
+          pip list --outdated > pip-outdated.txt || true
+          
+      - name: Run Snyk test
+        if: env.SNYK_TOKEN != ''
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          pip install snyk
+          snyk test --file=requirements.txt --json > snyk-python-report.json || true
+          snyk test --file=requirements.txt > snyk-python-report.txt || true
+          
+      - name: Upload Python reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dependency-reports
+          path: |
+            safety-report.*
+            pip-audit-report.*
+            pip-outdated.*
+            snyk-python-report.*
+          retention-days: 30
+
+  # Go dependency scanning
+  go-dependencies:
+    name: Go Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          
+      - name: Download dependencies
+        run: go mod download
+        
+      - name: Run go mod audit
+        run: |
+          go list -json -m all | nancy sleuth > nancy-report.txt || true
+          
+      - name: Run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck -json ./... > govulncheck-report.json || true
+          govulncheck ./... > govulncheck-report.txt || true
+          
+      - name: Check for outdated modules
+        run: |
+          go list -u -m -json all > go-outdated.json || true
+          go list -u -m all > go-outdated.txt || true
+          
+      - name: Run Snyk test
+        if: env.SNYK_TOKEN != ''
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          # Download Snyk CLI
+          curl -Lo snyk "https://github.com/snyk/cli/releases/latest/download/snyk-linux"
+          chmod +x snyk
+          
+          ./snyk test --json > snyk-go-report.json || true
+          ./snyk test > snyk-go-report.txt || true
+          
+      - name: Upload Go reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-dependency-reports
+          path: |
+            nancy-report.txt
+            govulncheck-report.*
+            go-outdated.*
+            snyk-go-report.*
+          retention-days: 30
+
+  # Container dependency scanning
+  container-dependencies:
+    name: Container Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        dockerfile:
+          - docker/api/Dockerfile.production
+          - docker/worker/Dockerfile.production
+          - docker/frontend/Dockerfile.production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Extract service name
+        id: service
+        run: |
+          SERVICE=$(echo "${{ matrix.dockerfile }}" | cut -d'/' -f2)
+          echo "name=$SERVICE" >> $GITHUB_OUTPUT
+          
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ${{ matrix.dockerfile }}
+          format: json
+          output-file: hadolint-${{ steps.service.outputs.name }}.json
+          
+      - name: Build image for scanning
+        run: |
+          docker build -f ${{ matrix.dockerfile }} -t scan-image:${{ steps.service.outputs.name }} .
+          
+      - name: Run Trivy on Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: ${{ matrix.dockerfile }}
+          format: 'json'
+          output: 'trivy-dockerfile-${{ steps.service.outputs.name }}.json'
+          
+      - name: Run Grype on image
+        run: |
+          # Install Grype
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Scan image
+          grype scan-image:${{ steps.service.outputs.name }} -o json > grype-${{ steps.service.outputs.name }}.json || true
+          grype scan-image:${{ steps.service.outputs.name }} > grype-${{ steps.service.outputs.name }}.txt || true
+          
+      - name: Upload container reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-dependency-reports-${{ steps.service.outputs.name }}
+          path: |
+            hadolint-*.json
+            trivy-dockerfile-*.json
+            grype-*.*
+          retention-days: 30
+
+  # License compliance check
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install license checker
+        run: |
+          npm install -g license-checker
+          pip install pip-licenses
+          
+      - name: Check Node.js licenses
+        run: |
+          license-checker --json > node-licenses.json || true
+          license-checker --summary > node-licenses-summary.txt || true
+          license-checker --onlyAllow 'MIT;Apache-2.0;BSD-3-Clause;BSD-2-Clause;ISC;CC0-1.0' > node-licenses-allowed.txt || true
+          
+      - name: Check Python licenses
+        run: |
+          pip-licenses --format=json > python-licenses.json || true
+          pip-licenses > python-licenses.txt || true
+          
+      - name: Check Go licenses
+        run: |
+          go install github.com/google/go-licenses@latest
+          go-licenses csv ./... > go-licenses.csv || true
+          
+      - name: Upload license reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            *-licenses.*
+          retention-days: 30
+
+  # Generate dependency report
+  dependency-report:
+    name: Generate Dependency Report
+    runs-on: ubuntu-latest
+    needs: [node-dependencies, python-dependencies, go-dependencies, container-dependencies, license-check]
+    if: always()
+    steps:
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: ./reports
+          
+      - name: Generate summary report
+        run: |
+          echo "# Dependency Scan Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for Node.js vulnerabilities
+          if [ -f "reports/npm-dependency-reports/npm-audit-report.json" ]; then
+            echo "### Node.js Dependencies" >> $GITHUB_STEP_SUMMARY
+            CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' reports/npm-dependency-reports/npm-audit-report.json)
+            HIGH=$(jq '.metadata.vulnerabilities.high // 0' reports/npm-dependency-reports/npm-audit-report.json)
+            echo "- Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+            echo "- High: $HIGH" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for Python vulnerabilities
+          if [ -f "reports/python-dependency-reports/safety-report.json" ]; then
+            echo "### Python Dependencies" >> $GITHUB_STEP_SUMMARY
+            VULN_COUNT=$(jq 'length' reports/python-dependency-reports/safety-report.json 2>/dev/null || echo "0")
+            echo "- Vulnerabilities: $VULN_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### Container Security" >> $GITHUB_STEP_SUMMARY
+          echo "Container scan results available in workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### License Compliance" >> $GITHUB_STEP_SUMMARY
+          echo "License reports available in workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          
+      - name: Create issue for critical vulnerabilities
+        if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Check for critical vulnerabilities
+            let hasCritical = false;
+            let issueBody = '## 🚨 Critical Security Vulnerabilities Detected\n\n';
+            
+            // Check npm audit
+            try {
+              const npmAudit = JSON.parse(fs.readFileSync('reports/npm-dependency-reports/npm-audit-report.json', 'utf8'));
+              if (npmAudit.metadata.vulnerabilities.critical > 0) {
+                hasCritical = true;
+                issueBody += `### Node.js Dependencies\n- Critical vulnerabilities: ${npmAudit.metadata.vulnerabilities.critical}\n\n`;
+              }
+            } catch (e) {}
+            
+            if (hasCritical) {
+              // Create or update issue
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: 'security,dependencies',
+                state: 'open'
+              });
+              
+              const existingIssue = issues.data.find(issue => 
+                issue.title.includes('Critical Security Vulnerabilities in Dependencies')
+              );
+              
+              if (existingIssue) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existingIssue.number,
+                  body: issueBody + `\n\n_Updated by dependency scan on ${new Date().toISOString()}_`
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: '🚨 Critical Security Vulnerabilities in Dependencies',
+                  body: issueBody + '\n\n_This issue was automatically created by the dependency scanning workflow._',
+                  labels: ['security', 'dependencies', 'critical']
+                });
+              }
+            }

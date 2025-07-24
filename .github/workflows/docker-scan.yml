@@ -1,0 +1,415 @@
+# Docker Security Scanning Workflow
+# Comprehensive container security scanning for vulnerabilities and compliance
+# 
+# @module .github/workflows/docker-scan.yml
+# @assigned-to CI/CD Team
+
+name: Docker Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docker/**'
+      - 'Dockerfile*'
+      - '.dockerignore'
+      - '.github/workflows/docker-scan.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docker/**'
+      - 'Dockerfile*'
+  schedule:
+    # Weekly scan on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      images:
+        description: 'Specific images to scan (comma-separated, or "all")'
+        required: false
+        default: 'all'
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  # Prepare scanning targets
+  prepare:
+    name: Prepare Scan Targets
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.images.outputs.images }}
+      scan_remote: ${{ steps.remote.outputs.scan_remote }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Determine images to scan
+        id: images
+        run: |
+          if [ "${{ github.event.inputs.images }}" == "all" ] || [ -z "${{ github.event.inputs.images }}" ]; then
+            # Find all Dockerfiles
+            IMAGES=$(find . -name "Dockerfile*" -type f | grep -E "(api|worker|frontend|monitoring|gateway)" | jq -R -s -c 'split("\n") | map(select(length > 0) | split("/")[-2])')
+            echo "images=$IMAGES" >> $GITHUB_OUTPUT
+          else
+            # Convert comma-separated to JSON array
+            IMAGES=$(echo "${{ github.event.inputs.images }}" | jq -R -s -c 'split(",") | map(select(length > 0))')
+            echo "images=$IMAGES" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Check if remote scan needed
+        id: remote
+        run: |
+          # Scan remote images on schedule or manual trigger
+          if [ "${{ github.event_name }}" == "schedule" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "scan_remote=true" >> $GITHUB_OUTPUT
+          else
+            echo "scan_remote=false" >> $GITHUB_OUTPUT
+          fi
+
+  # Dockerfile static analysis
+  dockerfile-lint:
+    name: Dockerfile Lint
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.prepare.outputs.images) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./docker/${{ matrix.service }}/Dockerfile.production
+          format: sarif
+          output-file: hadolint-${{ matrix.service }}.sarif
+          no-fail: true
+          
+      - name: Upload Hadolint results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: hadolint-${{ matrix.service }}.sarif
+          category: hadolint-${{ matrix.service }}
+          
+      - name: Run Dockerfile best practices check
+        run: |
+          # Check for security best practices
+          DOCKERFILE="./docker/${{ matrix.service }}/Dockerfile.production"
+          
+          echo "## Dockerfile Security Check: ${{ matrix.service }}" > dockerfile-check-${{ matrix.service }}.md
+          echo "" >> dockerfile-check-${{ matrix.service }}.md
+          
+          # Check for root user
+          if grep -q "USER root" "$DOCKERFILE" || ! grep -q "USER" "$DOCKERFILE"; then
+            echo "⚠️ **Warning**: Container may be running as root user" >> dockerfile-check-${{ matrix.service }}.md
+          fi
+          
+          # Check for sudo installation
+          if grep -q "sudo" "$DOCKERFILE"; then
+            echo "⚠️ **Warning**: sudo installed in container" >> dockerfile-check-${{ matrix.service }}.md
+          fi
+          
+          # Check for secret exposure
+          if grep -qE "(PASSWORD|SECRET|KEY|TOKEN)=" "$DOCKERFILE"; then
+            echo "🚨 **Critical**: Potential secret exposure in Dockerfile" >> dockerfile-check-${{ matrix.service }}.md
+          fi
+          
+          # Check for latest tags
+          if grep -qE "FROM.*:latest" "$DOCKERFILE"; then
+            echo "⚠️ **Warning**: Using :latest tag is not recommended for production" >> dockerfile-check-${{ matrix.service }}.md
+          fi
+          
+      - name: Upload Dockerfile check results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dockerfile-check-${{ matrix.service }}
+          path: dockerfile-check-${{ matrix.service }}.md
+          retention-days: 7
+
+  # Build and scan local images
+  local-image-scan:
+    name: Scan Local Image - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: [prepare, dockerfile-lint]
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.prepare.outputs.images) }}
+        scanner: [trivy, grype, snyk]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/${{ matrix.service }}/Dockerfile.production
+          tags: local-scan:${{ matrix.service }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Run Trivy scan
+        if: matrix.scanner == 'trivy'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: local-scan:${{ matrix.service }}
+          format: 'sarif'
+          output: 'trivy-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: 'os,library'
+          
+      - name: Run Grype scan
+        if: matrix.scanner == 'grype'
+        run: |
+          # Install Grype
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Scan image
+          grype local-scan:${{ matrix.service }} -o sarif > grype-${{ matrix.service }}.sarif
+          
+      - name: Run Snyk scan
+        if: matrix.scanner == 'snyk' && env.SNYK_TOKEN != ''
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          # Install Snyk
+          npm install -g snyk
+          
+          # Scan image
+          snyk container test local-scan:${{ matrix.service }} --sarif-file-output=snyk-${{ matrix.service }}.sarif || true
+          
+      - name: Upload scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ matrix.scanner }}-${{ matrix.service }}.sarif
+          category: ${{ matrix.scanner }}-${{ matrix.service }}
+          
+      - name: Generate SBOM
+        if: matrix.scanner == 'trivy'
+        run: |
+          # Install Syft
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Generate SBOM
+          syft local-scan:${{ matrix.service }} -o spdx-json > sbom-${{ matrix.service }}.spdx.json
+          syft local-scan:${{ matrix.service }} -o cyclonedx-json > sbom-${{ matrix.service }}.cyclonedx.json
+          
+      - name: Upload SBOMs
+        if: matrix.scanner == 'trivy'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: |
+            sbom-${{ matrix.service }}.spdx.json
+            sbom-${{ matrix.service }}.cyclonedx.json
+          retention-days: 30
+
+  # Scan remote registry images
+  remote-image-scan:
+    name: Scan Remote Image - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.scan_remote == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.prepare.outputs.images) }}
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Check if image exists
+        id: image_check
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/mcps-${{ matrix.service }}:latest"
+          if docker manifest inspect $IMAGE > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Run Trivy scan on remote image
+        if: steps.image_check.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.image_check.outputs.image }}
+          format: 'sarif'
+          output: 'trivy-remote-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Upload remote scan results
+        if: steps.image_check.outputs.exists == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-remote-${{ matrix.service }}.sarif
+          category: trivy-remote-${{ matrix.service }}
+
+  # Container runtime security check
+  runtime-security:
+    name: Runtime Security Check
+    runs-on: ubuntu-latest
+    needs: [prepare, local-image-scan]
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.prepare.outputs.images) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Build image
+        run: |
+          docker build -f ./docker/${{ matrix.service }}/Dockerfile.production -t runtime-test:${{ matrix.service }} .
+          
+      - name: Run Docker Bench Security
+        run: |
+          # Clone Docker Bench
+          git clone https://github.com/docker/docker-bench-security.git
+          
+          # Run security bench
+          cd docker-bench-security
+          sudo sh docker-bench-security.sh -i runtime-test:${{ matrix.service }} > ../docker-bench-${{ matrix.service }}.txt || true
+          
+      - name: Test container capabilities
+        run: |
+          echo "## Container Capability Report: ${{ matrix.service }}" > capability-report-${{ matrix.service }}.md
+          echo "" >> capability-report-${{ matrix.service }}.md
+          
+          # Start container
+          docker run -d --name test-${{ matrix.service }} runtime-test:${{ matrix.service }} || docker run -d --name test-${{ matrix.service }} --entrypoint /bin/sh runtime-test:${{ matrix.service }} -c "sleep 3600"
+          
+          # Check capabilities
+          echo "### Capabilities" >> capability-report-${{ matrix.service }}.md
+          docker exec test-${{ matrix.service }} sh -c "cat /proc/1/status | grep Cap" >> capability-report-${{ matrix.service }}.md || echo "Could not read capabilities" >> capability-report-${{ matrix.service }}.md
+          
+          # Check for privileged mode indicators
+          echo "### Security Features" >> capability-report-${{ matrix.service }}.md
+          docker inspect test-${{ matrix.service }} | jq '.[] | {Privileged: .HostConfig.Privileged, ReadonlyRootfs: .HostConfig.ReadonlyRootfs, User: .Config.User}' >> capability-report-${{ matrix.service }}.md
+          
+          # Cleanup
+          docker stop test-${{ matrix.service }} && docker rm test-${{ matrix.service }}
+          
+      - name: Check for security misconfigurations
+        run: |
+          # Use Dockle for deep security checks
+          VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+          curl -L -o dockle.tar.gz https://github.com/goodwithtech/dockle/releases/download/v${VERSION}/dockle_${VERSION}_Linux-64bit.tar.gz
+          tar zxvf dockle.tar.gz
+          
+          # Run Dockle
+          ./dockle --format json runtime-test:${{ matrix.service }} > dockle-${{ matrix.service }}.json || true
+          ./dockle runtime-test:${{ matrix.service }} > dockle-${{ matrix.service }}.txt || true
+          
+      - name: Upload runtime security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-security-${{ matrix.service }}
+          path: |
+            docker-bench-${{ matrix.service }}.txt
+            capability-report-${{ matrix.service }}.md
+            dockle-${{ matrix.service }}.*
+          retention-days: 7
+
+  # Generate security report
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [dockerfile-lint, local-image-scan, remote-image-scan, runtime-security]
+    if: always()
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          
+      - name: Generate consolidated report
+        run: |
+          echo "# 🔒 Docker Security Scan Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Count services scanned
+          SERVICES=$(find artifacts -name "dockerfile-check-*" -type f | wc -l)
+          echo "- **Services Scanned**: $SERVICES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scan Types**: Dockerfile lint, Vulnerability scan, Runtime security" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Dockerfile Security Issues" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Aggregate Dockerfile issues
+          for report in artifacts/dockerfile-check-*/dockerfile-check-*.md; do
+            if [ -f "$report" ]; then
+              cat "$report" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          echo "## Detailed Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Detailed vulnerability reports, SBOMs, and runtime security assessments are available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🔒 Docker Security Scan Results\n\n';
+            
+            // Check for critical issues
+            let hasCritical = false;
+            const dockerfileIssues = [];
+            
+            // Read Dockerfile check results
+            const files = fs.readdirSync('artifacts');
+            for (const file of files) {
+              if (file.startsWith('dockerfile-check-')) {
+                const content = fs.readFileSync(`artifacts/${file}/${file}.md`, 'utf8');
+                if (content.includes('🚨')) {
+                  hasCritical = true;
+                  dockerfileIssues.push(content);
+                }
+              }
+            }
+            
+            if (hasCritical) {
+              comment += '### 🚨 Critical Issues Found\n\n';
+              comment += dockerfileIssues.join('\n');
+            } else {
+              comment += '✅ No critical security issues found in Docker configurations.\n';
+            }
+            
+            comment += '\n\nDetailed security reports are available in the [workflow run artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

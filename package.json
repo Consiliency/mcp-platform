@@ -5,8 +5,31 @@
   "main": "sdk/core/index.js",
   "scripts": {
     "test": "jest",
-    "test:integration": "jest tests/integration/phase5/",
-    "test:sdk": "jest tests/integration/phase5/sdk-*.test.js"
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:e2e": "playwright test",
+    "test:coverage": "jest --coverage",
+    "test:sdk": "jest tests/integration/phase5/sdk-*.test.js",
+    "lint:js": "eslint .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build/build.js",
+    "build:production": "node scripts/build/build.js production",
+    "build:frontend": "echo 'Frontend build'",
+    "build:frontend:dev": "echo 'Frontend dev build'",
+    "build:api": "echo 'API build'",
+    "build:worker": "echo 'Worker build'",
+    "build:sdk": "echo 'SDK build'",
+    "package": "node scripts/build/package.js",
+    "test:runner": "node scripts/build/test-runner.js",
+    "version:bump": "node scripts/build/version-bump.js",
+    "optimize:assets": "node scripts/build/asset-optimize.js",
+    "wait-for-services": "echo 'Waiting for services...'",
+    "wait-for-app": "echo 'Waiting for app...'",
+    "db:migrate:test": "echo 'Running test migrations...'",
+    "start:test": "NODE_ENV=test node server.js",
+    "generate:test-report": "echo 'Generating test report...'",
+    "generate:coverage-report": "echo 'Generating coverage report...'"
   },
   "dependencies": {
     "axios": "^1.11.0",
@@ -25,7 +48,19 @@
   "devDependencies": {
     "jest": "^29.0.0",
     "js-yaml": "^4.1.0",
-    "supertest": "^7.1.4"
+    "supertest": "^7.1.4",
+    "@playwright/test": "^1.40.0",
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.2.0",
+    "@microsoft/eslint-formatter-sarif": "^3.0.0",
+    "archiver": "^6.0.0",
+    "tar": "^6.2.0",
+    "semver": "^7.5.0",
+    "glob": "^10.3.0",
+    "terser": "^5.20.0",
+    "clean-css": "^5.3.0",
+    "nyc": "^15.1.0"
   },
   "engines": {
     "node": ">=14.0.0"

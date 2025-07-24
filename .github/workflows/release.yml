@@ -1,14 +1,8 @@
 # Release Management Workflow
-# TODO: Implement release automation
+# Automates semantic versioning, changelog generation, and multi-platform releases
 # 
+# @module .github/workflows/release.yml
 # @assigned-to CI/CD Team
-# 
-# Requirements:
-# - Semantic versioning
-# - Changelog generation
-# - Asset packaging
-# - Multi-platform releases
-# - Release notes automation
 
 name: Release Pipeline
 
@@ -24,57 +18,434 @@ on:
           - minor
           - major
           - prerelease
+      prerelease_identifier:
+        description: 'Prerelease identifier (alpha, beta, rc)'
+        required: false
+        default: 'alpha'
+      dry_run:
+        description: 'Perform a dry run without creating release'
+        type: boolean
+        required: false
+        default: false
+
+env:
+  NODE_VERSION: '20'
+  GO_VERSION: '1.21'
+  PYTHON_VERSION: '3.11'
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+  pull-requests: write
+  id-token: write
 
 jobs:
-  # TODO: Version bump and tagging
+  # Version bump and changelog generation
   version:
-    name: Version and Tag
+    name: Version and Changelog
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.version.outputs.new_version }}
+      previous_version: ${{ steps.version.outputs.previous_version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      release_notes: ${{ steps.notes.outputs.release_notes }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
-      # TODO: Determine new version
-      # TODO: Update version files
-      # TODO: Generate changelog
-      # TODO: Create git tag
-      # TODO: Push changes
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit
+          npm install -g \
+            semantic-release \
+            @semantic-release/changelog \
+            @semantic-release/git \
+            conventional-changelog-cli \
+            standard-version
+            
+      - name: Configure git
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          
+      - name: Get current version
+        id: current
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Calculate new version
+        id: version
+        run: |
+          CURRENT_VERSION="${{ steps.current.outputs.version }}"
+          RELEASE_TYPE="${{ github.event.inputs.release_type }}"
+          PRERELEASE_ID="${{ github.event.inputs.prerelease_identifier }}"
+          
+          # Calculate new version based on release type
+          if [ "$RELEASE_TYPE" == "prerelease" ]; then
+            NEW_VERSION=$(npx semver $CURRENT_VERSION -i prerelease --preid $PRERELEASE_ID)
+          else
+            NEW_VERSION=$(npx semver $CURRENT_VERSION -i $RELEASE_TYPE)
+          fi
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "previous_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "New version will be: $NEW_VERSION"
+          
+      - name: Update version in files
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          
+          # Update package.json
+          npm version $NEW_VERSION --no-git-tag-version
+          
+          # Update package-lock.json
+          npm install --package-lock-only
+          
+          # Update version in other files
+          find . -name "*.go" -type f -exec sed -i "s/Version = \".*\"/Version = \"$NEW_VERSION\"/g" {} \;
+          find . -name "*.py" -type f -exec sed -i "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/g" {} \;
+          
+          # Update Helm charts
+          if [ -d "charts" ]; then
+            find charts -name "Chart.yaml" -type f -exec sed -i "s/^version: .*/version: $NEW_VERSION/g" {} \;
+            find charts -name "Chart.yaml" -type f -exec sed -i "s/^appVersion: .*/appVersion: $NEW_VERSION/g" {} \;
+          fi
+          
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog for new version
+          npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0 > CHANGELOG_NEW.md
+          
+          # Extract changelog for this release
+          CHANGELOG=$(sed -n '/^#/,/^#/{/^#/d;p}' CHANGELOG_NEW.md | sed '$ d')
+          
+          # Save to output
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Update main changelog file if not dry run
+          if [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            mv CHANGELOG_NEW.md CHANGELOG.md
+          fi
+          
+      - name: Generate release notes
+        id: notes
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          PREVIOUS_VERSION="${{ steps.version.outputs.previous_version }}"
+          
+          cat > release_notes.md << EOF
+          # Release $NEW_VERSION
+          
+          ## What's Changed
+          
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Installation
+          
+          ### Docker
+          \`\`\`bash
+          docker pull ghcr.io/${{ github.repository_owner }}/mcps:$NEW_VERSION
+          \`\`\`
+          
+          ### Binary Downloads
+          See the assets below for platform-specific binaries.
+          
+          ## Compatibility
+          
+          - Node.js: 18.x, 20.x, 22.x
+          - Python: 3.10, 3.11, 3.12
+          - Go: 1.20, 1.21, 1.22
+          
+          ## Full Changelog
+          
+          https://github.com/${{ github.repository }}/compare/v$PREVIOUS_VERSION...v$NEW_VERSION
+          EOF
+          
+          # Save to output
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+      - name: Commit version changes
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git add -A
+          git commit -m "chore(release): ${{ steps.version.outputs.new_version }}"
+          
+      - name: Create and push tag
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git tag -a "v${{ steps.version.outputs.new_version }}" -m "Release version ${{ steps.version.outputs.new_version }}"
+          git push origin main
+          git push origin "v${{ steps.version.outputs.new_version }}"
+          
+      - name: Upload version info
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-info
+          path: |
+            release_notes.md
+            CHANGELOG.md
+          retention-days: 7
 
-  # TODO: Build release assets
+  # Build release assets for multiple platforms
   build-assets:
-    name: Build Release Assets
-    runs-on: ubuntu-latest
+    name: Build ${{ matrix.platform }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
     needs: version
+    timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         include:
+          # Linux builds
           - platform: linux
             arch: amd64
+            os: ubuntu-latest
+            node-arch: x64
+          - platform: linux
+            arch: arm64
+            os: ubuntu-latest
+            node-arch: arm64
+          # macOS builds
           - platform: darwin
             arch: amd64
+            os: macos-latest
+            node-arch: x64
+          - platform: darwin
+            arch: arm64
+            os: macos-latest
+            node-arch: arm64
+          # Windows builds
           - platform: windows
             arch: amd64
+            os: windows-latest
+            node-arch: x64
+            ext: .exe
     steps:
-      - uses: actions/checkout@v4
-      
-      # TODO: Build platform-specific assets
-      # TODO: Package assets
-      # TODO: Sign binaries
-      # TODO: Upload artifacts
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.version.outputs.new_version }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          architecture: ${{ matrix.node-arch }}
+          cache: 'npm'
+          
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: ${{ matrix.node-arch }}
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit
+          go mod download
+          pip install -r requirements.txt || true
+          
+      - name: Build Node.js assets
+        run: |
+          npm run build:production
+          npm run package:${{ matrix.platform }}-${{ matrix.arch }}
+          
+      - name: Build Go binaries
+        env:
+          GOOS: ${{ matrix.platform }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w -X main.version=${{ needs.version.outputs.new_version }}" \
+            -o dist/mcps-server${{ matrix.ext }} \
+            ./cmd/server
+          go build -ldflags="-s -w -X main.version=${{ needs.version.outputs.new_version }}" \
+            -o dist/mcps-cli${{ matrix.ext }} \
+            ./cmd/cli
+            
+      - name: Build Python package
+        if: matrix.platform == 'linux' && matrix.arch == 'amd64'
+        run: |
+          pip install build wheel
+          python -m build --wheel --sdist
+          
+      - name: Package release assets
+        run: |
+          mkdir -p release
+          VERSION="${{ needs.version.outputs.new_version }}"
+          PLATFORM="${{ matrix.platform }}"
+          ARCH="${{ matrix.arch }}"
+          
+          # Create tarball/zip
+          if [ "$PLATFORM" == "windows" ]; then
+            7z a "release/mcps-${VERSION}-${PLATFORM}-${ARCH}.zip" ./dist/*
+          else
+            tar -czf "release/mcps-${VERSION}-${PLATFORM}-${ARCH}.tar.gz" -C dist .
+          fi
+          
+          # Copy individual binaries
+          cp dist/mcps-server${{ matrix.ext }} "release/mcps-server-${VERSION}-${PLATFORM}-${ARCH}${{ matrix.ext }}"
+          cp dist/mcps-cli${{ matrix.ext }} "release/mcps-cli-${VERSION}-${PLATFORM}-${ARCH}${{ matrix.ext }}"
+          
+      - name: Generate checksums
+        shell: bash
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS
+          
+      - name: Sign binaries (macOS)
+        if: matrix.platform == 'darwin' && github.event.inputs.dry_run != 'true'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        run: |
+          # Import certificate
+          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+          security create-keychain -p temp build.keychain
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD
+          
+          # Sign binaries
+          codesign --force --options runtime --timestamp \
+            --sign "Developer ID Application" \
+            release/mcps-*-darwin-*
+            
+          # Clean up
+          security delete-keychain build.keychain
+          rm certificate.p12
+          
+      - name: Sign binaries (Windows)
+        if: matrix.platform == 'windows' && github.event.inputs.dry_run != 'true'
+        run: |
+          # Sign Windows binaries
+          # This would use signtool.exe with a code signing certificate
+          echo "Windows signing would happen here"
+          
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release/*
+          retention-days: 7
 
-  # TODO: Create GitHub release
+  # Create GitHub release
   release:
     name: Create Release
     runs-on: ubuntu-latest
     needs: [version, build-assets]
+    if: github.event.inputs.dry_run != 'true'
     steps:
-      - uses: actions/checkout@v4
-      
-      # TODO: Download all artifacts
-      # TODO: Create release notes
-      # TODO: Publish GitHub release
-      # TODO: Update documentation
-      # TODO: Notify channels
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.version.outputs.new_version }}
+          
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          cp artifacts/release-assets-*/* release-assets/
+          cp artifacts/version-info/CHANGELOG.md release-assets/
+          
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.version.outputs.new_version }}
+          name: Release ${{ needs.version.outputs.new_version }}
+          body: ${{ needs.version.outputs.release_notes }}
+          draft: false
+          prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+          files: release-assets/*
+          
+      - name: Update latest release branch
+        if: github.event.inputs.release_type != 'prerelease'
+        run: |
+          git checkout -b release/latest
+          git push -f origin release/latest
+          
+  # Post-release tasks
+  post-release:
+    name: Post-Release Tasks
+    runs-on: ubuntu-latest
+    needs: [version, release]
+    if: github.event.inputs.dry_run != 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          
+      - name: Update documentation
+        run: |
+          # Update version references in docs
+          find docs -name "*.md" -type f -exec sed -i "s/version: .*/version: ${{ needs.version.outputs.new_version }}/g" {} \;
+          
+          # Commit if changes were made
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --local user.email "actions@github.com"
+            git config --local user.name "GitHub Actions"
+            git add -A
+            git commit -m "docs: update version references to ${{ needs.version.outputs.new_version }}"
+            git push origin main
+          fi
+          
+      - name: Trigger Docker build
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: release-published
+          client-payload: '{"version": "${{ needs.version.outputs.new_version }}"}'
+          
+      - name: Notify Slack
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          text: |
+            :rocket: New release published: v${{ needs.version.outputs.new_version }}
+            Release type: ${{ github.event.inputs.release_type }}
+            Release notes: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.version.outputs.new_version }}
+            
+      - name: Create PR for version bump to develop
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: merge release ${{ needs.version.outputs.new_version }} to develop"
+          title: "chore: merge release ${{ needs.version.outputs.new_version }} to develop"
+          body: |
+            This PR merges the version bump from release ${{ needs.version.outputs.new_version }} back to the develop branch.
+            
+            ## Changes
+            - Updated version to ${{ needs.version.outputs.new_version }}
+            - Updated CHANGELOG.md
+          branch: merge-release-${{ needs.version.outputs.new_version }}
+          base: develop

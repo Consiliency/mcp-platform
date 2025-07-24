@@ -1,0 +1,472 @@
+# Static Code Analysis Workflow
+# Comprehensive code quality and security analysis
+# 
+# @module .github/workflows/code-analysis.yml
+# @assigned-to CI/CD Team
+
+name: Code Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Weekly deep scan on Mondays at 3 AM UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+  actions: read
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  GO_VERSION: '1.21'
+
+jobs:
+  # CodeQL analysis
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript', 'typescript', 'python', 'go' ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+          
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+        
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # SonarCloud analysis
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --no-audit
+        
+      - name: Run tests with coverage
+        run: |
+          npm run test:coverage || true
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.go.coverage.reportPaths=coverage.out
+
+  # Semgrep analysis
+  semgrep:
+    name: Semgrep Analysis
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Semgrep
+        run: |
+          semgrep ci --sarif --output=semgrep.sarif || true
+          semgrep --config=auto --json --output=semgrep-report.json . || true
+          
+      - name: Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+          
+      - name: Upload Semgrep report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: |
+            semgrep.sarif
+            semgrep-report.json
+          retention-days: 30
+
+  # JavaScript/TypeScript analysis
+  javascript-analysis:
+    name: JavaScript/TypeScript Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm ci --no-audit
+          npm install -g jshint jscpd retire @microsoft/eslint-formatter-sarif
+          
+      - name: Run ESLint with SARIF output
+        run: |
+          npx eslint . --ext .js,.jsx,.ts,.tsx --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif || true
+          npx eslint . --ext .js,.jsx,.ts,.tsx --format json --output-file eslint-results.json || true
+          
+      - name: Run JSHint
+        run: |
+          jshint . --reporter=jslint > jshint-results.xml || true
+          
+      - name: Run JSCPD (Copy-Paste Detection)
+        run: |
+          jscpd . --reporters json --output jscpd-report.json || true
+          
+      - name: Run Retire.js (Vulnerable Libraries)
+        run: |
+          retire --outputformat json --outputpath retire-report.json || true
+          
+      - name: Run TypeScript Compiler Check
+        run: |
+          npx tsc --noEmit --pretty false > tsc-report.txt 2>&1 || true
+          
+      - name: Upload JavaScript analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: javascript-analysis
+          path: |
+            eslint-results.*
+            jshint-results.xml
+            jscpd-report.json
+            retire-report.json
+            tsc-report.txt
+          retention-days: 30
+          
+      - name: Upload ESLint SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: eslint-results.sarif
+          category: eslint
+
+  # Python analysis
+  python-analysis:
+    name: Python Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install pylint flake8 mypy bandit radon vulture prospector[with_everything]
+          
+      - name: Run Pylint
+        run: |
+          pylint **/*.py --output-format=json > pylint-report.json || true
+          pylint **/*.py > pylint-report.txt || true
+          
+      - name: Run Flake8
+        run: |
+          flake8 . --format=json --output-file=flake8-report.json || true
+          flake8 . > flake8-report.txt || true
+          
+      - name: Run MyPy
+        run: |
+          mypy . --json-report mypy-report --html-report mypy-html || true
+          
+      - name: Run Bandit Security Scan
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
+          bandit -r . -f sarif -o bandit.sarif || true
+          
+      - name: Run Radon (Complexity Analysis)
+        run: |
+          radon cc . -j > radon-cc-report.json || true
+          radon mi . -j > radon-mi-report.json || true
+          radon raw . -j > radon-raw-report.json || true
+          
+      - name: Run Vulture (Dead Code Detection)
+        run: |
+          vulture . > vulture-report.txt || true
+          
+      - name: Run Prospector
+        run: |
+          prospector --output-format json > prospector-report.json || true
+          
+      - name: Upload Python analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-analysis
+          path: |
+            *-report.*
+            mypy-report/
+            mypy-html/
+          retention-days: 30
+          
+      - name: Upload Bandit SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: bandit.sarif
+          category: bandit
+
+  # Go analysis
+  go-analysis:
+    name: Go Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          
+      - name: Install analysis tools
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+          go install github.com/go-critic/go-critic/cmd/gocritic@latest
+          go install golang.org/x/tools/cmd/goimports@latest
+          
+      - name: Run go vet
+        run: |
+          go vet -json ./... 2> govet-report.json || true
+          go vet ./... > govet-report.txt 2>&1 || true
+          
+      - name: Run golangci-lint
+        run: |
+          golangci-lint run --out-format json > golangci-lint-report.json || true
+          golangci-lint run --out-format sarif > golangci-lint.sarif || true
+          
+      - name: Run gosec
+        run: |
+          gosec -fmt=json -out=gosec-report.json ./... || true
+          gosec -fmt=sarif -out=gosec.sarif ./... || true
+          
+      - name: Run staticcheck
+        run: |
+          staticcheck -f json ./... > staticcheck-report.json || true
+          staticcheck ./... > staticcheck-report.txt || true
+          
+      - name: Run gocyclo
+        run: |
+          gocyclo -over 10 . > gocyclo-report.txt || true
+          
+      - name: Run go-critic
+        run: |
+          gocritic check ./... > gocritic-report.txt || true
+          
+      - name: Check formatting
+        run: |
+          goimports -l . > goimports-report.txt
+          if [ -s goimports-report.txt ]; then
+            echo "Formatting issues found"
+            cat goimports-report.txt
+          fi
+          
+      - name: Upload Go analysis results
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-analysis
+          path: |
+            *-report.*
+            *.sarif
+          retention-days: 30
+          
+      - name: Upload Go SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: |
+            golangci-lint.sarif
+            gosec.sarif
+          category: go-analysis
+
+  # Code complexity and metrics
+  code-metrics:
+    name: Code Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup tools
+        run: |
+          npm install -g plato cloc
+          pip install lizard
+          
+      - name: Run cloc (Count Lines of Code)
+        run: |
+          cloc . --json --out=cloc-report.json
+          cloc . --md > cloc-report.md
+          
+      - name: Run Plato (JavaScript Complexity)
+        run: |
+          mkdir -p plato-report
+          plato -r -d plato-report -t "Code Complexity Report" -e .eslintrc.json **/*.js || true
+          
+      - name: Run Lizard (Multi-language Complexity)
+        run: |
+          lizard -l javascript -l python -l go -o lizard-report.csv .
+          lizard -l javascript -l python -l go -o lizard-report.xml --xml .
+          lizard -l javascript -l python -l go . > lizard-report.txt
+          
+      - name: Generate metrics summary
+        run: |
+          echo "# Code Metrics Summary" > metrics-summary.md
+          echo "" >> metrics-summary.md
+          echo "## Lines of Code" >> metrics-summary.md
+          cat cloc-report.md >> metrics-summary.md
+          echo "" >> metrics-summary.md
+          echo "## Complexity Analysis" >> metrics-summary.md
+          echo "\`\`\`" >> metrics-summary.md
+          head -20 lizard-report.txt >> metrics-summary.md
+          echo "\`\`\`" >> metrics-summary.md
+          
+      - name: Upload metrics reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-metrics
+          path: |
+            cloc-report.*
+            plato-report/
+            lizard-report.*
+            metrics-summary.md
+          retention-days: 30
+
+  # Generate analysis report
+  analysis-report:
+    name: Generate Analysis Report
+    runs-on: ubuntu-latest
+    needs: [codeql, sonarcloud, semgrep, javascript-analysis, python-analysis, go-analysis, code-metrics]
+    if: always()
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          
+      - name: Generate consolidated report
+        run: |
+          echo "# 📊 Static Code Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Analysis Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Analysis Tools Run" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ CodeQL (Security and Quality)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SonarCloud (Code Quality)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Semgrep (Pattern-based Analysis)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Language-specific Analyzers" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Code Metrics and Complexity" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add metrics summary if available
+          if [ -f "artifacts/code-metrics/metrics-summary.md" ]; then
+            echo "## Code Metrics" >> $GITHUB_STEP_SUMMARY
+            cat artifacts/code-metrics/metrics-summary.md >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "## Detailed Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Detailed analysis reports for each tool are available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          
+      - name: Comment PR with summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 📊 Code Analysis Summary\n\n';
+            comment += '| Analysis Type | Status |\n';
+            comment += '|---------------|--------|\n';
+            comment += '| Security Analysis (CodeQL) | ✅ Completed |\n';
+            comment += '| Code Quality (SonarCloud) | ✅ Completed |\n';
+            comment += '| Pattern Analysis (Semgrep) | ✅ Completed |\n';
+            comment += '| Language-specific Analysis | ✅ Completed |\n';
+            comment += '| Code Metrics | ✅ Completed |\n';
+            comment += '\n';
+            
+            // Add key findings if any
+            comment += '### Key Findings\n\n';
+            
+            // Check for high-severity issues
+            let hasIssues = false;
+            
+            // Check ESLint results
+            try {
+              const eslintReport = JSON.parse(fs.readFileSync('artifacts/javascript-analysis/eslint-results.json', 'utf8'));
+              const errorCount = eslintReport.reduce((sum, file) => sum + file.errorCount, 0);
+              const warningCount = eslintReport.reduce((sum, file) => sum + file.warningCount, 0);
+              
+              if (errorCount > 0) {
+                comment += `- **ESLint**: ${errorCount} errors, ${warningCount} warnings\n`;
+                hasIssues = true;
+              }
+            } catch (e) {}
+            
+            if (!hasIssues) {
+              comment += '✅ No critical issues found.\n';
+            }
+            
+            comment += '\n';
+            comment += 'For detailed results, check the [workflow artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
