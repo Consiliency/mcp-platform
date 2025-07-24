@@ -17,6 +17,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@sentry/node": "^9.41.0",
+    "@sentry/profiling-node": "^9.41.0",
     "axios": "^1.11.0",
     "crypto": "^1.0.1",
     "express": "^5.1.0",
