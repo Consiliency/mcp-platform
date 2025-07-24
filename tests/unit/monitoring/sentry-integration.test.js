@@ -1,7 +1,8 @@
-const SentryIntegration = require('../../../monitoring/errors/sentry-integration');
-const Sentry = require('@sentry/node');
+// Mock Sentry before requiring any modules
+jest.mock('@sentry/profiling-node', () => ({
+  ProfilingIntegration: jest.fn()
+}));
 
-// Mock Sentry
 jest.mock('@sentry/node', () => ({
   init: jest.fn(),
   captureException: jest.fn().mockReturnValue('mock-event-id'),
@@ -43,6 +44,9 @@ jest.mock('@sentry/node', () => ({
   }
 }));
 
+const SentryIntegration = require('../../../monitoring/errors/sentry-integration');
+const Sentry = require('@sentry/node');
+
 describe('SentryIntegration', () => {
   let sentryIntegration;
 
@@ -58,10 +62,15 @@ describe('SentryIntegration', () => {
 
   describe('constructor', () => {
     it('should initialize with default options', () => {
+      const originalEnv = process.env.NODE_ENV;
+      delete process.env.NODE_ENV;
+      
       const integration = new SentryIntegration();
       expect(integration.options.environment).toBe('development');
       expect(integration.options.sampleRate).toBe(1.0);
       expect(integration.options.tracesSampleRate).toBe(0.1);
+      
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should accept custom options', () => {

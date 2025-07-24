@@ -25,8 +25,18 @@ describe('PrometheusExporter', () => {
       expect(defaultExporter.options.includeDefaultMetrics).toBe(true);
     });
 
-    it('should set default labels', () => {
-      expect(exporter.register.getDefaultLabels()).toEqual({ service: 'test' });
+    it('should set default labels', async () => {
+      // Default labels are set but not retrievable directly from registry
+      // We'll verify they work by checking a metric includes them
+      const testCounter = new client.Counter({
+        name: 'test_counter',
+        help: 'test counter',
+        registers: [exporter.register]
+      });
+      testCounter.inc();
+      
+      const metrics = await exporter.register.metrics();
+      expect(metrics).toContain('service="test"');
     });
 
     it('should initialize built-in exporters', () => {

@@ -14,10 +14,15 @@ describe('WinstonConfig', () => {
 
   describe('constructor', () => {
     it('should initialize with default options', () => {
+      const originalEnv = process.env.NODE_ENV;
+      delete process.env.NODE_ENV;
+      
       const config = new WinstonConfig();
       expect(config.options.serviceName).toBe('mcp-service');
       expect(config.options.environment).toBe('development');
       expect(config.options.logLevel).toBe('info');
+      
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should accept custom options', () => {

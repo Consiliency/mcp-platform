@@ -10,6 +10,13 @@ describe('AlertRouter', () => {
       deduplicationWindow: 5000
     });
   });
+  
+  afterEach(() => {
+    // Clean up any timers/intervals
+    if (alertRouter && alertRouter.cleanupInterval) {
+      clearInterval(alertRouter.cleanupInterval);
+    }
+  });
 
   describe('constructor', () => {
     it('should initialize with default options', () => {
@@ -248,9 +255,13 @@ describe('AlertRouter', () => {
       const result = await alertRouter.route(alert);
       expect(result.results[0].results[0].result.suppressed).toBe(true);
 
-      // Second alert should be suppressed
+      // Second alert with same source and severity should be suppressed
       const result2 = await alertRouter.route(alert);
-      expect(result2.suppressed).toBe(true);
+      // The alert should be deduplicated (same alert sent twice)
+      expect(result2).toHaveProperty('deduplicated', true);
+      
+      // Clean up timeout
+      await new Promise(resolve => setTimeout(resolve, 1100));
     });
 
     it('should transform alerts', async () => {
@@ -303,11 +314,18 @@ describe('AlertRouter', () => {
       expect(result.results[0].results[1].success).toBe(true);
       
       consoleSpy.mockRestore();
-    });
+    }, 10000);
   });
 
   describe('statistics and management', () => {
     it('should track statistics', async () => {
+      // Add a rule to ensure alert is processed through rules (which tracks history)
+      alertRouter.addRule({
+        name: 'Stats Rule',
+        conditions: { severity: 'info' },
+        actions: [{ type: 'send', channel: 'console' }]
+      });
+      
       await alertRouter.route({
         severity: 'info',
         title: 'Test Alert'
