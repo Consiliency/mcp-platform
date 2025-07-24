@@ -242,7 +242,7 @@ GET /api/v1/services?page=2&limit=10
 Response includes pagination metadata:
 ```json
 {
-  "data": [...],
+  "data": [],
   "pagination": {
     "page": 2,
     "limit": 10,
@@ -280,14 +280,19 @@ const client = new MCPClient({
   apiKey: 'your-api-key'
 });
 
-// List services
-const services = await client.services.list();
+// Example usage in an async function
+async function example() {
+  // List services
+  const services = await client.services.list();
 
-// Deploy a service
-await client.services.deploy({
-  serviceId: 'custom-mcp',
-  dockerImage: 'custom-mcp:latest'
-});
+  // Deploy a service
+  await client.services.deploy({
+    serviceId: 'custom-mcp',
+    dockerImage: 'custom-mcp:latest'
+  });
+}
+
+example().catch(console.error);
 ```
 
 ### Python
