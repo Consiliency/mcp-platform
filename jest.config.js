@@ -7,6 +7,7 @@ module.exports = {
   ],
   collectCoverageFrom: [
     'security/**/*.js',
+    'scripts/build/**/*.js',
     '!**/node_modules/**',
     '!**/tests/**'
   ],
