@@ -1,0 +1,565 @@
+{
+  "dashboards": [
+    {
+      "uid": "mcp-overview",
+      "title": "MCP Platform Overview",
+      "tags": ["mcp", "overview"],
+      "timezone": "browser",
+      "refresh": "30s",
+      "panels": [
+        {
+          "title": "MCP Active Connections",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum by (transport, client_type) (mcp_mcp_active_connections)",
+              "legendFormat": "{{transport}} - {{client_type}}"
+            }
+          ]
+        },
+        {
+          "title": "MCP Message Rate",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "rate(mcp_mcp_messages_processed_total[5m])",
+              "legendFormat": "{{message_type}} - {{direction}}"
+            }
+          ]
+        },
+        {
+          "title": "MCP Tool Performance",
+          "type": "heatmap",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (tool_name, le) (rate(mcp_mcp_tool_execution_seconds_bucket[5m])))",
+              "format": "heatmap"
+            }
+          ]
+        },
+        {
+          "title": "API Request Rate",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "targets": [
+            {
+              "expr": "sum by (method, status_class) (rate(mcp_http_requests_total[5m]))",
+              "legendFormat": "{{method}} - {{status_class}}"
+            }
+          ]
+        },
+        {
+          "title": "Error Rate",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "targets": [
+            {
+              "expr": "sum(rate(mcp_http_requests_total{status_class=~\"4..|5..\"}[5m])) / sum(rate(mcp_http_requests_total[5m])) * 100",
+              "legendFormat": "Error Rate %"
+            }
+          ],
+          "yaxis": {
+            "format": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      ]
+    },
+    {
+      "uid": "mcp-performance",
+      "title": "MCP Performance Metrics",
+      "tags": ["mcp", "performance"],
+      "timezone": "browser",
+      "refresh": "30s",
+      "panels": [
+        {
+          "title": "Response Time Percentiles",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (route, le) (rate(mcp_http_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "p50 - {{route}}"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (route, le) (rate(mcp_http_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "p95 - {{route}}"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (route, le) (rate(mcp_http_request_duration_seconds_bucket[5m])))",
+              "legendFormat": "p99 - {{route}}"
+            }
+          ],
+          "yaxis": {
+            "format": "s"
+          }
+        },
+        {
+          "title": "Database Query Performance",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (operation, le) (rate(mcp_database_query_duration_seconds_bucket[5m])))",
+              "legendFormat": "{{operation}}"
+            }
+          ],
+          "yaxis": {
+            "format": "s"
+          }
+        },
+        {
+          "title": "Cache Hit Rate",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            {
+              "expr": "sum(rate(mcp_cache_hits_total[5m])) / (sum(rate(mcp_cache_hits_total[5m])) + sum(rate(mcp_cache_misses_total[5m]))) * 100",
+              "legendFormat": "Hit Rate %"
+            }
+          ],
+          "yaxis": {
+            "format": "percent",
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "title": "External API Latency",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (api, endpoint, le) (rate(mcp_external_api_latency_seconds_bucket[5m])))",
+              "legendFormat": "{{api}} - {{endpoint}}"
+            }
+          ],
+          "yaxis": {
+            "format": "s"
+          }
+        }
+      ]
+    },
+    {
+      "uid": "mcp-business",
+      "title": "MCP Business Metrics",
+      "tags": ["mcp", "business"],
+      "timezone": "browser",
+      "refresh": "1h",
+      "panels": [
+        {
+          "title": "Daily Active Users",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(mcp_daily_active_users)",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "area",
+            "colorMode": "value"
+          }
+        },
+        {
+          "title": "Revenue Today",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(increase(mcp_revenue_total[24h]))",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "area",
+            "colorMode": "value",
+            "unit": "currencyUSD"
+          }
+        },
+        {
+          "title": "MRR",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(mcp_monthly_recurring_revenue)",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "area",
+            "colorMode": "value",
+            "unit": "currencyUSD"
+          }
+        },
+        {
+          "title": "API Usage",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(rate(mcp_api_usage_total[1h])) * 3600",
+              "instant": true
+            }
+          ],
+          "options": {
+            "graphMode": "area",
+            "colorMode": "value",
+            "unit": "short"
+          }
+        },
+        {
+          "title": "User Growth",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "targets": [
+            {
+              "expr": "mcp_daily_active_users",
+              "legendFormat": "{{user_type}} - {{platform}}"
+            }
+          ]
+        },
+        {
+          "title": "Revenue by Product",
+          "type": "piechart",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "targets": [
+            {
+              "expr": "sum by (product) (increase(mcp_revenue_total[24h]))",
+              "legendFormat": "{{product}}"
+            }
+          ]
+        },
+        {
+          "title": "Feature Adoption",
+          "type": "bargauge",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "targets": [
+            {
+              "expr": "mcp_feature_adoption_rate",
+              "legendFormat": "{{feature}}"
+            }
+          ],
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal"
+          }
+        },
+        {
+          "title": "Churn Rate Trend",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "targets": [
+            {
+              "expr": "mcp_churn_rate_percentage",
+              "legendFormat": "{{customer_segment}}"
+            }
+          ],
+          "yaxis": {
+            "format": "percent",
+            "min": 0
+          }
+        }
+      ]
+    },
+    {
+      "uid": "mcp-errors",
+      "title": "MCP Error Tracking",
+      "tags": ["mcp", "errors"],
+      "timezone": "browser",
+      "refresh": "1m",
+      "panels": [
+        {
+          "title": "Error Rate by Endpoint",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum by (route) (rate(mcp_http_requests_total{status_class=~\"4..|5..\"}[5m]))",
+              "legendFormat": "{{route}}"
+            }
+          ]
+        },
+        {
+          "title": "MCP Protocol Errors",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "sum by (error_type, severity) (rate(mcp_mcp_protocol_errors_total[5m]))",
+              "legendFormat": "{{error_type}} - {{severity}}"
+            }
+          ]
+        },
+        {
+          "title": "Security Events",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            {
+              "expr": "sum by (event_type, severity) (rate(mcp_security_events_total[5m]))",
+              "legendFormat": "{{event_type}} - {{severity}}"
+            }
+          ]
+        },
+        {
+          "title": "Failed Authentications",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+          "targets": [
+            {
+              "expr": "sum by (method) (rate(mcp_auth_attempts_total{status=\"failed\"}[5m]))",
+              "legendFormat": "{{method}}"
+            }
+          ]
+        },
+        {
+          "title": "Rate Limit Violations",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+          "targets": [
+            {
+              "expr": "sum by (endpoint, limit_type) (rate(mcp_rate_limit_violations_total[5m]))",
+              "legendFormat": "{{endpoint}} - {{limit_type}}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "mcp-infrastructure",
+      "title": "MCP Infrastructure",
+      "tags": ["mcp", "infrastructure"],
+      "timezone": "browser",
+      "refresh": "30s",
+      "panels": [
+        {
+          "title": "CPU Usage",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "yaxis": {
+            "format": "percent",
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "title": "Memory Usage",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "targets": [
+            {
+              "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "yaxis": {
+            "format": "percent",
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "title": "Database Connections",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            {
+              "expr": "sum by (database, state) (mcp_database_connections_active)",
+              "legendFormat": "{{database}} - {{state}}"
+            }
+          ]
+        },
+        {
+          "title": "Message Queue Depth",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            {
+              "expr": "mcp_queue_depth",
+              "legendFormat": "{{queue}} - {{topic}}"
+            }
+          ]
+        },
+        {
+          "title": "Disk Usage",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+          "targets": [
+            {
+              "expr": "mcp_disk_usage_bytes / 1024 / 1024 / 1024",
+              "legendFormat": "{{mount_point}} - {{type}}"
+            }
+          ],
+          "yaxis": {
+            "format": "GB"
+          }
+        }
+      ]
+    },
+    {
+      "uid": "mcp-sla",
+      "title": "MCP SLA Dashboard",
+      "tags": ["mcp", "sla"],
+      "timezone": "browser",
+      "refresh": "5m",
+      "panels": [
+        {
+          "title": "API Availability",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+          "targets": [
+            {
+              "expr": "avg(mcp_api_availability_percentage)",
+              "instant": true
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          },
+          "options": {
+            "unit": "percent"
+          }
+        },
+        {
+          "title": "Error Budget Remaining",
+          "type": "gauge",
+          "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+          "targets": [
+            {
+              "expr": "avg(mcp_error_budget_remaining_percentage)",
+              "instant": true
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "green", "value": 50 }
+            ]
+          },
+          "options": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        },
+        {
+          "title": "SLA Violations",
+          "type": "stat",
+          "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+          "targets": [
+            {
+              "expr": "sum(increase(mcp_sla_violations_total[24h]))",
+              "instant": true
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        {
+          "title": "Response Time SLO",
+          "type": "graph",
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+          "targets": [
+            {
+              "expr": "mcp_response_time_percentile_seconds{percentile=\"95\"}",
+              "legendFormat": "{{endpoint}} - p95"
+            }
+          ],
+          "yaxis": {
+            "format": "s"
+          },
+          "thresholds": [
+            {
+              "value": 0.5,
+              "color": "yellow",
+              "op": "gt"
+            },
+            {
+              "value": 1,
+              "color": "red",
+              "op": "gt"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "name": "HighErrorRate",
+      "condition": "sum(rate(mcp_http_requests_total{status_class=~\"5..\"}[5m])) / sum(rate(mcp_http_requests_total[5m])) > 0.05",
+      "for": "5m",
+      "severity": "critical",
+      "annotations": {
+        "summary": "High error rate detected",
+        "description": "Error rate is above 5% for the last 5 minutes"
+      }
+    },
+    {
+      "name": "MCPConnectionDrop",
+      "condition": "sum(mcp_mcp_active_connections) < 10",
+      "for": "2m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "Low MCP connection count",
+        "description": "MCP active connections dropped below 10"
+      }
+    },
+    {
+      "name": "HighResponseTime",
+      "condition": "histogram_quantile(0.95, sum by (le) (rate(mcp_http_request_duration_seconds_bucket[5m]))) > 1",
+      "for": "5m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "High response time",
+        "description": "95th percentile response time is above 1 second"
+      }
+    },
+    {
+      "name": "LowCacheHitRate",
+      "condition": "sum(rate(mcp_cache_hits_total[5m])) / (sum(rate(mcp_cache_hits_total[5m])) + sum(rate(mcp_cache_misses_total[5m]))) < 0.8",
+      "for": "10m",
+      "severity": "warning",
+      "annotations": {
+        "summary": "Low cache hit rate",
+        "description": "Cache hit rate is below 80%"
+      }
+    },
+    {
+      "name": "SecurityEventSpike",
+      "condition": "sum(rate(mcp_security_events_total{severity=\"high\"}[5m])) > 0.1",
+      "for": "1m",
+      "severity": "critical",
+      "annotations": {
+        "summary": "High severity security events detected",
+        "description": "Multiple high severity security events in the last minute"
+      }
+    }
+  ]
+}
