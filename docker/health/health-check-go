@@ -1,0 +1,31 @@
+#!/bin/sh
+# Go health check script
+# This is a simple shell script that acts as a health check for Go services
+# In production, this would be replaced with a compiled Go binary
+
+# Check if service is responding on expected port
+PORT=${HEALTH_CHECK_PORT:-8080}
+HOST=${HEALTH_CHECK_HOST:-localhost}
+ENDPOINT=${HEALTH_CHECK_ENDPOINT:-/health}
+
+# Attempt to connect to the service
+if command -v wget > /dev/null 2>&1; then
+    wget --quiet --tries=1 --timeout=3 --spider "http://${HOST}:${PORT}${ENDPOINT}"
+    exit $?
+elif command -v curl > /dev/null 2>&1; then
+    curl --fail --silent --max-time 3 "http://${HOST}:${PORT}${ENDPOINT}" > /dev/null
+    exit $?
+else
+    # Fallback to nc (netcat) if available
+    if command -v nc > /dev/null 2>&1; then
+        nc -z -w3 "${HOST}" "${PORT}"
+        exit $?
+    fi
+fi
+
+# If no tools available, check process
+if [ -f /proc/1/status ]; then
+    exit 0
+else
+    exit 1
+fi

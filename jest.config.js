@@ -8,8 +8,15 @@ module.exports = {
   collectCoverageFrom: [
     'security/**/*.js',
     'config/production/*.js',
+    'docker/health/*.js',
+    'docker/production/graceful-shutdown.js',
+    'monitoring/**/*.js',
+    'sdk/**/*.js',
     '!**/node_modules/**',
-    '!**/tests/**'
+    '!**/tests/**',
+    '!**/mocks/**',
+    '!**/*.test.js',
+    '!**/coverage/**'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

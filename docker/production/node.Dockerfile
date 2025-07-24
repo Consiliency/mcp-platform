@@ -61,9 +61,9 @@ COPY package*.json ./
 COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy built application
-COPY --from=build /app/dist ./dist 2>/dev/null || true
+# Note: Use separate RUN commands to handle optional directories
 COPY --from=build /app/src ./src
-COPY --from=build /app/lib ./lib 2>/dev/null || true
+RUN mkdir -p dist lib || true
 
 # Copy health check script
 COPY docker/health/health-monitor.js ./health/

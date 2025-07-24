@@ -7,10 +7,14 @@
     "test": "jest",
     "test:unit": "jest tests/unit/",
     "test:unit:config": "jest tests/unit/config/",
-    "test:integration": "jest tests/integration/phase5/",
+    "test:integration": "jest tests/integration/",
     "test:sdk": "jest tests/integration/phase5/sdk-*.test.js",
+    "test:docker": "jest tests/unit/docker/ tests/integration/docker/",
+    "test:docker:health": "jest tests/unit/docker/health/",
+    "test:docker:integration": "jest tests/integration/docker/",
     "test:coverage": "jest --coverage",
-    "test:config:coverage": "jest tests/unit/config/ --coverage"
+    "test:config:coverage": "jest tests/unit/config/ --coverage",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "axios": "^1.11.0",
