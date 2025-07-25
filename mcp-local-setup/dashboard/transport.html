@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Transport Dashboard</title>
+    <link rel="stylesheet" href="css/transport-dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>
+                    <span class="logo">MCP</span>
+                    Transport Dashboard
+                </h1>
+                <div class="header-actions">
+                    <div class="connection-status">
+                        <span class="status-indicator" id="wsStatus"></span>
+                        <span id="wsStatusText">Connecting...</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshAll()">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M4 12a8 8 0 0 1 8-8V2.5L16 6l-4 3.5V8a6 6 0 1 0 6 6h1.5a7.5 7.5 0 1 1-7.5-7.5z"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="dashboard-nav">
+            <a href="/" class="nav-link">Services</a>
+            <a href="/health" class="nav-link">Health Monitor</a>
+            <a href="/transport.html" class="nav-link active">Transport Overview</a>
+            <a href="/metrics.html" class="nav-link">Metrics</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Transport Overview Section -->
+            <section class="overview-section">
+                <h2>Transport Overview</h2>
+                <div class="transport-cards">
+                    <div class="transport-card" data-transport="stdio">
+                        <div class="transport-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <h3>STDIO</h3>
+                        <div class="transport-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="stdio-active">0</span>
+                                <span class="stat-label">Active</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="stdio-total">0</span>
+                                <span class="stat-label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="transport-card" data-transport="http">
+                        <div class="transport-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4.5 11h2.5l1.5 1.5L10 11h2l-3.5 3.5L12 18l-3.5-3.5L5 18l3.5-3.5L5 11zm7-6.5L15 8l-3.5 3.5L15 15l-3.5 3.5L8 15l3.5-3.5L8 8l3.5-3.5zm7 6.5L15 14.5 18.5 18 22 14.5 18.5 11h2l1.5 1.5L23.5 11h-5z"/>
+                            </svg>
+                        </div>
+                        <h3>HTTP</h3>
+                        <div class="transport-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="http-active">0</span>
+                                <span class="stat-label">Active</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="http-total">0</span>
+                                <span class="stat-label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="transport-card" data-transport="websocket">
+                        <div class="transport-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12c0 1.19.22 2.34.6 3.41l.29-.26c.43-.37.89-.69 1.37-.97-.17-.63-.26-1.29-.26-1.97 0-3.31 2.69-6 6-6s6 2.69 6 6c0 1.3-.42 2.51-1.12 3.5l1.46 1.46C17.37 15.65 18 13.91 18 12c0-4.42-3.58-8-8-8zm0 14c-1.19 0-2.34-.22-3.41-.6l.26-.29c.37-.43.69-.89.97-1.37.63.17 1.29.26 1.97.26 3.31 0 6-2.69 6-6 0-1.3-.42-2.51-1.12-3.5l1.46-1.46C19.37 8.35 20 10.09 20 12c0 4.42-3.58 8-8 8z"/>
+                            </svg>
+                        </div>
+                        <h3>WebSocket</h3>
+                        <div class="transport-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="websocket-active">0</span>
+                                <span class="stat-label">Active</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="websocket-total">0</span>
+                                <span class="stat-label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Server Grid Section -->
+            <section class="servers-section">
+                <div class="section-header">
+                    <h2>MCP Servers</h2>
+                    <div class="filter-controls">
+                        <select id="transportFilter" onchange="filterServers()">
+                            <option value="">All Transports</option>
+                            <option value="stdio">STDIO</option>
+                            <option value="http">HTTP</option>
+                            <option value="websocket">WebSocket</option>
+                        </select>
+                        <select id="statusFilter" onchange="filterServers()">
+                            <option value="">All Status</option>
+                            <option value="running">Running</option>
+                            <option value="stopped">Stopped</option>
+                            <option value="error">Error</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="servers-grid" id="serversGrid">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading servers...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics Section -->
+            <section class="metrics-section">
+                <h2>Real-time Metrics</h2>
+                <div class="metrics-grid">
+                    <div class="metric-chart-container">
+                        <h3>Requests per Second</h3>
+                        <canvas id="rpsChart"></canvas>
+                    </div>
+                    <div class="metric-chart-container">
+                        <h3>Active Connections</h3>
+                        <canvas id="connectionsChart"></canvas>
+                    </div>
+                    <div class="metric-chart-container">
+                        <h3>Transport Distribution</h3>
+                        <canvas id="transportChart"></canvas>
+                    </div>
+                    <div class="metric-chart-container">
+                        <h3>Response Times</h3>
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Server Control Modal -->
+    <div class="modal" id="serverModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Server Control</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Mock Data for Testing -->
+    <script src="js/mock-data.js"></script>
+    <!-- Dashboard JavaScript -->
+    <script src="js/transport-dashboard.js"></script>
+</body>
+</html>

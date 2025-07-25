@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Metrics Dashboard</title>
+    <link rel="stylesheet" href="css/transport-dashboard.css">
+    <link rel="stylesheet" href="css/metrics-dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>
+                    <span class="logo">MCP</span>
+                    Metrics Dashboard
+                </h1>
+                <div class="header-actions">
+                    <div class="time-range-selector">
+                        <select id="timeRange" onchange="updateTimeRange()">
+                            <option value="5m">Last 5 minutes</option>
+                            <option value="15m" selected>Last 15 minutes</option>
+                            <option value="1h">Last hour</option>
+                            <option value="6h">Last 6 hours</option>
+                            <option value="24h">Last 24 hours</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportMetrics()">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        </svg>
+                        Export
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="dashboard-nav">
+            <a href="/" class="nav-link">Services</a>
+            <a href="/health" class="nav-link">Health Monitor</a>
+            <a href="/transport.html" class="nav-link">Transport Overview</a>
+            <a href="/metrics.html" class="nav-link active">Metrics</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- Summary Cards -->
+            <section class="metrics-summary">
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>
+                            </svg>
+                        </div>
+                        <div class="summary-content">
+                            <h3>Total Requests</h3>
+                            <div class="summary-value" id="totalRequests">0</div>
+                            <div class="summary-change positive">+12.5%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div class="summary-content">
+                            <h3>Success Rate</h3>
+                            <div class="summary-value" id="successRate">99.9%</div>
+                            <div class="summary-change positive">+0.1%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0012 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61z"/>
+                            </svg>
+                        </div>
+                        <div class="summary-content">
+                            <h3>Avg Response</h3>
+                            <div class="summary-value" id="avgResponse">45ms</div>
+                            <div class="summary-change negative">+5ms</div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                            </svg>
+                        </div>
+                        <div class="summary-content">
+                            <h3>Uptime</h3>
+                            <div class="summary-value" id="uptime">99.99%</div>
+                            <div class="summary-change">30d</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Performance Charts -->
+            <section class="chart-section">
+                <h2>Performance Metrics</h2>
+                <div class="chart-grid">
+                    <div class="chart-container large">
+                        <div class="chart-header">
+                            <h3>Request Rate</h3>
+                            <div class="chart-controls">
+                                <button class="chart-control active" data-metric="requests">Requests</button>
+                                <button class="chart-control" data-metric="errors">Errors</button>
+                            </div>
+                        </div>
+                        <canvas id="requestRateChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Response Time Distribution</h3>
+                        </div>
+                        <canvas id="responseDistChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Transport Performance</h3>
+                        </div>
+                        <canvas id="transportPerfChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transport Breakdown -->
+            <section class="transport-breakdown">
+                <h2>Transport Breakdown</h2>
+                <div class="breakdown-tabs">
+                    <button class="tab-button active" onclick="showTransportTab('stdio')">STDIO</button>
+                    <button class="tab-button" onclick="showTransportTab('http')">HTTP</button>
+                    <button class="tab-button" onclick="showTransportTab('websocket')">WebSocket</button>
+                </div>
+                
+                <div class="tab-content" id="transportTabContent">
+                    <!-- Dynamic content -->
+                </div>
+            </section>
+
+            <!-- Error Analysis -->
+            <section class="error-section">
+                <h2>Error Analysis</h2>
+                <div class="error-grid">
+                    <div class="error-chart">
+                        <h3>Error Rate by Type</h3>
+                        <canvas id="errorTypeChart"></canvas>
+                    </div>
+                    <div class="error-list">
+                        <h3>Recent Errors</h3>
+                        <div id="recentErrors" class="error-items">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Server Performance Table -->
+            <section class="table-section">
+                <h2>Server Performance</h2>
+                <div class="table-container">
+                    <table class="metrics-table" id="serverPerfTable">
+                        <thead>
+                            <tr>
+                                <th>Server</th>
+                                <th>Transport</th>
+                                <th>Requests</th>
+                                <th>Success Rate</th>
+                                <th>Avg Response</th>
+                                <th>P95 Response</th>
+                                <th>P99 Response</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Mock Data for Testing -->
+    <script src="js/mock-data.js"></script>
+    <!-- Metrics Dashboard JavaScript -->
+    <script src="js/metrics-dashboard.js"></script>
+</body>
+</html>
