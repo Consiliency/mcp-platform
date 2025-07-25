@@ -14,6 +14,8 @@ const ora = require('ora');
 const yaml = require('js-yaml');
 const os = require('os');
 const { addHealthCommand } = require('./commands/health');
+const { addTransportCommand } = require('./commands/transport');
+const { addServerCommand } = require('./commands/server');
 const PluginManager = require('./plugins/core/plugin-manager');
 
 // Configuration
@@ -343,12 +345,13 @@ program
     .description('MCP Platform CLI - Manage Model Context Protocol services')
     .version('1.0.0');
 
-// Start command
+// Start command (legacy - for docker-compose based services)
 program
     .command('start')
-    .description('Start MCP services')
+    .description('Start MCP services (docker-compose)')
     .option('-p, --profile <profile>', 'Profile to use', 'default')
     .option('-d, --detach', 'Run in background')
+    .option('-t, --transport <type>', 'Default transport for new servers', 'stdio')
     .action(async (options) => {
         const spinner = ora('Starting MCP services...').start();
         
@@ -364,6 +367,11 @@ program
             if (options.profile !== 'default') {
                 spinner.text = `Switching to profile: ${options.profile}`;
                 await runCommand('bash', [PROFILE_MANAGER, 'switch', options.profile], { silent: true });
+            }
+            
+            // Set default transport if specified
+            if (options.transport) {
+                await updateEnvFile({ DEFAULT_TRANSPORT: options.transport });
             }
             
             // Start services
@@ -701,6 +709,12 @@ program
 
 // Add health command
 addHealthCommand(program);
+
+// Add transport command
+addTransportCommand(program);
+
+// Add server command
+addServerCommand(program);
 
 // Plugin command group
 const plugin = program
