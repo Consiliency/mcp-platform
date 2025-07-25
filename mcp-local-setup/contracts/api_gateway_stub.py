@@ -20,11 +20,11 @@ class APIGatewayStub(APIGatewayContract):
     def start_server(self, server_id: str) -> Dict[str, Any]:
         """Stub that simulates server start"""
         # Determine transport type based on server_id pattern
-        if 'stdio' in server_id:
+        if 'stdio' in server_id or 'snap' in server_id:
             transport = 'stdio'
-        elif 'ws' in server_id:
+        elif 'websocket' in server_id or 'ws' in server_id:
             transport = 'websocket'
-        elif 'sse' in server_id:
+        elif 'sse' in server_id or 'stream' in server_id:
             transport = 'sse'
         else:
             transport = 'http'
@@ -108,7 +108,8 @@ class APIGatewayStub(APIGatewayContract):
         default_servers = [
             {"id": "filesystem", "transport": "http", "status": "stopped"},
             {"id": "snap-happy", "transport": "stdio", "status": "stopped"},
-            {"id": "websocket-test", "transport": "websocket", "status": "stopped"}
+            {"id": "websocket-test", "transport": "websocket", "status": "stopped"},
+            {"id": "sse-stream", "transport": "sse", "status": "stopped"}
         ]
         
         # Merge with started servers
