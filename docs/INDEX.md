@@ -38,10 +38,8 @@ Welcome to the MCP Platform documentation! This guide will help you navigate thr
 
 ### Security & Compliance
 - **[Security Guide](SECURITY_GUIDE.md)** - Security architecture and best practices
-- **[Deployment Guide](DEPLOYMENT.md)** - Secure deployment configurations
 
 ### Development & Integration
-- **[Phase 6 Implementation](PHASE6_IMPLEMENTATION.md)** - Implementation details
 - **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
 
 ## 🎯 Quick Links by Task
@@ -98,8 +96,8 @@ Welcome to the MCP Platform documentation! This guide will help you navigate thr
 
 ## 📖 Documentation Versions
 
-- **Current Version**: v5.0 (Phase 6 - Production Ready)
-- **[Release Notes](../PHASE6_RELEASE_NOTES.md)** - Latest changes
+- **Current Version**: v6.0 (Phase 7 - Universal Transport Support)
+- **[Release Notes](../PHASE7_RELEASE_NOTES.md)** - Latest changes
 - **[Roadmap](../specs/ROADMAP.md)** - Future development plans
 
 ## 🔍 Search Documentation
@@ -145,4 +143,4 @@ Access documentation on mobile devices:
 
 ---
 
-**Documentation Version**: 5.0 | **Last Updated**: July 2025 | **Platform Version**: Phase 6
+**Documentation Version**: 6.0 | **Last Updated**: July 2025 | **Platform Version**: Phase 7
