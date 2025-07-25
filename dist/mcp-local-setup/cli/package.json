@@ -1,0 +1,31 @@
+{
+  "name": "mcp-platform-cli",
+  "version": "1.0.0",
+  "description": "MCP Platform Command Line Interface",
+  "main": "mcp-cli.js",
+  "bin": {
+    "mcp": "./mcp-cli.js"
+  },
+  "scripts": {
+    "postinstall": "node setup.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1",
+    "js-yaml": "^4.1.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "ai",
+    "development"
+  ],
+  "author": "MCP Platform",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

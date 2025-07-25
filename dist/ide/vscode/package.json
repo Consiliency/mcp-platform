@@ -1,0 +1,205 @@
+{
+  "name": "mcp-vscode",
+  "displayName": "MCP IDE Extension",
+  "description": "VS Code extension for MCP (Model Context Protocol) integration",
+  "version": "1.0.0",
+  "publisher": "mcp-team",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "microservices",
+    "service-mesh"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:python",
+    "onLanguage:go",
+    "workspaceContains:mcp.config.json",
+    "workspaceContains:mcp.yaml",
+    "onCommand:mcp.showServicePanel"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "mcp.showServicePanel",
+        "title": "MCP: Show Service Panel",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.installService",
+        "title": "MCP: Install Service",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.refreshServices",
+        "title": "MCP: Refresh Services",
+        "category": "MCP",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mcp.showServiceDetails",
+        "title": "MCP: Show Service Details",
+        "category": "MCP"
+      },
+      {
+        "command": "mcp.startDebugging",
+        "title": "MCP: Start Service Debugging",
+        "category": "MCP"
+      }
+    ],
+    "configuration": {
+      "title": "MCP",
+      "properties": {
+        "mcp.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for MCP SDK authentication"
+        },
+        "mcp.endpoint": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "MCP platform endpoint"
+        },
+        "mcp.enableDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MCP configuration diagnostics"
+        },
+        "mcp.autoComplete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MCP service auto-completion"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "mcp-config",
+        "aliases": [
+          "MCP Configuration",
+          "mcp-config"
+        ],
+        "extensions": [
+          ".mcp.json",
+          ".mcp.yaml",
+          ".mcp.yml"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mcp-config",
+        "scopeName": "source.mcp",
+        "path": "./syntaxes/mcp.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./snippets/mcp-javascript.json"
+      },
+      {
+        "language": "typescript",
+        "path": "./snippets/mcp-typescript.json"
+      },
+      {
+        "language": "python",
+        "path": "./snippets/mcp-python.json"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mcp-explorer",
+          "title": "MCP Services",
+          "icon": "media/mcp-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "mcp-explorer": [
+        {
+          "id": "mcp.servicesView",
+          "name": "Services",
+          "icon": "media/mcp-icon.svg",
+          "contextualTitle": "MCP Services"
+        },
+        {
+          "id": "mcp.healthView",
+          "name": "Health Monitor",
+          "icon": "media/health-icon.svg",
+          "contextualTitle": "Service Health"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "mcp.refreshServices",
+          "when": "view == mcp.servicesView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mcp.showServiceDetails",
+          "when": "view == mcp.servicesView && viewItem == service",
+          "group": "inline"
+        },
+        {
+          "command": "mcp.startDebugging",
+          "when": "view == mcp.servicesView && viewItem == service",
+          "group": "inline"
+        }
+      ]
+    },
+    "debuggers": [
+      {
+        "type": "mcp",
+        "label": "MCP Service Debug",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "serviceId"
+            ],
+            "properties": {
+              "serviceId": {
+                "type": "string",
+                "description": "The MCP service ID to debug"
+              },
+              "port": {
+                "type": "number",
+                "description": "Debug port",
+                "default": 9229
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.0.0",
+    "vscode-languageserver": "^8.0.0",
+    "vscode-languageserver-textdocument": "^1.0.0"
+  }
+}

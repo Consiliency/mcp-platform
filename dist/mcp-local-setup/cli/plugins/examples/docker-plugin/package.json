@@ -1,0 +1,15 @@
+{
+  "name": "mcp-cli-plugin-docker",
+  "version": "1.0.0",
+  "description": "Enhanced Docker management plugin for MCP CLI",
+  "main": "index.js",
+  "keywords": [
+    "mcp-cli-plugin",
+    "mcp",
+    "cli",
+    "plugin",
+    "docker"
+  ],
+  "author": "MCP Team",
+  "license": "MIT"
+}

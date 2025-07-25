@@ -1,0 +1,4 @@
+# MCP Platform 1.0.1-test2 Checksums
+# Generated: 2025-07-25T00:37:55.824Z
+
+de1b8ab65d4138e9b59e1bfe7a56dc9de2b8dec9875ef2adc0053af2b339ffa4  mcp-platform-1.0.1-test2-linux-x64.tar.gz (47.63 KB)

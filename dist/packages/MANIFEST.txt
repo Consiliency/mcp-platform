@@ -1,0 +1,9 @@
+MCP Platform 1.0.1-test2 - Package Manifest
+Generated: 2025-07-25T00:37:56.019Z
+
+Packages:
+  - mcp-platform-1.0.1-test2-linux-x64.tar.gz (47.63 KB)
+    Platform: linux / x64
+    SHA256: de1b8ab65d4138e9b59e1bfe7a56dc9de2b8dec9875ef2adc0053af2b339ffa4
+    Signature: mcp-platform-1.0.1-test2-linux-x64.tar.gz.asc
+

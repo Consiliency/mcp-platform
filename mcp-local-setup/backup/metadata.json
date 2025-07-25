@@ -1,0 +1,69 @@
+{
+  "backup-2025-07-25T20-22-17-685Z-68516c60": {
+    "id": "backup-2025-07-25T20-22-17-685Z-68516c60",
+    "createdAt": "2025-07-25T20:22:17.685Z",
+    "createdBy": "jenner",
+    "type": "full",
+    "services": [
+      "filesystem",
+      "git",
+      "browser",
+      "postgres",
+      "everest"
+    ],
+    "version": "1.0.0",
+    "description": "Cleanup test 2",
+    "metadata": {},
+    "size": 922,
+    "checksum": "72b57073eb5ccfffd753370334d05df3ccfcfe244150947ec48121f1ec3c71a8"
+  },
+  "backup-2025-07-25T20-22-17-691Z-6f1714b0": {
+    "id": "backup-2025-07-25T20-22-17-691Z-6f1714b0",
+    "createdAt": "2025-07-25T20:22:17.692Z",
+    "createdBy": "jenner",
+    "type": "full",
+    "services": [
+      "filesystem",
+      "git",
+      "browser",
+      "postgres",
+      "everest"
+    ],
+    "version": "1.0.0",
+    "description": "Cleanup test 3",
+    "metadata": {},
+    "size": 926,
+    "checksum": "7f7dd04aa1cb29252a8d37f67bfc9848c51b87196ed004d696256a77259dac34"
+  },
+  "backup-2025-07-25T20-22-17-695Z-302336a5": {
+    "id": "backup-2025-07-25T20-22-17-695Z-302336a5",
+    "createdAt": "2025-07-25T20:22:17.695Z",
+    "createdBy": "jenner",
+    "type": "full",
+    "services": [
+      "filesystem",
+      "git",
+      "browser",
+      "postgres",
+      "everest"
+    ],
+    "version": "1.0.0",
+    "description": "Cleanup test 4",
+    "metadata": {},
+    "size": 924,
+    "checksum": "a0dc4b1826171879af676165adb093fb399bca1a8e67457c77e0c698d47e3619"
+  },
+  "backup-2025-07-25T20-22-17-710Z-e5ed18de": {
+    "id": "backup-2025-07-25T20-22-17-710Z-e5ed18de",
+    "createdAt": "2025-07-25T20:22:17.711Z",
+    "createdBy": "jenner",
+    "type": "invalid-type",
+    "services": [
+      "non-existent-service"
+    ],
+    "version": "1.0.0",
+    "metadata": {},
+    "size": 889,
+    "checksum": "05480a6eab91ec3da80811af3be4f3eb6d5cad0a8158a3f0cecf950017222f43"
+  }
+}

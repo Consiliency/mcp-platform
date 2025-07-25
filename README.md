@@ -1,35 +1,89 @@
-# MCP SDK Core
+# MCP Platform
 
-The official SDK for Model Context Protocol (MCP) services. This SDK provides a unified interface for interacting with MCP services across multiple programming languages.
+A comprehensive platform for running Model Context Protocol (MCP) services with universal transport support. The platform provides a unified interface for multiple AI coding assistants through a robust infrastructure supporting stdio, HTTP, WebSocket, and SSE transports.
 
 ## Features
 
-- **Authentication**: Support for API key and username/password authentication
+### Core Platform
+- **Universal Transport Support**: stdio, HTTP, WebSocket, and SSE transports
 - **Service Discovery**: Browse and search available MCP services
 - **Service Management**: Install, uninstall, and manage service lifecycle
-- **Service Interaction**: Call service methods with type-safe interfaces
-- **Event System**: Subscribe to SDK and service events
-- **Health Monitoring**: Monitor platform and service health
-- **Multi-language Support**: JavaScript/TypeScript, Python, and Go SDKs
+- **Process Management**: Advanced process lifecycle with auto-restart and resource monitoring
+- **API Gateway**: Unified API for all transport types with automatic routing
+
+### Security & Authentication
+- **Authentication**: API key, JWT, and OAuth2 support
+- **Rate Limiting**: Redis-based rate limiting with multiple strategies
+- **Network Security**: Service isolation, CORS management, and TLS support
+- **Security Middleware**: Helmet.js integration, XSS protection
+
+### Monitoring & Observability
+- **Health Monitoring**: Real-time service health checks and status tracking
+- **Metrics Collection**: Prometheus integration with custom exporters
+- **Structured Logging**: Winston-based logging with rotation
+- **Error Tracking**: Sentry integration with alert routing
+- **Transport Dashboard**: Real-time visualization of transport connections
+
+### Developer Experience
+- **Multi-language SDKs**: JavaScript/TypeScript, Python, and Go
+- **CLI Tools**: Comprehensive command-line interface with transport commands
+- **IDE Extensions**: VS Code, IntelliJ, and Vim/Neovim plugins
+- **Event System**: Subscribe to platform and service events
+- **Hot Reload**: Development mode with automatic service restarts
 
 ## Installation
 
-### JavaScript/TypeScript
+### Platform Installation
+```bash
+# Linux/macOS/WSL
+curl -fsSL https://raw.githubusercontent.com/modelcontextprotocol/mcp-platform/main/install.sh | bash
+
+# Windows PowerShell
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/modelcontextprotocol/mcp-platform/main/install.ps1'))
+```
+
+### SDK Installation
+
+#### JavaScript/TypeScript
 ```bash
 npm install @mcp/sdk
 ```
 
-### Python
+#### Python
 ```bash
 pip install mcp-sdk
 ```
 
-### Go
+#### Go
 ```bash
 go get github.com/modelcontextprotocol/go-sdk
 ```
 
 ## Quick Start
+
+### Platform Commands
+```bash
+# Start all services
+mcp start
+
+# Check service status
+mcp status
+
+# View transport connections
+mcp transport status
+
+# Install a new service
+mcp install postgres-mcp
+
+# Start service with specific transport
+mcp server start filesystem --transport http
+
+# View real-time metrics
+mcp transport metrics
+
+# Access dashboard
+open http://localhost:8080/dashboard
+```
 
 ### JavaScript Example
 ```javascript
@@ -119,8 +173,18 @@ func main() {
 }
 ```
 
-## SDK Architecture
+## Architecture
 
+### Platform Architecture
+The MCP Platform uses a microservices architecture with:
+
+1. **Transport Layer**: Universal transport support (stdio, HTTP, WebSocket, SSE)
+2. **API Gateway**: Unified API routing requests to appropriate transports
+3. **Process Manager**: Lifecycle management with resource monitoring
+4. **Service Registry**: Enhanced with transport metadata and auto-detection
+5. **Monitoring Stack**: Prometheus, Grafana, and custom dashboards
+
+### SDK Architecture
 The SDK is built with a layered architecture:
 
 1. **Core SDK**: Low-level interface implementing the MCP protocol
@@ -137,17 +201,51 @@ The SDK is designed to integrate seamlessly with:
 - **CI/CD Pipelines**: Automate service deployment and testing
 - **Monitoring Tools**: Track service health and performance
 
+## Transport Support
+
+### Supported Transports
+- **stdio**: Process-based communication for local executables
+- **HTTP**: RESTful API with optional SSE for server-sent events
+- **WebSocket**: Bidirectional real-time communication
+- **SSE**: Server-sent events for streaming updates
+
+### Transport Selection
+The platform automatically detects the appropriate transport based on:
+- Service configuration in the registry
+- Environment variables
+- Service naming patterns
+- Explicit transport specification
+
 ## Development
 
 ### Running Tests
 ```bash
+# Run all tests
 npm test
+
+# Run transport-specific tests
+npm test tests/unit/transports/
+
+# Run integration tests
+python3 tests/test_phase7_integration.py
 ```
 
 ### Building Documentation
 ```bash
 npm run docs
 ```
+
+### Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+## Version History
+- v6.0: Phase 7 - Universal Transport Support
+- v5.0: Phase 6 - Production Ready with full observability
+- v4.0: Phase 5 - Ecosystem Growth with SDKs and IDE extensions
+- v3.0: Phase 4 - Enterprise Features
+- v2.0: Phase 3 - Production Readiness
+- v1.0: Phase 2 - Developer Experience
+- v1.0-beta: Phase 1 - Core Functionality
 
 ## License
 

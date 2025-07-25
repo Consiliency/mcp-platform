@@ -1,0 +1,166 @@
+{
+  "bb58abd1b7ef001d3ffc5f7eba1c4f82bf33da7316c7539bb2afbdd5fefdcfb1": {
+    "key": "mcp_ff03...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T20:38:19.444Z",
+    "lastUsed": "2025-07-24T20:38:19.445Z",
+    "id": "bb58abd1b7ef001d3ffc5f7eba1c4f82bf33da7316c7539bb2afbdd5fefdcfb1"
+  },
+  "9421ce80fa065882f1dab707632c416bb1e76530575b51e57aba6d1b70bdb9b0": {
+    "key": "mcp_15e4...",
+    "name": "test-key",
+    "permissions": [
+      "services.read",
+      "services.write"
+    ],
+    "createdAt": "2025-07-24T20:38:20.766Z",
+    "lastUsed": null,
+    "id": "9421ce80fa065882f1dab707632c416bb1e76530575b51e57aba6d1b70bdb9b0"
+  },
+  "7ef1f0be7505c4201d3079bcd9374aaba233ad654757e2773cee7686b9fab9b3": {
+    "key": "mcp_027d...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T20:38:20.769Z",
+    "lastUsed": null,
+    "id": "7ef1f0be7505c4201d3079bcd9374aaba233ad654757e2773cee7686b9fab9b3"
+  },
+  "3df531e26c9af5b654caccabd596e53e6b090f7e188e9f3b82048e237d88a5ad": {
+    "key": "mcp_f800...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T20:38:20.774Z",
+    "lastUsed": "2025-07-24T20:38:20.774Z",
+    "id": "3df531e26c9af5b654caccabd596e53e6b090f7e188e9f3b82048e237d88a5ad"
+  },
+  "89b79d6c9253f9afc2f2f78acfeb70f119de743ac67eb8d2d645d6a3886658fc": {
+    "key": "mcp_df98...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T20:39:55.286Z",
+    "lastUsed": "2025-07-24T20:39:55.287Z",
+    "id": "89b79d6c9253f9afc2f2f78acfeb70f119de743ac67eb8d2d645d6a3886658fc"
+  },
+  "92ecf9f4ee3f729f06f647f3f6782ec0323aba5c60ba233194e8da8bf0183ea4": {
+    "key": "mcp_0d49...",
+    "name": "test-key",
+    "permissions": [
+      "services.read",
+      "services.write"
+    ],
+    "createdAt": "2025-07-24T20:39:56.616Z",
+    "lastUsed": null,
+    "id": "92ecf9f4ee3f729f06f647f3f6782ec0323aba5c60ba233194e8da8bf0183ea4"
+  },
+  "3d59066abb16f15e127f846747543848f663a544f4765cac97e7b34aa692b451": {
+    "key": "mcp_115a...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T20:39:56.619Z",
+    "lastUsed": null,
+    "id": "3d59066abb16f15e127f846747543848f663a544f4765cac97e7b34aa692b451"
+  },
+  "021b78ab6387baf3c0f703fb320f0a8069d30e1046b74f981a94511c43ed1184": {
+    "key": "mcp_0959...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T20:39:56.624Z",
+    "lastUsed": "2025-07-24T20:39:56.625Z",
+    "id": "021b78ab6387baf3c0f703fb320f0a8069d30e1046b74f981a94511c43ed1184"
+  },
+  "38f0ce239dd1a5990bcab8f605e2005e42ffd3eaabfc41c752e1a6b85022905e": {
+    "key": "mcp_ae83...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T22:52:02.466Z",
+    "lastUsed": "2025-07-24T22:52:02.468Z",
+    "id": "38f0ce239dd1a5990bcab8f605e2005e42ffd3eaabfc41c752e1a6b85022905e"
+  },
+  "079895cc2f04f95f6bbce8349c0e468795c32b9e3b0c06e56203c6ecfd6b9b5a": {
+    "key": "mcp_79b0...",
+    "name": "test-key",
+    "permissions": [
+      "services.read",
+      "services.write"
+    ],
+    "createdAt": "2025-07-24T22:52:03.689Z",
+    "lastUsed": null,
+    "id": "079895cc2f04f95f6bbce8349c0e468795c32b9e3b0c06e56203c6ecfd6b9b5a"
+  },
+  "8a6cf4b17de206b3fee2200e52c0384cecac46c36dc8c649beea3956b0daf2a5": {
+    "key": "mcp_300c...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T22:52:03.691Z",
+    "lastUsed": null,
+    "id": "8a6cf4b17de206b3fee2200e52c0384cecac46c36dc8c649beea3956b0daf2a5"
+  },
+  "72a8c510acbac2fe25befdd505c33a40d1f4121201bdda39de3ce72066c8a70d": {
+    "key": "mcp_fa0b...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-24T22:52:03.694Z",
+    "lastUsed": "2025-07-24T22:52:03.694Z",
+    "id": "72a8c510acbac2fe25befdd505c33a40d1f4121201bdda39de3ce72066c8a70d"
+  },
+  "450839d99d4475a333f41d2c913714594e8e51501c78b250a49b29901e5bbcbc": {
+    "key": "mcp_1370...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-25T20:22:27.636Z",
+    "lastUsed": "2025-07-25T20:22:27.637Z",
+    "id": "450839d99d4475a333f41d2c913714594e8e51501c78b250a49b29901e5bbcbc"
+  },
+  "384944075714377393b9596a3649b29f53fe7c8927df70271e52c4358b36e1fe": {
+    "key": "mcp_9a53...",
+    "name": "test-key",
+    "permissions": [
+      "services.read",
+      "services.write"
+    ],
+    "createdAt": "2025-07-25T20:22:28.952Z",
+    "lastUsed": null,
+    "id": "384944075714377393b9596a3649b29f53fe7c8927df70271e52c4358b36e1fe"
+  },
+  "72f14b67c9b775793ad9263c950126cdafbc5cf43d25262d5b8a3b1863eb2a31": {
+    "key": "mcp_6f8e...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-25T20:22:28.955Z",
+    "lastUsed": null,
+    "id": "72f14b67c9b775793ad9263c950126cdafbc5cf43d25262d5b8a3b1863eb2a31"
+  },
+  "6e8a11f63aa44e389b028e8e5e420f4ec883dbefb56f21078f3e2b3d3c35337c": {
+    "key": "mcp_6498...",
+    "name": "test-key",
+    "permissions": [
+      "services.read"
+    ],
+    "createdAt": "2025-07-25T20:22:28.968Z",
+    "lastUsed": "2025-07-25T20:22:28.969Z",
+    "id": "6e8a11f63aa44e389b028e8e5e420f4ec883dbefb56f21078f3e2b3d3c35337c"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "startTime": 1753397500527,
+  "version": "1.0.0",
+  "commit": "bb509c9",
+  "branch": "main",
+  "artifacts": [
+    {
+      "name": "CLI",
+      "path": "/home/jenner/code/mcps/dist/mcp-local-setup/cli",
+      "type": "node"
+    },
+    {
+      "name": "SDK",
+      "path": "/home/jenner/code/mcps/dist/sdk",
+      "type": "node"
+    },
+    {
+      "name": "IDE Extensions/vscode",
+      "path": "/home/jenner/code/mcps/dist/ide/vscode",
+      "type": "node"
+    },
+    {
+      "name": "MANIFEST.txt",
+      "path": "/home/jenner/code/mcps/dist/packages/MANIFEST.txt",
+      "type": "package"
+    },
+    {
+      "name": "checksums.json",
+      "path": "/home/jenner/code/mcps/dist/packages/checksums.json",
+      "type": "package"
+    },
+    {
+      "name": "checksums.txt",
+      "path": "/home/jenner/code/mcps/dist/packages/checksums.txt",
+      "type": "package"
+    },
+    {
+      "name": "debian-package",
+      "path": "/home/jenner/code/mcps/dist/packages/debian-package",
+      "type": "package"
+    },
+    {
+      "name": "manifest.json",
+      "path": "/home/jenner/code/mcps/dist/packages/manifest.json",
+      "type": "package"
+    },
+    {
+      "name": "mcp-platform-1.0.0-darwin-x64.tar.gz",
+      "path": "/home/jenner/code/mcps/dist/packages/mcp-platform-1.0.0-darwin-x64.tar.gz",
+      "type": "package"
+    },
+    {
+      "name": "mcp-platform-1.0.0-darwin-x64.zip",
+      "path": "/home/jenner/code/mcps/dist/packages/mcp-platform-1.0.0-darwin-x64.zip",
+      "type": "package"
+    },
+    {
+      "name": "mcp-platform-1.0.0-linux-x64.tar.gz",
+      "path": "/home/jenner/code/mcps/dist/packages/mcp-platform-1.0.0-linux-x64.tar.gz",
+      "type": "package"
+    },
+    {
+      "name": "mcp-platform-1.0.0-linux-x64.zip",
+      "path": "/home/jenner/code/mcps/dist/packages/mcp-platform-1.0.0-linux-x64.zip",
+      "type": "package"
+    },
+    {
+      "name": "mcp-platform-1.0.0-win32-x64.tar.gz",
+      "path": "/home/jenner/code/mcps/dist/packages/mcp-platform-1.0.0-win32-x64.tar.gz",
+      "type": "package"
+    },
+    {
+      "name": "mcp-platform-1.0.0-win32-x64.zip",
+      "path": "/home/jenner/code/mcps/dist/packages/mcp-platform-1.0.0-win32-x64.zip",
+      "type": "package"
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "duration": 6345,
+  "durationFormatted": "6s",
+  "timestamp": "2025-07-24T22:51:46.872Z",
+  "environment": {
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v22.17.0",
+    "target": "production"
+  }
+}

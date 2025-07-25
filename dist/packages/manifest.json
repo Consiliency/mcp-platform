@@ -1,0 +1,28 @@
+{
+  "version": "1.0.1-test2",
+  "timestamp": "2025-07-25T00:37:56.019Z",
+  "packages": [
+    {
+      "file": "mcp-platform-1.0.1-test2-linux-x64.tar.gz",
+      "platform": "linux",
+      "arch": "x64",
+      "format": "tar.gz",
+      "size": 48775,
+      "sizeFormatted": "47.63 KB",
+      "checksum": "de1b8ab65d4138e9b59e1bfe7a56dc9de2b8dec9875ef2adc0053af2b339ffa4",
+      "signature": "mcp-platform-1.0.1-test2-linux-x64.tar.gz.asc"
+    }
+  ],
+  "checksums": {
+    "mcp-platform-1.0.1-test2-linux-x64.tar.gz": {
+      "sha256": "de1b8ab65d4138e9b59e1bfe7a56dc9de2b8dec9875ef2adc0053af2b339ffa4",
+      "size": 48775
+    }
+  },
+  "buildInfo": {
+    "node": "v22.17.0",
+    "platform": "linux",
+    "arch": "x64",
+    "builder": "jenner"
+  }
+}
