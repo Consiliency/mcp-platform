@@ -7,6 +7,7 @@
 const SchemaValidator = require('./schema-validator');
 const DependencyValidator = require('./dependency-validator');
 const VersionValidator = require('./version-validator');
+const TransportValidator = require('./transport-validator');
 
 /**
  * Run all validators on a catalog file
@@ -19,6 +20,7 @@ function validateAll(filePath) {
     schema: null,
     dependencies: null,
     versions: null,
+    transport: null,
     summary: {
       passed: [],
       failed: []
@@ -58,6 +60,56 @@ function validateAll(filePath) {
     results.summary.passed.push('versions');
   } else {
     results.summary.failed.push('versions');
+    results.valid = false;
+  }
+
+  // Run transport validation
+  console.log('Running transport validation...');
+  const transportValidator = new TransportValidator();
+  
+  // Load catalog data for transport validation
+  try {
+    const fs = require('fs');
+    const catalogData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const transportResults = {
+      valid: true,
+      errors: [],
+      warnings: []
+    };
+    
+    if (catalogData.servers) {
+      catalogData.servers.forEach(service => {
+        const validation = transportValidator.validateService(service);
+        if (!validation.valid) {
+          transportResults.valid = false;
+          transportResults.errors.push({
+            service: service.id,
+            errors: validation.errors
+          });
+        }
+        if (validation.warnings.length > 0) {
+          transportResults.warnings.push({
+            service: service.id,
+            warnings: validation.warnings
+          });
+        }
+      });
+    }
+    
+    results.transport = transportResults;
+    
+    if (results.transport.valid) {
+      results.summary.passed.push('transport');
+    } else {
+      results.summary.failed.push('transport');
+      results.valid = false;
+    }
+  } catch (error) {
+    results.transport = {
+      valid: false,
+      errors: [{ message: `Failed to validate transport: ${error.message}` }]
+    };
+    results.summary.failed.push('transport');
     results.valid = false;
   }
 
@@ -144,6 +196,36 @@ function formatResults(results) {
     }
   }
   
+  // Transport validation results
+  output.push('\n🚀 TRANSPORT VALIDATION:');
+  if (results.transport.valid) {
+    output.push('   ✅ Passed');
+    if (results.transport.warnings && results.transport.warnings.length > 0) {
+      output.push('   ⚠️  Warnings:');
+      for (const warning of results.transport.warnings) {
+        output.push(`     Service: ${warning.service}`);
+        for (const w of warning.warnings) {
+          output.push(`       - ${w.path}: ${w.message}`);
+        }
+      }
+    }
+  } else {
+    output.push('   ❌ Failed');
+    if (results.transport.errors && results.transport.errors.length > 0) {
+      output.push('   Errors:');
+      for (const error of results.transport.errors) {
+        if (error.service) {
+          output.push(`     Service: ${error.service}`);
+          for (const e of error.errors) {
+            output.push(`       - ${e.path}: ${e.message}`);
+          }
+        } else {
+          output.push(`     - ${error.message}`);
+        }
+      }
+    }
+  }
+  
   output.push('\n' + '=' .repeat(60));
   
   return output.join('\n');
@@ -172,6 +254,7 @@ module.exports = {
   SchemaValidator,
   DependencyValidator,
   VersionValidator,
+  TransportValidator,
   validateAll,
   formatResults
 };

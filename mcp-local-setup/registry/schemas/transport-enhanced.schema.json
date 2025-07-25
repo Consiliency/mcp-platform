@@ -1,0 +1,322 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Transport-Enhanced MCP Service Schema",
+  "description": "Extended schema for MCP service definitions with transport type metadata and configurations",
+  "type": "object",
+  "required": ["id", "name", "version", "category", "source", "docker", "config", "transport"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique service identifier (lowercase, alphanumeric, hyphens)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable service name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Service description"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Service version (semver format)"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["development", "data", "ai-ml", "cloud", "custom"],
+      "description": "Service category"
+    },
+    "source": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["npm", "docker", "git", "local"]
+        },
+        "package": {
+          "type": "string",
+          "description": "Package name for npm type"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Repository URL for git type"
+        },
+        "path": {
+          "type": "string",
+          "description": "Local path for local type"
+        },
+        "version": {
+          "type": "string",
+          "description": "Package or image version"
+        }
+      }
+    },
+    "transport": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["stdio", "http", "websocket", "sse"],
+          "description": "Transport protocol type"
+        },
+        "stdio": {
+          "type": "object",
+          "description": "Configuration for stdio transport",
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to execute (e.g., 'node', 'python')"
+            },
+            "args": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Command arguments"
+            },
+            "env": {
+              "type": "object",
+              "description": "Environment variables for stdio process"
+            }
+          }
+        },
+        "http": {
+          "type": "object",
+          "description": "Configuration for HTTP transport",
+          "properties": {
+            "url": {
+              "type": "string",
+              "pattern": "^https?://",
+              "description": "HTTP endpoint URL"
+            },
+            "headers": {
+              "type": "object",
+              "description": "Custom HTTP headers"
+            },
+            "timeout": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 30000,
+              "description": "Request timeout in milliseconds"
+            }
+          }
+        },
+        "websocket": {
+          "type": "object",
+          "description": "Configuration for WebSocket transport",
+          "properties": {
+            "url": {
+              "type": "string",
+              "pattern": "^wss?://",
+              "description": "WebSocket endpoint URL"
+            },
+            "reconnect": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable automatic reconnection"
+            },
+            "pingInterval": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 30000,
+              "description": "Ping interval in milliseconds"
+            }
+          }
+        },
+        "sse": {
+          "type": "object",
+          "description": "Configuration for Server-Sent Events transport",
+          "properties": {
+            "url": {
+              "type": "string",
+              "pattern": "^https?://",
+              "description": "SSE endpoint URL"
+            },
+            "reconnectInterval": {
+              "type": "integer",
+              "minimum": 1000,
+              "default": 5000,
+              "description": "Reconnection interval in milliseconds"
+            }
+          }
+        },
+        "autoDetect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable automatic transport detection based on server capabilities"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "stdio" } }
+          },
+          "then": {
+            "required": ["stdio"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "http" } }
+          },
+          "then": {
+            "required": ["http"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "websocket" } }
+          },
+          "then": {
+            "required": ["websocket"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "sse" } }
+          },
+          "then": {
+            "required": ["sse"]
+          }
+        }
+      ]
+    },
+    "docker": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": ["string", "null"],
+          "description": "Pre-built Docker image"
+        },
+        "build": {
+          "type": "object",
+          "properties": {
+            "dockerfile": {
+              "type": "string",
+              "description": "Path to Dockerfile"
+            },
+            "context": {
+              "type": "string",
+              "description": "Build context path"
+            },
+            "args": {
+              "type": "object",
+              "description": "Build arguments"
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["port"],
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 3000,
+          "maximum": 9999,
+          "description": "Service port"
+        },
+        "environment": {
+          "type": "object",
+          "description": "Environment variables"
+        },
+        "env_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required environment variables"
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Volume mounts"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Service dependencies (other service IDs)"
+    },
+    "healthCheck": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "default": "/health",
+          "description": "Health check endpoint path"
+        },
+        "interval": {
+          "type": "string",
+          "pattern": "^\\d+[smh]$",
+          "default": "30s",
+          "description": "Health check interval"
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^\\d+[smh]$",
+          "default": "5s",
+          "description": "Health check timeout"
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Number of retries before marking unhealthy"
+        },
+        "startPeriod": {
+          "type": "string",
+          "pattern": "^\\d+[smh]$",
+          "default": "30s",
+          "description": "Grace period before health checks start"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "properties": {
+        "startupTimeout": {
+          "type": "string",
+          "pattern": "^\\d+[smh]$",
+          "default": "60s",
+          "description": "Maximum time allowed for service startup"
+        },
+        "shutdownGracePeriod": {
+          "type": "string",
+          "pattern": "^\\d+[smh]$",
+          "default": "30s",
+          "description": "Grace period for graceful shutdown"
+        },
+        "restartPolicy": {
+          "type": "string",
+          "enum": ["no", "on-failure", "unless-stopped", "always"],
+          "default": "unless-stopped",
+          "description": "Docker restart policy"
+        }
+      }
+    },
+    "clients": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["claude-code", "vscode", "cursor", "all"]
+      },
+      "description": "Compatible MCP clients"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Service tags for search and filtering"
+    }
+  }
+}
