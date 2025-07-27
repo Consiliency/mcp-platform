@@ -13,9 +13,15 @@ class CircuitBreaker extends EventEmitter {
     this.failures = 0;
     this.lastFailTime = null;
     this.resetTimer = null;
+    this.name = options.name || 'default';
     
-    // TODO: Implement by stability-team
-    // Implement within existing error handling boundaries
+    // Additional metrics
+    this.metrics = {
+      totalRequests: 0,
+      totalFailures: 0,
+      totalSuccesses: 0,
+      stateChanges: []
+    };
   }
   
   /**
@@ -23,11 +29,66 @@ class CircuitBreaker extends EventEmitter {
    * TASK: Implement circuit breaker logic
    */
   async execute(fn) {
-    // TODO: Implement by stability-team
-    // - Check circuit state
-    // - Execute function if allowed
-    // - Track failures/successes
-    // - Transition states appropriately
+    this.metrics.totalRequests++;
+    
+    // Check circuit state
+    if (this.state === 'OPEN') {
+      const error = new Error(`Circuit breaker ${this.name} is OPEN`);
+      this.emit('rejected', { error, state: this.state });
+      throw error;
+    }
+    
+    try {
+      // Execute function
+      const result = await fn();
+      
+      // Track success
+      this.onSuccess();
+      
+      return result;
+    } catch (error) {
+      // Track failure
+      this.onFailure(error);
+      
+      throw error;
+    }
+  }
+  
+  /**
+   * Handle successful execution
+   */
+  onSuccess() {
+    this.metrics.totalSuccesses++;
+    
+    if (this.state === 'HALF_OPEN') {
+      this.close();
+    }
+    
+    // Reset failure count on success in CLOSED state
+    if (this.state === 'CLOSED') {
+      this.failures = 0;
+    }
+    
+    this.emit('success', { state: this.state });
+  }
+  
+  /**
+   * Handle failed execution
+   */
+  onFailure(error) {
+    this.failures++;
+    this.lastFailTime = Date.now();
+    this.metrics.totalFailures++;
+    
+    this.emit('failure', { error, failures: this.failures, state: this.state });
+    
+    // Check if we should open the circuit
+    if (this.state === 'CLOSED' && this.failures >= this.failureThreshold) {
+      this.open();
+    } else if (this.state === 'HALF_OPEN') {
+      // Failed in half-open state, re-open circuit
+      this.open();
+    }
   }
   
   /**
@@ -35,10 +96,28 @@ class CircuitBreaker extends EventEmitter {
    * TASK: Implement circuit opening logic
    */
   open() {
-    // TODO: Implement by stability-team
-    // - Set state to OPEN
-    // - Start reset timer
-    // - Emit state change event
+    if (this.state === 'OPEN') return;
+    
+    const previousState = this.state;
+    this.state = 'OPEN';
+    
+    this.metrics.stateChanges.push({
+      from: previousState,
+      to: 'OPEN',
+      timestamp: new Date().toISOString(),
+      failures: this.failures
+    });
+    
+    // Start reset timer
+    if (this.resetTimer) {
+      clearTimeout(this.resetTimer);
+    }
+    
+    this.resetTimer = setTimeout(() => {
+      this.halfOpen();
+    }, this.resetTimeout);
+    
+    this.emit('stateChange', { from: previousState, to: 'OPEN' });
   }
   
   /**
@@ -46,10 +125,24 @@ class CircuitBreaker extends EventEmitter {
    * TASK: Implement half-open state
    */
   halfOpen() {
-    // TODO: Implement by stability-team
-    // - Set state to HALF_OPEN
-    // - Allow test request
-    // - Monitor result
+    if (this.state !== 'OPEN') return;
+    
+    const previousState = this.state;
+    this.state = 'HALF_OPEN';
+    
+    this.metrics.stateChanges.push({
+      from: previousState,
+      to: 'HALF_OPEN',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear reset timer
+    if (this.resetTimer) {
+      clearTimeout(this.resetTimer);
+      this.resetTimer = null;
+    }
+    
+    this.emit('stateChange', { from: previousState, to: 'HALF_OPEN' });
   }
   
   /**
@@ -57,10 +150,71 @@ class CircuitBreaker extends EventEmitter {
    * TASK: Implement circuit closing
    */
   close() {
-    // TODO: Implement by stability-team
-    // - Reset failure count
-    // - Set state to CLOSED
-    // - Clear timers
+    if (this.state === 'CLOSED') return;
+    
+    const previousState = this.state;
+    this.state = 'CLOSED';
+    this.failures = 0;
+    this.lastFailTime = null;
+    
+    this.metrics.stateChanges.push({
+      from: previousState,
+      to: 'CLOSED',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear any timers
+    if (this.resetTimer) {
+      clearTimeout(this.resetTimer);
+      this.resetTimer = null;
+    }
+    
+    this.emit('stateChange', { from: previousState, to: 'CLOSED' });
+  }
+  
+  /**
+   * Get current status
+   */
+  getStatus() {
+    return {
+      name: this.name,
+      state: this.state,
+      failures: this.failures,
+      lastFailTime: this.lastFailTime,
+      metrics: this.getMetrics()
+    };
+  }
+  
+  /**
+   * Get metrics
+   */
+  getMetrics() {
+    return {
+      ...this.metrics,
+      failureRate: this.metrics.totalRequests > 0 
+        ? (this.metrics.totalFailures / this.metrics.totalRequests * 100).toFixed(2) + '%'
+        : '0%',
+      successRate: this.metrics.totalRequests > 0
+        ? (this.metrics.totalSuccesses / this.metrics.totalRequests * 100).toFixed(2) + '%'
+        : '0%'
+    };
+  }
+  
+  /**
+   * Reset circuit breaker
+   */
+  reset() {
+    this.close();
+    this.failures = 0;
+    this.lastFailTime = null;
+    this.metrics = {
+      totalRequests: 0,
+      totalFailures: 0,
+      totalSuccesses: 0,
+      stateChanges: []
+    };
+    
+    this.emit('reset', { name: this.name });
   }
 }
 
