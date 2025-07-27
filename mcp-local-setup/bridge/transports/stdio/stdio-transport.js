@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const { TransportInterface } = require('../../core');
 const readline = require('readline');
 const EventEmitter = require('events');
+const TransportOptimizer = require('../transport-optimizer');
 
 /**
  * stdio Transport Adapter
@@ -12,6 +13,8 @@ class StdioTransport extends TransportInterface {
         super(config);
         this.type = 'stdio';
         this.processes = new Map();
+        this.optimizer = new TransportOptimizer();
+        this.batchingEnabled = config.batchingEnabled || false;
     }
 
     /**
@@ -19,7 +22,21 @@ class StdioTransport extends TransportInterface {
      */
     async initialize() {
         this.status = 'initialized';
-        console.log('stdio transport initialized');
+        
+        // Apply performance optimizations
+        this.optimizer.tuneTransportPerformance(this, {
+            bufferSize: 65536, // 64KB for stdio
+            timeout: 30000,
+            concurrency: 5, // Limit concurrent stdio processes
+            compression: false // Not applicable for stdio
+        });
+        
+        // Enable message batching if configured
+        if (this.batchingEnabled) {
+            this.optimizer.enableMessageBatching(this);
+        }
+        
+        console.log('stdio transport initialized with optimizations');
     }
 
     /**
@@ -76,8 +93,14 @@ class StdioTransport extends TransportInterface {
 
             const child = spawn(command, args, spawnOptions);
             
+            // Apply buffer size optimization if set
+            if (this.bufferSize && child.stdout && child.stdin) {
+                child.stdout.setNoDelay && child.stdout.setNoDelay(true);
+                child.stdin.setNoDelay && child.stdin.setNoDelay(true);
+            }
+            
             // Create message handler
-            const messageHandler = new StdioMessageHandler(child);
+            const messageHandler = new StdioMessageHandler(child, this.timeout);
             
             // Store process info
             const processInfo = {
@@ -277,6 +300,52 @@ class StdioTransport extends TransportInterface {
 
         return metrics;
     }
+    
+    /**
+     * Send a batch of messages
+     * @param {Array} messages - Array of messages to send
+     * @returns {Promise<Array>} Array of responses
+     */
+    async sendBatch(messages) {
+        const results = [];
+        
+        // For stdio, we send messages sequentially but can optimize the timing
+        for (const message of messages) {
+            try {
+                const result = await this.sendMessage(message.connectionId, message.data);
+                results.push({ success: true, result });
+            } catch (error) {
+                results.push({ success: false, error: error.message });
+            }
+        }
+        
+        return results;
+    }
+    
+    /**
+     * Set buffer size for stdio streams
+     * @param {number} size - Buffer size in bytes
+     */
+    setBufferSize(size) {
+        this.bufferSize = size;
+        // Apply to new connections
+    }
+    
+    /**
+     * Set timeout for operations
+     * @param {number} timeout - Timeout in milliseconds
+     */
+    setTimeout(timeout) {
+        this.timeout = timeout;
+    }
+    
+    /**
+     * Set concurrency limit
+     * @param {number} limit - Maximum concurrent connections
+     */
+    setConcurrency(limit) {
+        this.concurrencyLimit = limit;
+    }
 }
 
 /**
@@ -284,11 +353,12 @@ class StdioTransport extends TransportInterface {
  * Handles JSON-RPC communication over stdio
  */
 class StdioMessageHandler extends EventEmitter {
-    constructor(process) {
+    constructor(process, timeout = 30000) {
         super();
         this.process = process;
         this.pendingRequests = new Map();
         this.buffer = '';
+        this.timeout = timeout;
         
         this.setupStreams();
     }
@@ -353,13 +423,13 @@ class StdioMessageHandler extends EventEmitter {
                 if (message.id) {
                     this.pendingRequests.set(message.id, { resolve, reject });
                     
-                    // Timeout after 30 seconds
+                    // Timeout based on configured value
                     setTimeout(() => {
                         if (this.pendingRequests.has(message.id)) {
                             this.pendingRequests.delete(message.id);
                             reject(new Error('Request timeout'));
                         }
-                    }, 30000);
+                    }, this.timeout);
                 }
 
                 // Write message to stdin
