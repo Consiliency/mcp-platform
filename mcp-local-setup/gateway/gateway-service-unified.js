@@ -12,6 +12,12 @@ const PlatformManager = require('./platform-manager');
 const PathTranslator = require('./path-translator');
 const ApiKeyManager = require('./api-key-manager');
 
+// Import Phase 8 enhancements
+const ToolInventoryCache = require('./tool-inventory');
+const LifecycleManager = require('./lifecycle-manager');
+const SmartToolDiscovery = require('./smart-discovery');
+const ApiKeyValidator = require('./api-key-validator');
+
 /**
  * Unified Gateway Service that handles both HTTP and stdio servers
  */
@@ -28,6 +34,12 @@ class UnifiedGatewayService extends EventEmitter {
     
     // API key management
     this.apiKeyManager = new ApiKeyManager();
+    
+    // Phase 8 enhancements
+    this.toolInventoryCache = new ToolInventoryCache();
+    this.lifecycleManager = new LifecycleManager();
+    this.apiKeyValidator = new ApiKeyValidator(this.apiKeyManager);
+    this.smartDiscovery = new SmartToolDiscovery(this, this.apiKeyManager, this.toolInventoryCache);
     
     // Core services
     this.discovery = new DockerDiscovery();
@@ -58,6 +70,8 @@ class UnifiedGatewayService extends EventEmitter {
     // Setup listeners
     this.setupDiscoveryListeners();
     this.setupBridgeListeners();
+    this.setupLifecycleListeners();
+    this.setupSmartDiscoveryListeners();
   }
   
   /**
@@ -97,6 +111,9 @@ class UnifiedGatewayService extends EventEmitter {
     // Initialize API key manager
     await this.apiKeyManager.initialize();
     
+    // Start lifecycle manager
+    this.lifecycleManager.start();
+    
     // Start bridge service
     await this.bridge.start();
     
@@ -125,6 +142,12 @@ class UnifiedGatewayService extends EventEmitter {
     // Stop services
     this.discovery.stop();
     await this.bridge.stop();
+    
+    // Stop lifecycle manager
+    this.lifecycleManager.stop();
+    
+    // Clean up API key validator
+    this.apiKeyValidator.destroy();
     
     // Stop health monitoring
     if (this.healthCheckInterval) {
@@ -525,6 +548,57 @@ class UnifiedGatewayService extends EventEmitter {
   }
   
   /**
+   * Setup lifecycle manager listeners
+   */
+  setupLifecycleListeners() {
+    this.lifecycleManager.on('cleanup', async (serverId) => {
+      console.log(`Lifecycle: Cleaning up idle server ${serverId}`);
+      
+      const server = this.servers.get(serverId);
+      if (!server) return;
+      
+      if (server.type === 'stdio' && server.connectionId) {
+        await this.bridge.stopServer(serverId);
+      } else if (server.type === 'http') {
+        // For HTTP servers, just remove from tracking
+        this.removeServerTools(serverId);
+        this.servers.delete(serverId);
+        this.httpClients.delete(serverId);
+      }
+      
+      // Invalidate tool cache
+      await this.toolInventoryCache.invalidateServer(serverId);
+    });
+  }
+  
+  /**
+   * Setup smart discovery listeners
+   */
+  setupSmartDiscoveryListeners() {
+    this.smartDiscovery.on('tools-discovered', ({ serverId, toolCount, tools }) => {
+      console.log(`Smart Discovery: Discovered ${toolCount} tools for ${serverId}`);
+      
+      // Register tool requirements with validator
+      for (const tool of tools) {
+        const serverConfig = this.servers.get(serverId)?.config;
+        if (serverConfig?.requiredKeys) {
+          this.apiKeyValidator.registerToolRequirements(tool.name, serverConfig.requiredKeys);
+        }
+      }
+    });
+    
+    this.smartDiscovery.on('tools-added', ({ serverId, tools }) => {
+      console.log(`Smart Discovery: Tools added for ${serverId}:`, tools.map(t => t.name));
+      this.emit('tools:updated', this.getAllToolsSync());
+    });
+    
+    this.smartDiscovery.on('tools-removed', ({ serverId, tools }) => {
+      console.log(`Smart Discovery: Tools removed for ${serverId}:`, tools.map(t => t.name));
+      this.emit('tools:updated', this.getAllToolsSync());
+    });
+  }
+  
+  /**
    * Discover tools from a server (works for both HTTP and stdio)
    */
   async discoverServerTools(serverId) {
@@ -533,6 +607,20 @@ class UnifiedGatewayService extends EventEmitter {
       if (!server) return;
       
       console.log(`Discovering tools for ${serverId} (${server.type})`);
+      
+      // Check cache first
+      const cachedTools = this.toolInventoryCache.getServerTools(serverId);
+      if (cachedTools) {
+        console.log(`Using cached tools for ${serverId}: ${cachedTools.length} tools`);
+        
+        // Apply cached tools to internal state
+        this.applyServerTools(serverId, cachedTools);
+        return;
+      }
+      
+      // Register activity with lifecycle manager
+      const clientId = 'gateway-discovery';
+      this.lifecycleManager.registerActivity(serverId, clientId);
       
       let response;
       
@@ -562,36 +650,51 @@ class UnifiedGatewayService extends EventEmitter {
       if (response?.result?.tools) {
         const serverTools = response.result.tools;
         
-        // Clear existing tools
-        for (const [toolKey, tool] of this.tools) {
-          if (tool.serverId === serverId) {
-            this.tools.delete(toolKey);
-            this.toolRouting.delete(tool.namespacedName);
-          }
-        }
+        // Update cache
+        await this.toolInventoryCache.updateServerTools(serverId, serverTools);
         
-        // Add new tools with namespacing
-        for (const tool of serverTools) {
-          const namespacedName = `${serverId}:${tool.name}`;
-          const toolInfo = {
-            ...tool,
-            serverId,
-            namespacedName,
-            originalName: tool.name,
-            serverType: server.type
-          };
-          
-          const toolKey = `${serverId}:${tool.name}`;
-          this.tools.set(toolKey, toolInfo);
-          this.toolRouting.set(namespacedName, serverId);
-        }
+        // Apply tools to internal state
+        this.applyServerTools(serverId, serverTools);
         
-        console.log(`Discovered ${serverTools.length} tools from ${serverId}`);
-        this.emit('tools:updated', this.getAllToolsSync());
+        // Verify tools match expectations
+        await this.smartDiscovery.verifyToolsOnStartup(serverId);
       }
     } catch (error) {
       console.error(`Failed to discover tools for ${serverId}:`, error.message);
     }
+  }
+  
+  /**
+   * Apply server tools to internal state
+   * @private
+   */
+  applyServerTools(serverId, serverTools) {
+    // Clear existing tools
+    for (const [toolKey, tool] of this.tools) {
+      if (tool.serverId === serverId) {
+        this.tools.delete(toolKey);
+        this.toolRouting.delete(tool.namespacedName);
+      }
+    }
+    
+    // Add new tools with namespacing
+    for (const tool of serverTools) {
+      const namespacedName = `${serverId}:${tool.name}`;
+      const toolInfo = {
+        ...tool,
+        serverId,
+        namespacedName,
+        originalName: tool.name,
+        serverType: this.servers.get(serverId)?.type
+      };
+      
+      const toolKey = `${serverId}:${tool.name}`;
+      this.tools.set(toolKey, toolInfo);
+      this.toolRouting.set(namespacedName, serverId);
+    }
+    
+    console.log(`Applied ${serverTools.length} tools from ${serverId}`);
+    this.emit('tools:updated', this.getAllToolsSync());
   }
   
   /**
@@ -660,13 +763,28 @@ class UnifiedGatewayService extends EventEmitter {
   }
   
   async handleToolsList(message) {
-    const tools = this.getAllToolsSync();
+    // Get all tools
+    const allTools = this.getAllToolsSync();
+    
+    // Filter by API key availability
+    const availableTools = this.apiKeyValidator.filterToolsByAvailability(allTools);
+    
+    // Check if using smart discovery for lazy loading
+    const smartTools = await this.smartDiscovery.getAvailableTools();
+    
+    // Merge and deduplicate
+    const mergedTools = [...availableTools];
+    for (const smartTool of smartTools) {
+      if (!mergedTools.find(t => t.namespacedName === smartTool.namespacedName)) {
+        mergedTools.push(smartTool);
+      }
+    }
     
     return {
       jsonrpc: '2.0',
       id: message.id,
       result: {
-        tools: tools.map(tool => ({
+        tools: mergedTools.map(tool => ({
           name: tool.namespacedName,
           description: tool.description,
           inputSchema: tool.inputSchema
@@ -729,7 +847,30 @@ class UnifiedGatewayService extends EventEmitter {
       };
     }
     
+    // Check API key availability
+    const canCall = this.apiKeyValidator.canCallTool(tool.originalName);
+    if (!canCall.canCall) {
+      return {
+        jsonrpc: '2.0',
+        id: message.id,
+        error: {
+          code: -32603,
+          message: canCall.error.message,
+          data: canCall.error
+        }
+      };
+    }
+    
+    // Register activity with lifecycle manager
+    const clientId = message.clientId || 'gateway-tool-call';
+    this.lifecycleManager.registerActivity(serverId, clientId);
+    
     try {
+      // Check if server needs lazy startup
+      if (this.smartDiscovery.needsStartup(serverId)) {
+        console.log(`Lazy starting server ${serverId} for tool ${toolName}`);
+        await this.smartDiscovery.lazyDiscoverTools(serverId);
+      }
       // Translate paths in arguments if needed
       const translatedArgs = this.pathTranslator.translateToolArguments(
         tool.originalName, 
@@ -1205,6 +1346,91 @@ class UnifiedGatewayService extends EventEmitter {
       console.error('Failed to discover server:', error);
       throw new Error(`Failed to discover server: ${error.message}`);
     }
+  }
+  
+  /**
+   * List tools for a specific server (used by SmartToolDiscovery)
+   */
+  async listTools(serverId) {
+    const server = this.servers.get(serverId);
+    if (!server) {
+      throw new Error(`Server not found: ${serverId}`);
+    }
+    
+    let response;
+    
+    if (server.type === 'http') {
+      const client = this.httpClients.get(serverId);
+      if (!client) {
+        throw new Error(`No HTTP client for server: ${serverId}`);
+      }
+      
+      response = await client.post('', {
+        jsonrpc: '2.0',
+        id: `list_tools_${Date.now()}`,
+        method: 'tools/list',
+        params: {}
+      });
+      response = response.data;
+    } else if (server.type === 'stdio') {
+      response = await this.bridge.sendToServer(serverId, {
+        jsonrpc: '2.0',
+        id: `list_tools_${Date.now()}`,
+        method: 'tools/list',
+        params: {}
+      });
+    }
+    
+    if (response?.result?.tools) {
+      return response.result.tools;
+    }
+    
+    return [];
+  }
+  
+  /**
+   * Ensure a server is started (used by SmartToolDiscovery)
+   */
+  async ensureServerStarted(serverId) {
+    const server = this.servers.get(serverId);
+    if (!server) {
+      throw new Error(`Server not found: ${serverId}`);
+    }
+    
+    // For HTTP servers, they're already running
+    if (server.type === 'http') {
+      return true;
+    }
+    
+    // For stdio servers, check if running
+    if (server.type === 'stdio') {
+      if (server.status === 'running' && server.connectionId) {
+        return true;
+      }
+      
+      // Start the server
+      await this.startStdioServer(server);
+      return true;
+    }
+    
+    throw new Error(`Unknown server type: ${server.type}`);
+  }
+  
+  /**
+   * Call a tool by name (used by SmartToolDiscovery)
+   */
+  async callTool(toolName, args) {
+    const message = {
+      jsonrpc: '2.0',
+      id: `tool_call_${Date.now()}`,
+      method: 'tools/call',
+      params: {
+        name: toolName,
+        arguments: args
+      }
+    };
+    
+    return await this.handleToolCall(message);
   }
 }
 
