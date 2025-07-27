@@ -12,80 +12,139 @@ class ToolInventoryCache {
     this.lastUpdated = new Map();
     this.cacheValidationInterval = 300000; // 5 minutes
     
-    // TODO: Implement by gateway-team
-    throw new Error('Not implemented - GATEWAY-8.7');
+    // Initialize by loading existing inventory
+    this.loadInventory().catch(err => {
+      console.warn('Failed to load tool inventory:', err.message);
+    });
   }
   
   /**
    * Load tool inventory from disk
    */
   async loadInventory() {
-    // TODO: Implement by gateway-team
-    // Load persisted tool inventory from tool-inventory.json
-    throw new Error('Not implemented - GATEWAY-8.7');
+    try {
+      const data = await fs.readFile(this.inventoryPath, 'utf8');
+      const parsed = JSON.parse(data);
+      
+      // Convert back to Maps
+      this.inventory = new Map(Object.entries(parsed.inventory || {}));
+      this.lastUpdated = new Map(
+        Object.entries(parsed.lastUpdated || {}).map(([k, v]) => [k, new Date(v)])
+      );
+      
+      console.log(`Loaded tool inventory: ${this.inventory.size} servers cached`);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        // File doesn't exist yet, that's okay
+        console.log('No existing tool inventory found, starting fresh');
+      } else {
+        throw err;
+      }
+    }
   }
   
   /**
    * Save tool inventory to disk
    */
   async saveInventory() {
-    // TODO: Implement by gateway-team
-    // Persist current inventory to tool-inventory.json
-    throw new Error('Not implemented - GATEWAY-8.7');
+    const data = {
+      inventory: Object.fromEntries(this.inventory),
+      lastUpdated: Object.fromEntries(
+        Array.from(this.lastUpdated.entries()).map(([k, v]) => [k, v.toISOString()])
+      ),
+      savedAt: new Date().toISOString()
+    };
+    
+    await fs.writeFile(this.inventoryPath, JSON.stringify(data, null, 2));
+    console.log(`Saved tool inventory: ${this.inventory.size} servers`);
   }
   
   /**
    * Get cached tools for a server
    */
   getServerTools(serverId) {
-    // TODO: Implement by gateway-team
-    // Return cached tools for the specified server
-    throw new Error('Not implemented - GATEWAY-8.7');
+    if (!this.isCacheValid(serverId)) {
+      return null;
+    }
+    
+    return this.inventory.get(serverId) || null;
   }
   
   /**
    * Update tools for a server
    */
-  updateServerTools(serverId, tools) {
-    // TODO: Implement by gateway-team
-    // Update cache with new tools and timestamp
-    throw new Error('Not implemented - GATEWAY-8.7');
+  async updateServerTools(serverId, tools) {
+    this.inventory.set(serverId, tools);
+    this.lastUpdated.set(serverId, new Date());
+    
+    // Persist to disk
+    await this.saveInventory();
+    
+    console.log(`Updated tool cache for ${serverId}: ${tools.length} tools`);
   }
   
   /**
    * Validate cache freshness
    */
   isCacheValid(serverId) {
-    // TODO: Implement by gateway-team
-    // Check if cache for server is still valid based on timestamp
-    throw new Error('Not implemented - GATEWAY-8.7');
+    const lastUpdate = this.lastUpdated.get(serverId);
+    if (!lastUpdate) {
+      return false;
+    }
+    
+    const now = new Date();
+    const age = now - lastUpdate;
+    
+    return age < this.cacheValidationInterval;
   }
   
   /**
    * Mark server tools as stale
    */
-  invalidateServer(serverId) {
-    // TODO: Implement by gateway-team
-    // Mark server's tool cache as needing refresh
-    throw new Error('Not implemented - GATEWAY-8.7');
+  async invalidateServer(serverId) {
+    this.inventory.delete(serverId);
+    this.lastUpdated.delete(serverId);
+    
+    // Persist changes
+    await this.saveInventory();
+    
+    console.log(`Invalidated tool cache for ${serverId}`);
   }
   
   /**
    * Get all cached tools
    */
   getAllTools() {
-    // TODO: Implement by gateway-team
-    // Return all tools from all servers
-    throw new Error('Not implemented - GATEWAY-8.7');
+    const allTools = [];
+    
+    for (const [serverId, tools] of this.inventory.entries()) {
+      if (this.isCacheValid(serverId)) {
+        allTools.push(...tools.map(tool => ({
+          ...tool,
+          serverId
+        })));
+      }
+    }
+    
+    return allTools;
   }
   
   /**
    * Clear entire cache
    */
   async clearCache() {
-    // TODO: Implement by gateway-team
-    // Clear in-memory and persistent cache
-    throw new Error('Not implemented - GATEWAY-8.7');
+    this.inventory.clear();
+    this.lastUpdated.clear();
+    
+    // Remove the file
+    try {
+      await fs.unlink(this.inventoryPath);
+      console.log('Tool inventory cache cleared');
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
+    }
   }
 }
 
