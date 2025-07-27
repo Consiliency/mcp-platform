@@ -94,13 +94,13 @@ The automated installer handles all dependencies and configuration.
 
 #### Linux/macOS/WSL
 ```bash
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 #### Windows PowerShell
 ```powershell
 # Run as Administrator
-iwr -useb https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.ps1 | iex
 ```
 
 ### Method 2: Manual Installation
@@ -134,7 +134,7 @@ sudo systemctl enable docker
 #### Step 2: Clone Repository
 
 ```bash
-git clone https://github.com/your-org/mcp-platform.git
+git clone https://github.com/Consiliency/mcp-platform.git
 cd mcp-platform/mcp-local-setup
 ```
 
@@ -162,7 +162,7 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl wget git build-essential
 
 # Run installer
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 
 # Add to PATH
 echo 'export PATH="$HOME/.mcp-platform/scripts:$PATH"' >> ~/.bashrc
@@ -180,7 +180,7 @@ sudo setenforce 0
 sudo sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
 
 # Run installer
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 #### Arch Linux
@@ -194,7 +194,7 @@ sudo systemctl start docker
 sudo systemctl enable docker
 
 # Run installer
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 ### Windows Installation
@@ -232,7 +232,7 @@ choco install docker-desktop -y
 Restart-Computer
 
 # After restart, run MCP installer
-iwr -useb https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.ps1 | iex
 ```
 
 #### Windows-Specific Configuration
@@ -281,7 +281,7 @@ brew install --cask docker
 # In Docker Desktop: Settings > Features > Use Rosetta for x86/amd64 emulation
 
 # Run installer
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 ### WSL2 Installation
@@ -589,6 +589,6 @@ brew uninstall --cask docker
 
 ## Getting Help
 
-- **Installation Issues**: [GitHub Issues](https://github.com/your-org/mcp-platform/issues)
+- **Installation Issues**: [GitHub Issues](https://github.com/Consiliency/mcp-platform/issues)
 - **Community Support**: [Discord Server](https://discord.gg/mcp-platform)
 - **Documentation**: [Full Documentation](INDEX.md)

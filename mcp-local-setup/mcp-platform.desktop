@@ -1,0 +1,23 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MCP Platform
+Comment=Launch MCP Platform Services
+Icon=applications-development
+Exec=gnome-terminal -- bash -c "cd %k && ./launch.sh start; exec bash"
+Path=
+Terminal=true
+Categories=Development;
+Keywords=mcp;docker;development;
+StartupNotify=true
+
+# Installation instructions:
+# 1. Copy this file to ~/.local/share/applications/
+# 2. Make it executable: chmod +x ~/.local/share/applications/mcp-platform.desktop
+# 3. The launcher will appear in your applications menu
+# 4. You can also add it to your desktop or dock
+
+# Alternative terminal emulators (replace the Exec line):
+# For Konsole: Exec=konsole -e bash -c "cd %k && ./launch.sh start; exec bash"
+# For xterm: Exec=xterm -e bash -c "cd %k && ./launch.sh start; exec bash"
+# For tilix: Exec=tilix -e bash -c "cd %k && ./launch.sh start; exec bash"

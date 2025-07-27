@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Server Catalog</title>
+  <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/catalog.css">
+  <style>
+    /* Page-specific inline styles */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .add-server-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    .input-group {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: #3498db;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #2980b9;
+    }
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
+    .btn-success:hover {
+      background: #229954;
+    }
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+    }
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+    .section-title {
+      font-size: 24px;
+      margin-bottom: 1.5rem;
+      color: #2c3e50;
+    }
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .server-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .server-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .server-name {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+    .server-description {
+      color: #7f8c8d;
+      margin-bottom: 1rem;
+      font-size: 14px;
+    }
+    .server-meta {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      font-size: 12px;
+      color: #95a5a6;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-category {
+      background: #ecf0f1;
+      color: #34495e;
+    }
+    .badge-transport {
+      background: #e8f4f8;
+      color: #3498db;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    .status-running { background: #27ae60; }
+    .status-stopped { background: #e74c3c; }
+    .status-installing { background: #f39c12; animation: pulse 1s infinite; }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    
+    .alert {
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #7f8c8d;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+    <a href="/dashboard/">Overview</a>
+    <a href="/dashboard/health/">Health Monitor</a>
+    <a href="/dashboard/transport.html">Transport Overview</a>
+    <a href="/dashboard/metrics.html">Metrics Dashboard</a>
+    <a href="/dashboard/catalog.html" class="active">Server Catalog</a>
+    <a href="/dashboard/config.html">Configuration</a>
+  </div>
+
+  <div class="container">
+    <h1>MCP Server Catalog</h1>
+    
+    <div id="alerts"></div>
+
+    <!-- Add Server Section -->
+    <div class="add-server-section">
+      <h2>Add New MCP Server</h2>
+      
+      <!-- Package Type Selector -->
+      <div class="input-group">
+        <label for="package-type">Package Manager:</label>
+        <select id="package-type" onchange="updatePackageInput()">
+          <option value="github">GitHub Repository</option>
+          <option value="npm">NPM (Node.js)</option>
+          <option value="pip">PyPI (Python)</option>
+          <option value="cargo">Crates.io (Rust)</option>
+          <option value="go">Go Modules</option>
+          <option value="gem">RubyGems</option>
+          <option value="composer">Packagist (PHP)</option>
+        </select>
+      </div>
+      
+      <div class="input-group">
+        <input type="text" id="package-input" placeholder="Enter package information">
+        <button class="btn btn-primary" onclick="addPackage()">Add Server</button>
+      </div>
+      
+      <div id="package-help" style="font-size: 0.9em; color: #666; margin-top: 0.5rem;">
+        Enter a GitHub URL (e.g., https://github.com/owner/repo)
+      </div>
+      
+      <div style="font-size: 0.85em; color: #888; margin-top: 1rem; padding: 0.75rem; background: #f5f5f5; border-radius: 4px;">
+        <strong>💡 Tip:</strong> Personal GitHub repositories work too! You don't need to publish your MCP server to a package manager. 
+        Just push your code to GitHub and we'll automatically detect the language and build it. 
+        If your repo has a Dockerfile, we'll use that. Otherwise, we'll detect if it's Node.js, Python, Go, Rust, Ruby, or PHP and use the appropriate build process.
+      </div>
+    </div>
+
+    <!-- Popular Servers Section -->
+    <section>
+      <h2 class="section-title">Popular MCP Servers</h2>
+      <div id="popular-servers" class="server-grid">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading popular servers...
+        </div>
+      </div>
+    </section>
+
+    <!-- Installed Servers Section -->
+    <section>
+      <h2 class="section-title">Installed Servers</h2>
+      <div id="installed-servers" class="server-grid">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading installed servers...
+        </div>
+      </div>
+    </section>
+
+    <!-- Available Servers Section -->
+    <section>
+      <h2 class="section-title">Available in Catalog</h2>
+      <div id="available-servers" class="server-grid">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading catalog...
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/catalog-manager.js"></script>
+  <script src="js/catalog-manager-extended.js"></script>
+  <script>
+    // Initialize the catalog manager
+    document.addEventListener('DOMContentLoaded', function() {
+      window.catalogManager = new CatalogManager();
+      window.catalogManager.initialize();
+    });
+
+    // Update package input placeholder based on selected type
+    function updatePackageInput() {
+      const packageType = document.getElementById('package-type').value;
+      const packageInput = document.getElementById('package-input');
+      const packageHelp = document.getElementById('package-help');
+      
+      const placeholders = {
+        github: 'GitHub URL (e.g., https://github.com/owner/repo)',
+        npm: 'NPM Package (e.g., @mariozechner/snap-happy)',
+        pip: 'PyPI Package (e.g., fastmcp, mcp-atlassian)',
+        cargo: 'Cargo Crate (e.g., rust-mcp-sdk, json-mcp-server)',
+        go: 'Go Module (e.g., github.com/mark3labs/mcp-go)',
+        gem: 'Ruby Gem (e.g., rails-mcp-server, fast-mcp)',
+        composer: 'Composer Package (e.g., php-mcp/server)'
+      };
+      
+      const helpTexts = {
+        github: 'Enter a GitHub URL (e.g., https://github.com/owner/repo)',
+        npm: 'Enter an NPM package name (e.g., @mariozechner/snap-happy)',
+        pip: 'Enter a PyPI package name (e.g., fastmcp, mcp-atlassian)',
+        cargo: 'Enter a crates.io package name (e.g., rust-mcp-sdk)',
+        go: 'Enter a Go module path (e.g., github.com/mark3labs/mcp-go)',
+        gem: 'Enter a RubyGems package name (e.g., rails-mcp-server)',
+        composer: 'Enter a Packagist package name (e.g., php-mcp/server)'
+      };
+      
+      packageInput.placeholder = placeholders[packageType] || 'Enter package information';
+      packageHelp.textContent = helpTexts[packageType] || 'Enter package information';
+    }
+    
+    // Add package based on selected type
+    async function addPackage() {
+      const packageType = document.getElementById('package-type').value;
+      const packageInput = document.getElementById('package-input').value.trim();
+      
+      if (!packageInput) {
+        catalogManager.showAlert('Please enter package information', 'error');
+        return;
+      }
+      
+      // Map package type to appropriate method
+      const methodMap = {
+        github: 'addFromGitHub',
+        npm: 'addFromNpm',
+        pip: 'addFromPip',
+        cargo: 'addFromCargo',
+        go: 'addFromGo',
+        gem: 'addFromGem',
+        composer: 'addFromComposer'
+      };
+      
+      const method = methodMap[packageType];
+      if (method && catalogManager[method]) {
+        await catalogManager[method](packageInput);
+      } else {
+        catalogManager.showAlert(`Package type ${packageType} not yet implemented`, 'error');
+      }
+      
+      // Clear input
+      document.getElementById('package-input').value = '';
+    }
+
+    // Quick function references for onclick handlers
+    function addFromGitHub() {
+      window.catalogManager.addFromGitHub();
+    }
+
+    function addFromNpm() {
+      window.catalogManager.addFromNpm();
+    }
+
+    function installServer(serverId) {
+      window.catalogManager.installServer(serverId);
+    }
+
+    function uninstallServer(serverId) {
+      window.catalogManager.uninstallServer(serverId);
+    }
+
+    function startServer(serverId) {
+      window.catalogManager.startServer(serverId);
+    }
+
+    function stopServer(serverId) {
+      window.catalogManager.stopServer(serverId);
+    }
+
+    function configureServer(serverId) {
+      window.catalogManager.configureServer(serverId);
+    }
+  </script>
+</body>
+</html>

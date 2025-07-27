@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated": "2024-01-21",
+  "updated": "2025-07-25",
   "categories": {
     "development": {
       "name": "Development Tools",
@@ -25,211 +25,51 @@
   },
   "servers": [
     {
-      "id": "filesystem",
-      "name": "Filesystem",
-      "description": "Access and manipulate files and directories on the local system",
-      "category": "data",
-      "source": {
-        "type": "npm",
-        "package": "@modelcontextprotocol/server-filesystem",
-        "version": "latest"
-      },
-      "docker": {
-        "image": null,
-        "build": {
-          "dockerfile": "templates/npm.Dockerfile",
-          "args": {
-            "PACKAGE": "@modelcontextprotocol/server-filesystem"
-          }
-        }
-      },
-      "config": {
-        "port": 3001,
-        "environment": {
-          "MCP_MODE": "http"
-        },
-        "volumes": [
-          "${HOME}:/workspace:ro"
-        ],
-        "capabilities": ["read", "write", "list"]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
-    },
-    {
-      "id": "git",
-      "name": "Git",
-      "description": "Perform Git operations on repositories",
-      "category": "development",
-      "source": {
-        "type": "npm",
-        "package": "@modelcontextprotocol/server-git",
-        "version": "latest"
-      },
-      "docker": {
-        "image": null,
-        "build": {
-          "dockerfile": "templates/npm.Dockerfile",
-          "args": {
-            "PACKAGE": "@modelcontextprotocol/server-git"
-          }
-        }
-      },
-      "config": {
-        "port": 3002,
-        "environment": {
-          "MCP_MODE": "http"
-        },
-        "volumes": [
-          "${HOME}/repos:/repos"
-        ]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
-    },
-    {
-      "id": "playwright",
-      "name": "Playwright",
-      "description": "Browser automation and testing with Playwright",
+      "id": "gateway",
+      "name": "MCP Gateway",
+      "description": "Unified gateway providing single entry point for all MCP servers with automatic tool namespacing",
       "category": "development",
       "source": {
         "type": "local",
-        "path": "../playwright-mcp"
+        "path": "gateway"
       },
       "docker": {
+        "image": null,
         "build": {
-          "context": "../playwright-mcp",
+          "context": "./gateway",
           "dockerfile": "Dockerfile"
         }
       },
       "config": {
-        "port": 3003,
-        "environment": {
-          "PLAYWRIGHT_BROWSERS_PATH": "/ms-playwright"
-        },
-        "volumes": [
-          "playwright-browsers:/ms-playwright"
-        ]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
-    },
-    {
-      "id": "postgres",
-      "name": "PostgreSQL",
-      "description": "Query and manage PostgreSQL databases",
-      "category": "data",
-      "source": {
-        "type": "npm",
-        "package": "@modelcontextprotocol/server-postgres",
-        "version": "latest"
-      },
-      "docker": {
-        "image": null,
-        "build": {
-          "dockerfile": "templates/npm.Dockerfile",
-          "args": {
-            "PACKAGE": "@modelcontextprotocol/server-postgres"
-          }
-        }
-      },
-      "config": {
-        "port": 3004,
+        "port": 8090,
         "environment": {
           "MCP_MODE": "http",
-          "POSTGRES_URL": "${POSTGRES_URL}"
+          "GATEWAY_API_KEY": "${GATEWAY_API_KEY:-mcp-gateway-default-key}"
         },
-        "env_required": ["POSTGRES_URL"]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
-    },
-    {
-      "id": "google-drive",
-      "name": "Google Drive",
-      "description": "Access and manage Google Drive files",
-      "category": "cloud",
-      "source": {
-        "type": "npm",
-        "package": "@modelcontextprotocol/server-gdrive",
-        "version": "latest"
-      },
-      "docker": {
-        "image": null,
-        "build": {
-          "dockerfile": "templates/npm.Dockerfile",
-          "args": {
-            "PACKAGE": "@modelcontextprotocol/server-gdrive"
-          }
+        "labels": {
+          "mcp.gateway": "true",
+          "mcp.gateway.version": "1.0.0"
         }
       },
-      "config": {
-        "port": 3005,
-        "environment": {
-          "MCP_MODE": "http",
-          "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
-          "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
-        },
-        "env_required": ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
-        "volumes": [
-          "gdrive-auth:/auth"
-        ]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
-    },
-    {
-      "id": "github",
-      "name": "GitHub",
-      "description": "Interact with GitHub repositories, issues, and pull requests",
-      "category": "development",
-      "source": {
-        "type": "npm",
-        "package": "@modelcontextprotocol/server-github",
-        "version": "latest"
-      },
-      "docker": {
-        "image": null,
-        "build": {
-          "dockerfile": "templates/npm.Dockerfile",
-          "args": {
-            "PACKAGE": "@modelcontextprotocol/server-github"
+      "clients": {
+        "claude-code": {
+          "url": "http://localhost:8090/mcp",
+          "headers": {
+            "X-API-Key": "${GATEWAY_API_KEY:-mcp-gateway-default-key}"
           }
+        },
+        "cursor": {
+          "url": "http://localhost:8090/mcp"
+        },
+        "vs-code": {
+          "url": "http://localhost:8090/mcp"
         }
       },
-      "config": {
-        "port": 3006,
-        "environment": {
-          "MCP_MODE": "http",
-          "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-        },
-        "env_required": ["GITHUB_TOKEN"]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
-    },
-    {
-      "id": "slack",
-      "name": "Slack",
-      "description": "Read and send messages in Slack",
-      "category": "data",
-      "source": {
-        "type": "npm",
-        "package": "@modelcontextprotocol/server-slack",
-        "version": "latest"
-      },
-      "docker": {
-        "image": null,
-        "build": {
-          "dockerfile": "templates/npm.Dockerfile",
-          "args": {
-            "PACKAGE": "@modelcontextprotocol/server-slack"
-          }
-        }
-      },
-      "config": {
-        "port": 3007,
-        "environment": {
-          "MCP_MODE": "http",
-          "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
-        },
-        "env_required": ["SLACK_BOT_TOKEN"]
-      },
-      "clients": ["claude-code", "vs-code", "cursor"]
+      "metadata": {
+        "autoStart": true,
+        "alwaysInclude": true,
+        "skipHealthCheck": false
+      }
     },
     {
       "id": "memory",
@@ -259,7 +99,522 @@
           "memory-data:/data"
         ]
       },
-      "clients": ["claude-code", "vs-code", "cursor"]
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "memory-mcp",
+      "name": "Memory MCP",
+      "description": "Simple knowledge graph memory for storing and retrieving information",
+      "category": "ai-ml",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-memory",
+        "version": "latest"
+      },
+      "docker": {
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-memory"
+          }
+        }
+      },
+      "config": {
+        "port": 3013,
+        "environment": {
+          "MCP_MODE": "http"
+        },
+        "volumes": [
+          "memory-data:/data"
+        ]
+      },
+      "transport": "http",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "google-drive",
+      "name": "Google Drive",
+      "description": "Access and manage Google Drive files",
+      "category": "cloud",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-gdrive",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-gdrive"
+          }
+        }
+      },
+      "config": {
+        "port": 3005,
+        "environment": {
+          "MCP_MODE": "http",
+          "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+          "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
+        },
+        "env_required": [
+          "GOOGLE_CLIENT_ID",
+          "GOOGLE_CLIENT_SECRET"
+        ],
+        "volumes": [
+          "gdrive-auth:/auth"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "filesystem",
+      "name": "Filesystem",
+      "description": "Access and manipulate files and directories on the local system",
+      "category": "data",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-filesystem",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-filesystem"
+          }
+        }
+      },
+      "config": {
+        "port": 3001,
+        "environment": {
+          "MCP_MODE": "http"
+        },
+        "volumes": [
+          "${HOME}:/workspace:ro"
+        ],
+        "capabilities": [
+          "read",
+          "write",
+          "list"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "description": "Query and manage PostgreSQL databases",
+      "category": "data",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-postgres",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-postgres"
+          }
+        }
+      },
+      "config": {
+        "port": 3004,
+        "environment": {
+          "MCP_MODE": "http",
+          "POSTGRES_URL": "${POSTGRES_URL}"
+        },
+        "env_required": [
+          "POSTGRES_URL"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "description": "Read and send messages in Slack",
+      "category": "data",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-slack",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-slack"
+          }
+        }
+      },
+      "config": {
+        "port": 3007,
+        "environment": {
+          "MCP_MODE": "http",
+          "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+        },
+        "env_required": [
+          "SLACK_BOT_TOKEN"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "supabase-mcp",
+      "name": "Supabase MCP",
+      "description": "Connect to Supabase for database, auth, and edge functions",
+      "category": "database",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/supabase-community/supabase-mcp"
+      },
+      "docker": {
+        "build": {
+          "context": "https://github.com/supabase-community/supabase-mcp.git",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3017,
+        "environment": {
+          "MCP_MODE": "http",
+          "SUPABASE_URL": "${SUPABASE_URL}",
+          "SUPABASE_KEY": "${SUPABASE_KEY}"
+        },
+        "env_required": [
+          "SUPABASE_URL",
+          "SUPABASE_KEY"
+        ]
+      },
+      "transport": "http",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ],
+      "repository": "https://github.com/supabase-community/supabase-mcp"
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "description": "Perform Git operations on repositories",
+      "category": "development",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-git",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-git"
+          }
+        }
+      },
+      "config": {
+        "port": 3002,
+        "environment": {
+          "MCP_MODE": "http"
+        },
+        "volumes": [
+          "${HOME}/repos:/repos"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "description": "Interact with GitHub repositories, issues, and pull requests",
+      "category": "development",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-github",
+        "version": "latest"
+      },
+      "docker": {
+        "image": null,
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-github"
+          }
+        }
+      },
+      "config": {
+        "port": 3006,
+        "environment": {
+          "MCP_MODE": "http",
+          "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+        },
+        "env_required": [
+          "GITHUB_TOKEN"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "github-mcp",
+      "name": "GitHub MCP",
+      "description": "Official GitHub integration for repositories, issues, and pull requests",
+      "category": "development",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/github/github-mcp-server"
+      },
+      "docker": {
+        "build": {
+          "context": "https://github.com/github/github-mcp-server.git",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3011,
+        "environment": {
+          "MCP_MODE": "http",
+          "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+        },
+        "env_required": [
+          "GITHUB_TOKEN"
+        ]
+      },
+      "transport": "http",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ],
+      "repository": "https://github.com/github/github-mcp-server"
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "description": "Browser automation and testing with Playwright",
+      "category": "development",
+      "source": {
+        "type": "local",
+        "path": "../playwright-mcp"
+      },
+      "docker": {
+        "build": {
+          "context": "../playwright-mcp",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3003,
+        "environment": {
+          "PLAYWRIGHT_BROWSERS_PATH": "/ms-playwright"
+        },
+        "volumes": [
+          "playwright-browsers:/ms-playwright"
+        ]
+      },
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "docker-mcp",
+      "name": "Docker MCP",
+      "description": "Manage Docker containers, images, and compose stacks",
+      "category": "devops",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/docker/mcp-servers"
+      },
+      "docker": {
+        "build": {
+          "context": "https://github.com/docker/mcp-servers.git",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3014,
+        "environment": {
+          "MCP_MODE": "stdio"
+        },
+        "volumes": [
+          "/var/run/docker.sock:/var/run/docker.sock"
+        ]
+      },
+      "transport": "stdio",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ],
+      "repository": "https://github.com/docker/mcp-servers"
+    },
+    {
+      "id": "stripe-mcp",
+      "name": "Stripe MCP",
+      "description": "Interact with Stripe API for payment processing and management",
+      "category": "finance",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/stripe/agent-toolkit"
+      },
+      "docker": {
+        "build": {
+          "context": "https://github.com/stripe/agent-toolkit.git",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3015,
+        "environment": {
+          "MCP_MODE": "http",
+          "STRIPE_API_KEY": "${STRIPE_API_KEY}"
+        },
+        "env_required": [
+          "STRIPE_API_KEY"
+        ]
+      },
+      "transport": "http",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ],
+      "repository": "https://github.com/stripe/agent-toolkit"
+    },
+    {
+      "id": "notion-mcp",
+      "name": "Notion MCP",
+      "description": "Official Notion integration for workspace access and management",
+      "category": "productivity",
+      "source": {
+        "type": "github",
+        "url": "https://github.com/makenotion/notion-mcp-server"
+      },
+      "docker": {
+        "build": {
+          "context": "https://github.com/makenotion/notion-mcp-server.git",
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "config": {
+        "port": 3016,
+        "environment": {
+          "MCP_MODE": "http",
+          "NOTION_TOKEN": "${NOTION_TOKEN}"
+        },
+        "env_required": [
+          "NOTION_TOKEN"
+        ]
+      },
+      "transport": "http",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ],
+      "repository": "https://github.com/makenotion/notion-mcp-server"
+    },
+    {
+      "id": "fetch-mcp",
+      "name": "Fetch MCP",
+      "description": "Web content fetching and conversion optimized for LLM usage",
+      "category": "utility",
+      "source": {
+        "type": "npm",
+        "package": "@modelcontextprotocol/server-fetch",
+        "version": "latest"
+      },
+      "docker": {
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@modelcontextprotocol/server-fetch"
+          }
+        }
+      },
+      "config": {
+        "port": 3012,
+        "environment": {
+          "MCP_MODE": "http"
+        }
+      },
+      "transport": "http",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ]
+    },
+    {
+      "id": "snap-happy",
+      "name": "Snap Happy",
+      "description": "Cross-platform screenshot utility - capture screenshots and list windows",
+      "category": "utility",
+      "source": {
+        "type": "npm",
+        "package": "@mariozechner/snap-happy",
+        "version": "latest"
+      },
+      "docker": {
+        "build": {
+          "dockerfile": "templates/npm.Dockerfile",
+          "args": {
+            "PACKAGE": "@mariozechner/snap-happy"
+          }
+        }
+      },
+      "config": {
+        "port": 3010,
+        "environment": {
+          "MCP_MODE": "stdio"
+        }
+      },
+      "transport": "stdio",
+      "clients": [
+        "claude-code",
+        "vs-code",
+        "cursor"
+      ],
+      "repository": "https://github.com/badlogic/lemmy/tree/main/apps/snap-happy"
     }
   ],
   "templates": {

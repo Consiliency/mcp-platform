@@ -1,0 +1,1346 @@
+[
+  {
+    "id": "snap-happy",
+    "name": "Snap Happy",
+    "description": "Screenshot capture tool with GUI interaction capabilities",
+    "package": "@mariozechner/snap-happy",
+    "transport": "stdio",
+    "category": "Media & UI",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@mariozechner/snap-happy"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "sequential-thinking",
+    "name": "Sequential Thinking",
+    "description": "Dynamic problem-solving through thought sequences",
+    "package": "@modelcontextprotocol/server-sequential-thinking",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "exa",
+    "name": "Exa",
+    "description": "Advanced web search API server",
+    "package": "@modelcontextprotocol/server-exa",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-exa"],
+      "environment": {
+        "EXA_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "memory",
+    "name": "Memory",
+    "description": "MCP server for knowledge graph memory",
+    "package": "@modelcontextprotocol/server-memory",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "obsidian",
+    "name": "Obsidian",
+    "description": "Obsidian vault manipulation MCP server",
+    "package": "mcp-obsidian",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-obsidian"],
+      "environment": {
+        "VAULT_PATH": ""
+      }
+    }
+  },
+  {
+    "id": "context-engine",
+    "name": "Context Engine",
+    "description": "Intelligent context-aware MCP server",
+    "package": "mcp-context-engine",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-context-engine"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "langchain",
+    "name": "LangChain",
+    "description": "LangChain toolkit integration MCP server",
+    "package": "mcp-langchain",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-langchain"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "autogen",
+    "name": "AutoGen",
+    "description": "Microsoft AutoGen multi-agent framework MCP server",
+    "package": "mcp-autogen",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-autogen"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "crewai",
+    "name": "CrewAI",
+    "description": "CrewAI agent collaboration framework MCP server",
+    "package": "mcp-crewai",
+    "transport": "stdio",
+    "category": "AI Agent & Workflow",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-crewai"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "git",
+    "name": "Git",
+    "description": "Git repository operations MCP server",
+    "package": "@modelcontextprotocol/server-git",
+    "transport": "stdio",
+    "category": "Source Control",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "github",
+    "name": "GitHub",
+    "description": "MCP server for GitHub operations",
+    "package": "@modelcontextprotocol/server-github",
+    "transport": "stdio",
+    "category": "Source Control",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "gitlab",
+    "name": "GitLab",
+    "description": "GitLab MCP server for repository management",
+    "package": "@modelcontextprotocol/server-gitlab",
+    "transport": "stdio",
+    "category": "Source Control",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "environment": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "",
+        "GITLAB_API_URL": "https://gitlab.com/api/v4"
+      }
+    }
+  },
+  {
+    "id": "subversion",
+    "name": "Subversion (SVN)",
+    "description": "SVN version control MCP server",
+    "package": "mcp-server-svn",
+    "transport": "stdio",
+    "category": "Source Control",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-svn"],
+      "environment": {
+        "SVN_USERNAME": "",
+        "SVN_PASSWORD": ""
+      }
+    }
+  },
+  {
+    "id": "perforce",
+    "name": "Perforce",
+    "description": "Perforce version control MCP server",
+    "package": "mcp-server-p4",
+    "transport": "stdio",
+    "category": "Source Control",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-p4"],
+      "environment": {
+        "P4PORT": "",
+        "P4USER": "",
+        "P4PASSWD": ""
+      }
+    }
+  },
+  {
+    "id": "bitbucket",
+    "name": "Bitbucket",
+    "description": "Bitbucket MCP server for repository operations",
+    "package": "mcp-server-bitbucket",
+    "transport": "stdio",
+    "category": "Source Control",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-bitbucket"],
+      "environment": {
+        "BITBUCKET_USERNAME": "",
+        "BITBUCKET_APP_PASSWORD": ""
+      }
+    }
+  },
+  {
+    "id": "filesystem",
+    "name": "File System",
+    "description": "MCP server for file system operations",
+    "package": "@modelcontextprotocol/server-filesystem",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "docker",
+    "name": "Docker",
+    "description": "Docker container management MCP server",
+    "package": "@modelcontextprotocol/server-docker",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-docker"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "kubernetes",
+    "name": "Kubernetes",
+    "description": "Kubernetes cluster management MCP server",
+    "package": "@modelcontextprotocol/server-kubernetes",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+      "environment": {
+        "KUBECONFIG": ""
+      }
+    }
+  },
+  {
+    "id": "shell",
+    "name": "Shell",
+    "description": "Shell command execution MCP server",
+    "package": "@modelcontextprotocol/server-shell",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-shell"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "ssh",
+    "name": "SSH",
+    "description": "SSH remote server management MCP server",
+    "package": "mcp-server-ssh",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-ssh"],
+      "environment": {
+        "SSH_CONFIG_PATH": "~/.ssh/config"
+      }
+    }
+  },
+  {
+    "id": "windows-registry",
+    "name": "Windows Registry",
+    "description": "Windows Registry manipulation MCP server",
+    "package": "mcp-server-windows-registry",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-windows-registry"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "macos-defaults",
+    "name": "macOS Defaults",
+    "description": "macOS defaults system configuration MCP server",
+    "package": "mcp-server-macos-defaults",
+    "transport": "stdio",
+    "category": "File System & OS",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-macos-defaults"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "puppeteer",
+    "name": "Puppeteer",
+    "description": "MCP server for browser automation",
+    "package": "@modelcontextprotocol/server-puppeteer",
+    "transport": "stdio",
+    "category": "Browser Automation",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "playwright",
+    "name": "Playwright",
+    "description": "Playwright browser automation MCP server",
+    "package": "@modelcontextprotocol/server-playwright",
+    "transport": "stdio",
+    "category": "Browser Automation",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "selenium",
+    "name": "Selenium",
+    "description": "Selenium WebDriver MCP server",
+    "package": "mcp-server-selenium",
+    "transport": "stdio",
+    "category": "Browser Automation",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-selenium"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "cypress",
+    "name": "Cypress",
+    "description": "Cypress E2E testing MCP server",
+    "package": "mcp-server-cypress",
+    "transport": "stdio",
+    "category": "Browser Automation",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-cypress"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "browserstack",
+    "name": "BrowserStack",
+    "description": "BrowserStack cloud testing MCP server",
+    "package": "mcp-server-browserstack",
+    "transport": "stdio",
+    "category": "Browser Automation",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-browserstack"],
+      "environment": {
+        "BROWSERSTACK_USERNAME": "",
+        "BROWSERSTACK_ACCESS_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "postgres",
+    "name": "PostgreSQL",
+    "description": "MCP server for PostgreSQL database operations",
+    "package": "@modelcontextprotocol/server-postgres",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "environment": {
+        "POSTGRES_CONNECTION_STRING": ""
+      }
+    }
+  },
+  {
+    "id": "sqlite",
+    "name": "SQLite",
+    "description": "MCP server for SQLite database operations",
+    "package": "@modelcontextprotocol/server-sqlite",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "mysql",
+    "name": "MySQL",
+    "description": "MySQL database MCP server",
+    "package": "mcp-server-mysql",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-mysql"],
+      "environment": {
+        "MYSQL_HOST": "",
+        "MYSQL_USER": "",
+        "MYSQL_PASSWORD": "",
+        "MYSQL_DATABASE": ""
+      }
+    }
+  },
+  {
+    "id": "mongodb",
+    "name": "MongoDB",
+    "description": "MongoDB NoSQL database MCP server",
+    "package": "mcp-server-mongodb",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-mongodb"],
+      "environment": {
+        "MONGODB_URI": ""
+      }
+    }
+  },
+  {
+    "id": "redis",
+    "name": "Redis",
+    "description": "Redis in-memory database MCP server",
+    "package": "mcp-server-redis",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-redis"],
+      "environment": {
+        "REDIS_URL": ""
+      }
+    }
+  },
+  {
+    "id": "cassandra",
+    "name": "Cassandra",
+    "description": "Apache Cassandra database MCP server",
+    "package": "mcp-server-cassandra",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-cassandra"],
+      "environment": {
+        "CASSANDRA_CONTACT_POINTS": "",
+        "CASSANDRA_KEYSPACE": ""
+      }
+    }
+  },
+  {
+    "id": "elasticsearch",
+    "name": "Elasticsearch",
+    "description": "Elasticsearch search engine MCP server",
+    "package": "mcp-server-elasticsearch",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-elasticsearch"],
+      "environment": {
+        "ELASTICSEARCH_URL": "",
+        "ELASTICSEARCH_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "neo4j",
+    "name": "Neo4j",
+    "description": "Neo4j graph database MCP server",
+    "package": "mcp-server-neo4j",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-neo4j"],
+      "environment": {
+        "NEO4J_URI": "",
+        "NEO4J_USER": "",
+        "NEO4J_PASSWORD": ""
+      }
+    }
+  },
+  {
+    "id": "oracle",
+    "name": "Oracle Database",
+    "description": "Oracle Database MCP server",
+    "package": "mcp-server-oracle",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-oracle"],
+      "environment": {
+        "ORACLE_CONNECTION_STRING": ""
+      }
+    }
+  },
+  {
+    "id": "mssql",
+    "name": "Microsoft SQL Server",
+    "description": "Microsoft SQL Server MCP server",
+    "package": "mcp-server-mssql",
+    "transport": "stdio",
+    "category": "Databases",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-mssql"],
+      "environment": {
+        "MSSQL_SERVER": "",
+        "MSSQL_DATABASE": "",
+        "MSSQL_USERNAME": "",
+        "MSSQL_PASSWORD": ""
+      }
+    }
+  },
+  {
+    "id": "aws",
+    "name": "AWS",
+    "description": "Amazon Web Services comprehensive MCP server",
+    "package": "@modelcontextprotocol/server-aws",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws"],
+      "environment": {
+        "AWS_ACCESS_KEY_ID": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_REGION": ""
+      }
+    }
+  },
+  {
+    "id": "google-cloud",
+    "name": "Google Cloud",
+    "description": "Google Cloud Platform MCP server",
+    "package": "@modelcontextprotocol/server-gcp",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gcp"],
+      "environment": {
+        "GOOGLE_APPLICATION_CREDENTIALS": ""
+      }
+    }
+  },
+  {
+    "id": "azure",
+    "name": "Azure",
+    "description": "Microsoft Azure cloud services MCP server",
+    "package": "@modelcontextprotocol/server-azure",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-azure"],
+      "environment": {
+        "AZURE_SUBSCRIPTION_ID": "",
+        "AZURE_TENANT_ID": "",
+        "AZURE_CLIENT_ID": "",
+        "AZURE_CLIENT_SECRET": ""
+      }
+    }
+  },
+  {
+    "id": "cloudflare",
+    "name": "Cloudflare",
+    "description": "Cloudflare services MCP server",
+    "package": "mcp-server-cloudflare",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-cloudflare"],
+      "environment": {
+        "CLOUDFLARE_API_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "digitalocean",
+    "name": "DigitalOcean",
+    "description": "DigitalOcean cloud services MCP server",
+    "package": "mcp-server-digitalocean",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-digitalocean"],
+      "environment": {
+        "DIGITALOCEAN_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "linode",
+    "name": "Linode",
+    "description": "Linode cloud services MCP server",
+    "package": "mcp-server-linode",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-linode"],
+      "environment": {
+        "LINODE_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "vultr",
+    "name": "Vultr",
+    "description": "Vultr cloud services MCP server",
+    "package": "mcp-server-vultr",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-vultr"],
+      "environment": {
+        "VULTR_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "heroku",
+    "name": "Heroku",
+    "description": "Heroku Platform MCP Server for managing apps and resources",
+    "package": "@heroku/mcp-server",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@heroku/mcp-server"],
+      "environment": {
+        "HEROKU_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "vercel",
+    "name": "Vercel",
+    "description": "Vercel deployment platform MCP server",
+    "package": "mcp-server-vercel",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-vercel"],
+      "environment": {
+        "VERCEL_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "netlify",
+    "name": "Netlify",
+    "description": "Netlify deployment platform MCP server",
+    "package": "mcp-server-netlify",
+    "transport": "stdio",
+    "category": "Cloud Services",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-netlify"],
+      "environment": {
+        "NETLIFY_AUTH_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "fetch",
+    "name": "Fetch",
+    "description": "Web content fetching and conversion optimized for LLM usage",
+    "package": "@modelcontextprotocol/server-fetch",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "brave-search",
+    "name": "Brave Search",
+    "description": "MCP server for Brave Search API",
+    "package": "@modelcontextprotocol/server-brave-search",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "environment": {
+        "BRAVE_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "tavily",
+    "name": "Tavily",
+    "description": "Tavily AI search API MCP server",
+    "package": "mcp-server-tavily",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-tavily"],
+      "environment": {
+        "TAVILY_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "serper",
+    "name": "Serper",
+    "description": "Serper Google search API MCP server",
+    "package": "mcp-server-serper",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-serper"],
+      "environment": {
+        "SERPER_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "youtube",
+    "name": "YouTube Data",
+    "description": "Access YouTube data and analytics through the YouTube API",
+    "package": "youtube-data-mcp-server",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "youtube-data-mcp-server"],
+      "environment": {
+        "YOUTUBE_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "stripe",
+    "name": "Stripe",
+    "description": "Stripe payment processing MCP server",
+    "package": "mcp-server-stripe",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-stripe"],
+      "environment": {
+        "STRIPE_SECRET_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "paypal",
+    "name": "PayPal",
+    "description": "PayPal payment integration MCP server",
+    "package": "mcp-server-paypal",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-paypal"],
+      "environment": {
+        "PAYPAL_CLIENT_ID": "",
+        "PAYPAL_CLIENT_SECRET": ""
+      }
+    }
+  },
+  {
+    "id": "twilio",
+    "name": "Twilio",
+    "description": "Twilio communication API MCP server",
+    "package": "mcp-server-twilio",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-twilio"],
+      "environment": {
+        "TWILIO_ACCOUNT_SID": "",
+        "TWILIO_AUTH_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "sendgrid",
+    "name": "SendGrid",
+    "description": "SendGrid email service MCP server",
+    "package": "mcp-server-sendgrid",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-sendgrid"],
+      "environment": {
+        "SENDGRID_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "mailgun",
+    "name": "Mailgun",
+    "description": "Mailgun email service MCP server",
+    "package": "mcp-server-mailgun",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-mailgun"],
+      "environment": {
+        "MAILGUN_API_KEY": "",
+        "MAILGUN_DOMAIN": ""
+      }
+    }
+  },
+  {
+    "id": "slack",
+    "name": "Slack",
+    "description": "MCP server for Slack operations",
+    "package": "@modelcontextprotocol/server-slack",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "environment": {
+        "SLACK_BOT_TOKEN": "",
+        "SLACK_TEAM_ID": ""
+      }
+    }
+  },
+  {
+    "id": "discord",
+    "name": "Discord",
+    "description": "Discord bot and API MCP server",
+    "package": "mcp-server-discord",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-discord"],
+      "environment": {
+        "DISCORD_BOT_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "teams",
+    "name": "Microsoft Teams",
+    "description": "Microsoft Teams collaboration MCP server",
+    "package": "mcp-server-teams",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-teams"],
+      "environment": {
+        "TEAMS_APP_ID": "",
+        "TEAMS_APP_PASSWORD": ""
+      }
+    }
+  },
+  {
+    "id": "notion",
+    "name": "Notion",
+    "description": "Official MCP server for Notion API integration",
+    "package": "@notionhq/notion-mcp-server",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "environment": {
+        "NOTION_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "asana",
+    "name": "Asana",
+    "description": "Asana project management MCP server",
+    "package": "mcp-server-asana",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-asana"],
+      "environment": {
+        "ASANA_ACCESS_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "trello",
+    "name": "Trello",
+    "description": "Trello board management MCP server",
+    "package": "mcp-server-trello",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-trello"],
+      "environment": {
+        "TRELLO_API_KEY": "",
+        "TRELLO_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "jira",
+    "name": "Jira",
+    "description": "Atlassian Jira issue tracking MCP server",
+    "package": "mcp-server-jira",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-jira"],
+      "environment": {
+        "JIRA_HOST": "",
+        "JIRA_EMAIL": "",
+        "JIRA_API_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "confluence",
+    "name": "Confluence",
+    "description": "Atlassian Confluence wiki MCP server",
+    "package": "mcp-server-confluence",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-confluence"],
+      "environment": {
+        "CONFLUENCE_HOST": "",
+        "CONFLUENCE_EMAIL": "",
+        "CONFLUENCE_API_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "google-workspace",
+    "name": "Google Workspace",
+    "description": "Google Workspace suite MCP server",
+    "package": "mcp-server-google-workspace",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-google-workspace"],
+      "environment": {
+        "GOOGLE_CLIENT_ID": "",
+        "GOOGLE_CLIENT_SECRET": ""
+      }
+    }
+  },
+  {
+    "id": "microsoft-365",
+    "name": "Microsoft 365",
+    "description": "Microsoft 365 suite MCP server",
+    "package": "mcp-server-microsoft-365",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-microsoft-365"],
+      "environment": {
+        "MS365_CLIENT_ID": "",
+        "MS365_CLIENT_SECRET": "",
+        "MS365_TENANT_ID": ""
+      }
+    }
+  },
+  {
+    "id": "google-drive",
+    "name": "Google Drive",
+    "description": "MCP server for Google Drive operations",
+    "package": "@modelcontextprotocol/server-google-drive",
+    "transport": "stdio",
+    "category": "Collaboration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-drive"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "sentry",
+    "name": "Sentry",
+    "description": "Sentry error tracking MCP server",
+    "package": "mcp-server-sentry",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-sentry"],
+      "environment": {
+        "SENTRY_AUTH_TOKEN": "",
+        "SENTRY_ORG": ""
+      }
+    }
+  },
+  {
+    "id": "datadog",
+    "name": "Datadog",
+    "description": "Datadog monitoring MCP server",
+    "package": "mcp-server-datadog",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-datadog"],
+      "environment": {
+        "DATADOG_API_KEY": "",
+        "DATADOG_APP_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "newrelic",
+    "name": "New Relic",
+    "description": "New Relic monitoring MCP server",
+    "package": "mcp-server-newrelic",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-newrelic"],
+      "environment": {
+        "NEWRELIC_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "jest",
+    "name": "Jest",
+    "description": "Jest testing framework MCP server",
+    "package": "mcp-server-jest",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-jest"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "pytest",
+    "name": "Pytest",
+    "description": "Pytest testing framework MCP server",
+    "package": "mcp-server-pytest",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-pytest"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "sonarqube",
+    "name": "SonarQube",
+    "description": "SonarQube code quality MCP server",
+    "package": "mcp-server-sonarqube",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-sonarqube"],
+      "environment": {
+        "SONARQUBE_URL": "",
+        "SONARQUBE_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "vault",
+    "name": "HashiCorp Vault",
+    "description": "HashiCorp Vault secrets management MCP server",
+    "package": "mcp-server-vault",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-vault"],
+      "environment": {
+        "VAULT_ADDR": "",
+        "VAULT_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "1password",
+    "name": "1Password",
+    "description": "1Password secrets management MCP server",
+    "package": "mcp-server-1password",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-1password"],
+      "environment": {
+        "OP_CONNECT_HOST": "",
+        "OP_CONNECT_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "bitwarden",
+    "name": "Bitwarden",
+    "description": "Bitwarden password manager MCP server",
+    "package": "mcp-server-bitwarden",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-bitwarden"],
+      "environment": {
+        "BW_CLIENTID": "",
+        "BW_CLIENTSECRET": ""
+      }
+    }
+  },
+  {
+    "id": "owasp-zap",
+    "name": "OWASP ZAP",
+    "description": "OWASP ZAP security testing MCP server",
+    "package": "mcp-server-zap",
+    "transport": "stdio",
+    "category": "Security & Testing",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-zap"],
+      "environment": {
+        "ZAP_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "figma",
+    "name": "Figma",
+    "description": "Figma design tool MCP server",
+    "package": "mcp-server-figma",
+    "transport": "stdio",
+    "category": "Design & Media",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-figma"],
+      "environment": {
+        "FIGMA_ACCESS_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "sketch",
+    "name": "Sketch",
+    "description": "Sketch design tool MCP server",
+    "package": "mcp-server-sketch",
+    "transport": "stdio",
+    "category": "Design & Media",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-sketch"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "adobe-creative-cloud",
+    "name": "Adobe Creative Cloud",
+    "description": "Adobe Creative Cloud MCP server",
+    "package": "mcp-server-adobe-cc",
+    "transport": "stdio",
+    "category": "Design & Media",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-adobe-cc"],
+      "environment": {
+        "ADOBE_CLIENT_ID": "",
+        "ADOBE_CLIENT_SECRET": ""
+      }
+    }
+  },
+  {
+    "id": "canva",
+    "name": "Canva",
+    "description": "Canva design platform MCP server",
+    "package": "mcp-server-canva",
+    "transport": "stdio",
+    "category": "Design & Media",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-canva"],
+      "environment": {
+        "CANVA_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "ffmpeg",
+    "name": "FFmpeg",
+    "description": "FFmpeg media processing MCP server",
+    "package": "mcp-server-ffmpeg",
+    "transport": "stdio",
+    "category": "Design & Media",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-ffmpeg"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "imagemagick",
+    "name": "ImageMagick",
+    "description": "ImageMagick image processing MCP server",
+    "package": "mcp-server-imagemagick",
+    "transport": "stdio",
+    "category": "Design & Media",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-imagemagick"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "code-runner",
+    "name": "Code Runner",
+    "description": "Execute code snippets in various programming languages",
+    "package": "mcp-server-code-runner",
+    "transport": "stdio",
+    "category": "MCP Frameworks",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-code-runner"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "time",
+    "name": "Time",
+    "description": "Time and date utility MCP server",
+    "package": "@modelcontextprotocol/server-time",
+    "transport": "stdio",
+    "category": "MCP Frameworks",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "everything",
+    "name": "Everything",
+    "description": "Everything search tool integration MCP server",
+    "package": "@modelcontextprotocol/server-everything",
+    "transport": "stdio",
+    "category": "MCP Frameworks",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "mcp-python",
+    "name": "MCP Python SDK",
+    "description": "Python SDK for building MCP servers",
+    "package": "mcp-python",
+    "transport": "stdio",
+    "category": "MCP Frameworks",
+    "config": {
+      "command": "python",
+      "args": ["-m", "mcp_python"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "mcp-typescript",
+    "name": "MCP TypeScript SDK",
+    "description": "TypeScript SDK for building MCP servers",
+    "package": "@modelcontextprotocol/sdk",
+    "transport": "stdio",
+    "category": "MCP Frameworks",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/sdk"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "mcp-rust",
+    "name": "MCP Rust SDK",
+    "description": "Rust SDK for building MCP servers",
+    "package": "mcp-rust",
+    "transport": "stdio",
+    "category": "MCP Frameworks",
+    "config": {
+      "command": "cargo",
+      "args": ["run", "--package", "mcp-rust"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "google-maps",
+    "name": "Google Maps",
+    "description": "MCP server for Google Maps operations",
+    "package": "@modelcontextprotocol/server-google-maps",
+    "transport": "stdio",
+    "category": "Integration",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-maps"],
+      "environment": {
+        "GOOGLE_MAPS_API_KEY": ""
+      }
+    }
+  }
+]

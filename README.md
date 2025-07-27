@@ -5,6 +5,7 @@ A comprehensive platform for running Model Context Protocol (MCP) services with 
 ## Features
 
 ### Core Platform
+- **🌟 Unified MCP Gateway**: Single entry point for all MCP servers with automatic tool namespacing
 - **Universal Transport Support**: stdio, HTTP, WebSocket, and SSE transports
 - **Service Discovery**: Browse and search available MCP services
 - **Service Management**: Install, uninstall, and manage service lifecycle
@@ -36,27 +37,38 @@ A comprehensive platform for running Model Context Protocol (MCP) services with 
 ### Platform Installation
 ```bash
 # Linux/macOS/WSL
-curl -fsSL https://raw.githubusercontent.com/modelcontextprotocol/mcp-platform/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 
 # Windows PowerShell
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/modelcontextprotocol/mcp-platform/main/install.ps1'))
+iwr -useb https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.ps1 | iex
 ```
 
-### SDK Installation
+### SDK Installation (Local Development)
+
+The SDKs are currently available for local development. Package manager distribution is planned for a future release.
 
 #### JavaScript/TypeScript
 ```bash
-npm install @mcp/sdk
+# Clone the repository
+git clone https://github.com/Consiliency/mcp-platform.git
+
+# In your project's package.json:
+"dependencies": {
+  "@mcp/sdk": "file:../path/to/mcp-platform/sdk/js"
+}
 ```
 
 #### Python
-```bash
-pip install mcp-sdk
+```python
+# Add to your Python path
+import sys
+sys.path.append('/path/to/mcp-platform/sdk/python')
 ```
 
 #### Go
-```bash
-go get github.com/modelcontextprotocol/go-sdk
+```go
+// In your go.mod file:
+replace github.com/modelcontextprotocol/go-sdk => ../path/to/mcp-platform/sdk/go
 ```
 
 ## Quick Start
@@ -68,6 +80,16 @@ mcp start
 
 # Check service status
 mcp status
+
+# Start unified gateway
+mcp gateway start
+
+# Configure AI assistant (e.g., Claude Code)
+claude mcp add unified-gateway --transport sse http://localhost:8090/mcp \
+  --header "X-API-Key: your-gateway-api-key"
+
+# Generate client configuration
+mcp config generate --client claude-code
 
 # View transport connections
 mcp transport status
@@ -81,8 +103,9 @@ mcp server start filesystem --transport http
 # View real-time metrics
 mcp transport metrics
 
-# Access dashboard
+# Access dashboards
 open http://localhost:8080/dashboard
+open http://localhost:8080/gateway.html
 ```
 
 ### JavaScript Example
@@ -215,6 +238,26 @@ The platform automatically detects the appropriate transport based on:
 - Environment variables
 - Service naming patterns
 - Explicit transport specification
+
+## Current Status & Roadmap
+
+### What's Working Now
+- ✅ Universal transport support (stdio, HTTP, WebSocket, SSE)
+- ✅ Server catalog with dashboard UI
+- ✅ Multi-package manager support
+- ✅ Local SDK development
+- ✅ Basic authentication (JWT, API keys)
+- ✅ Health monitoring and metrics
+- ✅ IDE extensions (VS Code, IntelliJ structure)
+
+### Coming Soon
+- 📦 Published SDKs to npm, PyPI, and Go modules
+- 🔐 Full user management and RBAC
+- 🔄 Backup and restore functionality
+- 📊 Advanced monitoring and distributed tracing
+- 🏢 Enterprise features (multi-tenancy, SSO)
+
+For detailed feature status, see [FEATURES.md](FEATURES.md).
 
 ## Development
 

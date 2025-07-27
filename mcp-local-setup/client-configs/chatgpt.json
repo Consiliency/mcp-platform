@@ -1,0 +1,47 @@
+{
+  "description": "ChatGPT configuration for MCP Gateway",
+  "requirements": {
+    "subscription": "ChatGPT Pro, Team, Enterprise, or Edu",
+    "mode": "Only works in Deep Research mode",
+    "tools": "Must provide 'search' and 'fetch' tools"
+  },
+  "setup": {
+    "location": "Settings > Connectors > Custom Connectors",
+    "type": "Custom MCP Connector"
+  },
+  "configuration": {
+    "connector": {
+      "name": "MCP Gateway",
+      "url": "http://localhost:8090/mcp",
+      "authentication": {
+        "type": "custom_header",
+        "header": "X-API-Key",
+        "value": "your-gateway-api-key"
+      },
+      "required_tools": ["search", "fetch"]
+    }
+  },
+  "limitations": {
+    "response_time": "30+ minutes for Deep Research mode",
+    "setup_time": "8-12 hours including troubleshooting",
+    "mode": "Only works in Deep Research, not regular chat"
+  },
+  "verification": {
+    "steps": [
+      "Start new chat in Deep Research mode",
+      "Select 'Use connectors'",
+      "Choose MCP Gateway from sources",
+      "Tools should be available"
+    ]
+  },
+  "notes": [
+    "Custom connectors are not verified by OpenAI",
+    "Only workspace owners/admins can add connectors",
+    "Consider using Claude for easier MCP integration",
+    "Gateway must provide required 'search' and 'fetch' tools"
+  ],
+  "alternative": {
+    "recommendation": "Claude MCP implementation is more mature",
+    "setup_time": "5 minutes vs hours for ChatGPT"
+  }
+}

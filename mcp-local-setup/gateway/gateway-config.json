@@ -1,0 +1,73 @@
+{
+  "gateway": {
+    "apiKey": "mcp-gateway-default-key",
+    "autoStartServers": [
+      "github",
+      "snap-happy"
+    ]
+  },
+  "servers": {
+    "snap-happy": {
+      "transport": "stdio",
+      "package": "@mariozechner/snap-happy",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mariozechner/snap-happy"
+      ],
+      "environment": {},
+      "capabilities": [
+        "screenshot",
+        "gui"
+      ]
+    },
+    "memory": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-memory",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "environment": {}
+    },
+    "filesystem": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-filesystem",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/jenner/code"
+      ],
+      "environment": {},
+      "mounts": {
+        "win32": {
+          "/workspace": "${USERPROFILE}\\Documents"
+        },
+        "wsl": {
+          "/workspace": "${HOME}/code",
+          "/windows": "/mnt/c/Users"
+        },
+        "darwin": {
+          "/workspace": "${HOME}/Documents"
+        },
+        "linux": {
+          "/workspace": "${HOME}/code"
+        }
+      }
+    },
+    "github": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-github",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    }
+  }
+}

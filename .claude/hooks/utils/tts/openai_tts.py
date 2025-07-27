@@ -3,23 +3,27 @@
 # requires-python = ">=3.8"
 # dependencies = [
 #     "openai",
-#     "openai[voice_helpers]",
-#     "python-dotenv",
 # ]
 # ///
 
 import os
 import sys
-import asyncio
+import tempfile
+import subprocess
 from pathlib import Path
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv is optional
 
 
-async def main():
+def main():
     """
     OpenAI TTS Script
 
-    Uses OpenAI's latest TTS model for high-quality text-to-speech.
+    Uses OpenAI's TTS model for high-quality text-to-speech.
     Accepts optional text prompt as command-line argument.
 
     Usage:
@@ -27,14 +31,10 @@ async def main():
     - ./openai_tts.py "Your custom text" # Uses provided text
 
     Features:
-    - OpenAI gpt-4o-mini-tts model (latest)
-    - Nova voice (engaging and warm)
-    - Streaming audio with instructions support
-    - Live audio playback via LocalAudioPlayer
+    - OpenAI tts-1 model
+    - Alloy voice (default)
+    - File-based playback for WSL compatibility
     """
-
-    # Load environment variables
-    load_dotenv()
 
     # Get API key from environment
     api_key = os.getenv("OPENAI_API_KEY")
@@ -45,11 +45,10 @@ async def main():
         sys.exit(1)
 
     try:
-        from openai import AsyncOpenAI
-        from openai.helpers import LocalAudioPlayer
+        import openai
 
         # Initialize OpenAI client
-        openai = AsyncOpenAI(api_key=api_key)
+        client = openai.OpenAI(api_key=api_key)
 
         print("🎙️  OpenAI TTS")
         print("=" * 20)
@@ -61,18 +60,34 @@ async def main():
             text = "Today is a wonderful day to build something people love!"
 
         print(f"🎯 Text: {text}")
-        print("🔊 Generating and streaming...")
+        print("🔊 Generating and playing...")
 
         try:
-            # Generate and stream audio using OpenAI TTS
-            async with openai.audio.speech.with_streaming_response.create(
-                model="gpt-4o-mini-tts",
-                voice="nova",
-                input=text,
-                instructions="Speak in a cheerful, positive yet professional tone.",
-                response_format="mp3",
-            ) as response:
-                await LocalAudioPlayer().play(response)
+            # Generate audio
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice="alloy",
+                input=text
+            )
+            
+            # Save to temporary file
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
+                temp_path = temp_file.name
+                temp_file.write(response.content)
+            
+            # Play the audio file using system commands
+            for player in ['mpg123', 'ffplay', 'aplay', 'paplay']:
+                try:
+                    subprocess.run([player, temp_path], capture_output=True, timeout=10)
+                    break
+                except (subprocess.SubprocessError, FileNotFoundError):
+                    continue
+            
+            # Clean up temporary file
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
 
             print("✅ Playback complete!")
 
@@ -90,4 +105,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

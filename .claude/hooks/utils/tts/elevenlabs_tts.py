@@ -61,10 +61,18 @@ def main():
         print("🔊 Generating and playing...")
         
         try:
+            # Get voice ID from environment variable
+            voice_id = os.getenv('ELEVENLABS_VOICE_ID')
+            if not voice_id:
+                print("❌ Error: ELEVENLABS_VOICE_ID not found in environment variables")
+                print("Please add your ElevenLabs voice ID to .env file:")
+                print("ELEVENLABS_VOICE_ID=your_voice_id_here")
+                sys.exit(1)
+            
             # Generate and play audio directly
             audio = elevenlabs.text_to_speech.convert(
                 text=text,
-                voice_id="WejK3H1m7MI9CHnIjW9K",  # Specified voice
+                voice_id=voice_id,
                 model_id="eleven_turbo_v2_5",
                 output_format="mp3_44100_128",
             )

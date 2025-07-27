@@ -1,66 +1,715 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>MCP Dev Dashboard</title>
-  <style>
-    body { font-family: sans-serif; padding: 2rem; }
-    .service { margin-bottom: 1.5rem; }
-    .service input, .service button { width: 100%; margin-top: 0.5rem; }
-    .nav-bar { 
-      background: #f0f0f0; 
-      padding: 1rem; 
-      margin: -2rem -2rem 2rem -2rem;
-      display: flex;
-      gap: 1rem;
-    }
-    .nav-bar a {
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      background: #007bff;
-      color: white;
-      border-radius: 4px;
-    }
-    .nav-bar a:hover {
-      background: #0056b3;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Gateway Overview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-healthy {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-degraded {
+            background: var(--warning);
+            color: white;
+        }
+
+        .status-unhealthy {
+            background: var(--danger);
+            color: white;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .metric-detail {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .server-card {
+            padding: 16px;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .server-card:hover {
+            border-color: var(--gray-300);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .server-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-running {
+            background: var(--success);
+        }
+
+        .status-stopped {
+            background: var(--gray-400);
+        }
+
+        .server-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .server-tools {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .activity-success {
+            background: #d1fae5;
+            color: var(--success);
+        }
+
+        .activity-warning {
+            background: #fed7aa;
+            color: var(--warning);
+        }
+
+        .activity-error {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .nav-bar {
+            background: var(--gray-900);
+            padding: 0;
+            margin-bottom: 0;
+        }
+
+        .nav-bar a {
+            display: inline-block;
+            padding: 12px 24px;
+            color: var(--gray-300);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-bar a:hover {
+            background: var(--gray-800);
+            color: white;
+        }
+
+        .nav-bar a.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-500);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gray-300);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-  <div class="nav-bar">
-    <a href="/">Services</a>
-    <a href="/health">Health Monitor</a>
-    <a href="/transport.html">Transport Overview</a>
-    <a href="/metrics.html">Metrics Dashboard</a>
-    <a href="/dashboard/">Traefik Dashboard</a>
-  </div>
-  <h1>MCP Services Dashboard</h1>
-  <div id="services"></div>
-  <script>
-    async function loadManifest() {
-      const res = await fetch('/.well-known/mcp-manifest.json');
-      const manifest = await res.json();
-      const container = document.getElementById('services');
-      for (const [key, svc] of Object.entries(manifest.services)) {
-        const div = document.createElement('div');
-        div.className = 'service';
-        div.innerHTML = `<h2>${key}</h2>
-                         <p>${svc.description}</p>
-                         <textarea id="input-${key}" rows="4" placeholder="Paste input"></textarea>
-                         <button onclick="callService('${key}')">Run</button>
-                         <pre id="output-${key}"></pre>`;
-        container.appendChild(div);
-      }
-    }
-    async function callService(key) {
-      const manifest = await (await fetch('/.well-known/mcp-manifest.json')).json();
-      const svc = manifest.services[key];
-      const input = document.getElementById(`input-${key}`).value;
-      const res = await fetch(svc.url, { method: 'POST', body: input });
-      const text = await res.text();
-      document.getElementById(`output-${key}`).textContent = text;
-    }
-    loadManifest();
-  </script>
+    <div class="nav-bar">
+        <a href="/dashboard/" class="active">Overview</a>
+        <a href="/dashboard/health/">Health Monitor</a>
+        <a href="/dashboard/transport.html">Transport Overview</a>
+        <a href="/dashboard/metrics.html">Metrics Dashboard</a>
+        <a href="/dashboard/catalog.html">Server Catalog</a>
+        <a href="/dashboard/config.html">Configuration</a>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <h1>MCP Gateway Overview</h1>
+            <div class="status-badge" id="system-status">
+                <div class="spinner"></div>
+                <span>Loading...</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Servers</div>
+                <div class="metric-value" id="metric-total">-</div>
+                <div class="metric-detail">
+                    <span id="metric-running">-</span> running • 
+                    <span id="metric-stopped">-</span> stopped
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">System Health</div>
+                <div class="metric-value" id="metric-health">-</div>
+                <div class="metric-detail">
+                    <span id="metric-healthy">-</span> healthy • 
+                    <span id="metric-unhealthy">-</span> unhealthy
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">API Keys</div>
+                <div class="metric-value" id="metric-apikeys">-</div>
+                <div class="metric-detail">
+                    <span id="metric-configured">-</span> configured • 
+                    <span id="metric-missing">-</span> missing
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Available Tools</div>
+                <div class="metric-value" id="metric-tools">-</div>
+                <div class="metric-detail">
+                    From <span id="metric-tool-servers">-</span> servers
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="startAllServers()">
+                        ▶️ Start All
+                    </button>
+                    <button class="btn btn-secondary" onclick="stopAllServers()">
+                        ⏹️ Stop All
+                    </button>
+                    <a href="/dashboard/health/" class="btn btn-secondary">
+                        🏥 Health Details
+                    </a>
+                    <a href="/dashboard/config.html#api-keys" class="btn btn-secondary">
+                        🔑 Configure API Keys
+                    </a>
+                    <button class="btn btn-secondary" onclick="refreshData()">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Status -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Server Status</h2>
+                <a href="/dashboard/catalog.html" class="btn btn-secondary btn-small">
+                    View All
+                </a>
+            </div>
+            <div class="servers-grid" id="servers-grid">
+                <div class="empty-state">Loading servers...</div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Activity</h2>
+            </div>
+            <div class="activity-list" id="activity-list">
+                <div class="empty-state">No recent activity</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GATEWAY_URL = window.location.origin;
+        const API_KEY = localStorage.getItem('gatewayApiKey') || 'mcp-gateway-default-key';
+        
+        let refreshInterval;
+        let activityLog = [];
+        const MAX_ACTIVITIES = 20;
+
+        async function fetchData() {
+            try {
+                // Fetch all data in parallel
+                const [healthRes, serversRes, apiKeysRes, toolsRes] = await Promise.all([
+                    fetch(`${GATEWAY_URL}/health`),
+                    fetch(`${GATEWAY_URL}/api/gateway/servers`, {
+                        headers: { 'x-api-key': API_KEY }
+                    }),
+                    fetch(`${GATEWAY_URL}/api/gateway/apikeys`, {
+                        headers: { 'x-api-key': API_KEY }
+                    }),
+                    fetch(`${GATEWAY_URL}/api/gateway/tools`, {
+                        headers: { 'x-api-key': API_KEY }
+                    })
+                ]);
+
+                const health = await healthRes.json();
+                const servers = await serversRes.json();
+                const apiKeys = await apiKeysRes.json();
+                const tools = await toolsRes.json();
+
+                return { health, servers, apiKeys, tools };
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                throw error;
+            }
+        }
+
+        function updateSystemStatus(health) {
+            const statusEl = document.getElementById('system-status');
+            const statusClass = health.status === 'healthy' ? 'status-healthy' : 
+                               health.status === 'degraded' ? 'status-degraded' : 'status-unhealthy';
+            
+            statusEl.className = `status-badge ${statusClass}`;
+            statusEl.innerHTML = `
+                <span>${health.status === 'healthy' ? '✅' : health.status === 'degraded' ? '⚠️' : '❌'}</span>
+                <span>System ${health.status}</span>
+            `;
+        }
+
+        function updateMetrics(data) {
+            const { health, servers, apiKeys, tools } = data;
+            
+            // Server metrics
+            const serverList = servers.servers || [];
+            const running = serverList.filter(s => s.status === 'running').length;
+            const stopped = serverList.filter(s => s.status !== 'running').length;
+            
+            document.getElementById('metric-total').textContent = serverList.length;
+            document.getElementById('metric-running').textContent = running;
+            document.getElementById('metric-stopped').textContent = stopped;
+            
+            // Health metrics
+            document.getElementById('metric-health').textContent = `${health.services.healthy}/${health.services.total}`;
+            document.getElementById('metric-healthy').textContent = health.services.healthy;
+            document.getElementById('metric-unhealthy').textContent = health.services.unhealthy;
+            
+            // API key metrics
+            if (apiKeys.success && apiKeys.stats) {
+                const stats = apiKeys.stats;
+                const percentage = stats.totalKeys > 0 ? 
+                    Math.round((stats.configuredKeys / stats.totalKeys) * 100) : 100;
+                document.getElementById('metric-apikeys').textContent = `${percentage}%`;
+                document.getElementById('metric-configured').textContent = stats.configuredKeys;
+                document.getElementById('metric-missing').textContent = stats.missingKeys;
+            }
+            
+            // Tools metrics
+            if (tools.success) {
+                const toolCount = tools.tools ? tools.tools.length : 0;
+                const serverCount = serverList.filter(s => s.toolCount > 0).length;
+                document.getElementById('metric-tools').textContent = toolCount;
+                document.getElementById('metric-tool-servers').textContent = serverCount;
+            }
+        }
+
+        function updateServerGrid(servers) {
+            const grid = document.getElementById('servers-grid');
+            const serverList = servers.servers || [];
+            
+            if (serverList.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No servers installed. <a href="/dashboard/catalog.html">Browse catalog</a></div>';
+                return;
+            }
+            
+            grid.innerHTML = serverList.map(server => {
+                const isRunning = server.status === 'running';
+                return `
+                    <div class="server-card">
+                        <div class="server-info">
+                            <div class="server-status ${isRunning ? 'status-running' : 'status-stopped'}"></div>
+                            <div>
+                                <div class="server-name">${server.name || server.id}</div>
+                                <div class="server-tools">${server.toolCount || 0} tools</div>
+                            </div>
+                        </div>
+                        <div class="server-actions">
+                            ${isRunning ? 
+                                `<button class="btn btn-secondary btn-small" onclick="stopServer('${server.id}')">Stop</button>` :
+                                `<button class="btn btn-primary btn-small" onclick="startServer('${server.id}')">Start</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addActivity(type, title, icon) {
+            const activity = {
+                type,
+                title,
+                icon,
+                time: new Date()
+            };
+            
+            activityLog.unshift(activity);
+            if (activityLog.length > MAX_ACTIVITIES) {
+                activityLog.pop();
+            }
+            
+            updateActivityList();
+        }
+
+        function updateActivityList() {
+            const list = document.getElementById('activity-list');
+            
+            if (activityLog.length === 0) {
+                list.innerHTML = '<div class="empty-state">No recent activity</div>';
+                return;
+            }
+            
+            list.innerHTML = activityLog.map(activity => {
+                const timeAgo = getTimeAgo(activity.time);
+                const iconClass = activity.type === 'success' ? 'activity-success' :
+                                 activity.type === 'warning' ? 'activity-warning' : 'activity-error';
+                
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon ${iconClass}">${activity.icon}</div>
+                        <div class="activity-content">
+                            <div class="activity-title">${activity.title}</div>
+                            <div class="activity-time">${timeAgo}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            return `${Math.floor(seconds / 86400)}d ago`;
+        }
+
+        async function startServer(serverId) {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/api/gateway/servers/${serverId}/start`, {
+                    method: 'POST',
+                    headers: { 'x-api-key': API_KEY }
+                });
+                
+                if (response.ok) {
+                    addActivity('success', `Started server: ${serverId}`, '✅');
+                    refreshData();
+                } else {
+                    addActivity('error', `Failed to start: ${serverId}`, '❌');
+                }
+            } catch (error) {
+                addActivity('error', `Error starting: ${serverId}`, '❌');
+            }
+        }
+
+        async function stopServer(serverId) {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/api/gateway/servers/${serverId}/stop`, {
+                    method: 'POST',
+                    headers: { 'x-api-key': API_KEY }
+                });
+                
+                if (response.ok) {
+                    addActivity('success', `Stopped server: ${serverId}`, '⏹️');
+                    refreshData();
+                } else {
+                    addActivity('error', `Failed to stop: ${serverId}`, '❌');
+                }
+            } catch (error) {
+                addActivity('error', `Error stopping: ${serverId}`, '❌');
+            }
+        }
+
+        async function startAllServers() {
+            const response = await fetch(`${GATEWAY_URL}/api/gateway/servers`, {
+                headers: { 'x-api-key': API_KEY }
+            });
+            const data = await response.json();
+            
+            if (data.success && data.servers) {
+                const stopped = data.servers.filter(s => s.status !== 'running');
+                for (const server of stopped) {
+                    await startServer(server.id);
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+                }
+            }
+        }
+
+        async function stopAllServers() {
+            const response = await fetch(`${GATEWAY_URL}/api/gateway/servers`, {
+                headers: { 'x-api-key': API_KEY }
+            });
+            const data = await response.json();
+            
+            if (data.success && data.servers) {
+                const running = data.servers.filter(s => s.status === 'running');
+                for (const server of running) {
+                    await stopServer(server.id);
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+                }
+            }
+        }
+
+        async function refreshData() {
+            try {
+                const data = await fetchData();
+                updateSystemStatus(data.health);
+                updateMetrics(data);
+                updateServerGrid(data.servers);
+            } catch (error) {
+                console.error('Failed to refresh data:', error);
+                document.getElementById('system-status').innerHTML = `
+                    <span>❌</span>
+                    <span>Connection Error</span>
+                `;
+            }
+        }
+
+        // Initialize
+        refreshData();
+        updateActivityList();
+        
+        // Auto-refresh every 5 seconds
+        refreshInterval = setInterval(refreshData, 5000);
+        
+        // Update activity times every minute
+        setInterval(updateActivityList, 60000);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
 </body>
 </html>

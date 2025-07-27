@@ -1,26 +1,12 @@
-entryPoints:
-  web:
-    address: ":8080"
-  websocket:
-    address: ":8081"
-
-providers:
-  docker:
-    exposedByDefault: false
-    network: mcp_network
-  file:
-    directory: /etc/traefik/dynamic
-    watch: true
-
 api:
   dashboard: true
   insecure: true
 
-log:
-  level: INFO
+entryPoints:
+  web:
+    address: ":8080"
 
-accessLog: {}
-
-# Enable WebSocket support
-serversTransport:
-  insecureSkipVerify: true
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true

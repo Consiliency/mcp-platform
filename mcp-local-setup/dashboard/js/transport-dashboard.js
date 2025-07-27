@@ -80,7 +80,11 @@ function handleRealtimeUpdate(data) {
 // Load servers from API
 async function loadServers() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/gateway/servers`);
+        const response = await fetch(`${API_BASE_URL}/api/gateway/servers`, {
+            headers: {
+                'X-API-Key': 'mcp-gateway-default-key'
+            }
+        });
         if (!response.ok) throw new Error('Failed to fetch servers');
         
         servers = await response.json();
@@ -204,7 +208,10 @@ async function startServer(serverId) {
         button.disabled = true;
         
         const response = await fetch(`${API_BASE_URL}/api/gateway/servers/${serverId}/start`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'X-API-Key': 'mcp-gateway-default-key'
+            }
         });
         
         if (!response.ok) throw new Error('Failed to start server');
@@ -228,7 +235,10 @@ async function stopServer(serverId) {
         button.disabled = true;
         
         const response = await fetch(`${API_BASE_URL}/api/gateway/servers/${serverId}/stop`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'X-API-Key': 'mcp-gateway-default-key'
+            }
         });
         
         if (!response.ok) throw new Error('Failed to stop server');

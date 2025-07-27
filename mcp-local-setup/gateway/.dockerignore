@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env.*
+.vscode
+.idea
+coverage
+.nyc_output
+*.log
+gateway-run.log
+gateway.log
+nohup.out

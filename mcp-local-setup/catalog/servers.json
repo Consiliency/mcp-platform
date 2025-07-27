@@ -1,0 +1,223 @@
+[
+  {
+    "id": "snap-happy",
+    "name": "Snap Happy",
+    "description": "Screenshot capture tool with GUI interaction capabilities",
+    "package": "@mariozechner/snap-happy",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@mariozechner/snap-happy"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "filesystem",
+    "name": "File System",
+    "description": "MCP server for file system operations",
+    "package": "@modelcontextprotocol/server-filesystem",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "memory",
+    "name": "Memory",
+    "description": "MCP server for knowledge graph memory",
+    "package": "@modelcontextprotocol/server-memory",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "github",
+    "name": "GitHub",
+    "description": "MCP server for GitHub operations",
+    "package": "@modelcontextprotocol/server-github",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    }
+  },
+  {
+    "id": "google-maps",
+    "name": "Google Maps",
+    "description": "MCP server for Google Maps operations",
+    "package": "@modelcontextprotocol/server-google-maps",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-maps"],
+      "environment": {
+        "GOOGLE_MAPS_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "postgres",
+    "name": "PostgreSQL",
+    "description": "MCP server for PostgreSQL database operations",
+    "package": "@modelcontextprotocol/server-postgres",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "environment": {
+        "POSTGRES_CONNECTION_STRING": ""
+      }
+    }
+  },
+  {
+    "id": "sqlite",
+    "name": "SQLite",
+    "description": "MCP server for SQLite database operations",
+    "package": "@modelcontextprotocol/server-sqlite",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "slack",
+    "name": "Slack",
+    "description": "MCP server for Slack operations",
+    "package": "@modelcontextprotocol/server-slack",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "environment": {
+        "SLACK_BOT_TOKEN": "",
+        "SLACK_TEAM_ID": ""
+      }
+    }
+  },
+  {
+    "id": "puppeteer",
+    "name": "Puppeteer",
+    "description": "MCP server for browser automation",
+    "package": "@modelcontextprotocol/server-puppeteer",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "brave-search",
+    "name": "Brave Search",
+    "description": "MCP server for Brave Search API",
+    "package": "@modelcontextprotocol/server-brave-search",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "environment": {
+        "BRAVE_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "google-drive",
+    "name": "Google Drive",
+    "description": "MCP server for Google Drive operations",
+    "package": "@modelcontextprotocol/server-google-drive",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-drive"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "sequential-thinking",
+    "name": "Sequential Thinking",
+    "description": "Dynamic problem-solving through thought sequences",
+    "package": "@modelcontextprotocol/server-sequential-thinking",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "fetch",
+    "name": "Fetch",
+    "description": "Web content fetching and conversion optimized for LLM usage",
+    "package": "@modelcontextprotocol/server-fetch",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "notion",
+    "name": "Notion",
+    "description": "Official MCP server for Notion API integration",
+    "package": "@notionhq/notion-mcp-server",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/notion-mcp-server"],
+      "environment": {
+        "NOTION_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "heroku",
+    "name": "Heroku",
+    "description": "Heroku Platform MCP Server for managing apps and resources",
+    "package": "@heroku/mcp-server",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "@heroku/mcp-server"],
+      "environment": {
+        "HEROKU_API_KEY": ""
+      }
+    }
+  },
+  {
+    "id": "code-runner",
+    "name": "Code Runner",
+    "description": "Execute code snippets in various programming languages",
+    "package": "mcp-server-code-runner",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "mcp-server-code-runner"],
+      "environment": {}
+    }
+  },
+  {
+    "id": "youtube",
+    "name": "YouTube Data",
+    "description": "Access YouTube data and analytics through the YouTube API",
+    "package": "youtube-data-mcp-server",
+    "transport": "stdio",
+    "config": {
+      "command": "npx",
+      "args": ["-y", "youtube-data-mcp-server"],
+      "environment": {
+        "YOUTUBE_API_KEY": ""
+      }
+    }
+  }
+]

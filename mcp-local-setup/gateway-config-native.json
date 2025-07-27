@@ -1,0 +1,31 @@
+{
+  "gateway": {
+    "apiKey": "mcp-gateway-default-key",
+    "autoStartServers": ["snap-happy-native", "memory", "filesystem"]
+  },
+  "servers": {
+    "snap-happy-native": {
+      "transport": "stdio",
+      "package": "@mariozechner/snap-happy",
+      "command": "powershell.exe",
+      "args": ["-Command", "npx -y @mariozechner/snap-happy"],
+      "environment": {},
+      "capabilities": ["screenshot", "gui"],
+      "native": true
+    },
+    "memory": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-memory",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "environment": {}
+    },
+    "filesystem": {
+      "transport": "stdio", 
+      "package": "@modelcontextprotocol/server-filesystem",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/jenner/code"],
+      "environment": {}
+    }
+  }
+}

@@ -4,6 +4,13 @@
   "description": "MCP Local Setup - Testing Infrastructure",
   "private": true,
   "scripts": {
+    "start": "node launch.js start",
+    "stop": "node launch.js stop",
+    "restart": "node launch.js restart",
+    "status": "node launch.js status",
+    "logs": "node launch.js logs",
+    "dashboard": "node launch.js start",
+    "launch": "node launch.js start",
     "test": "jest",
     "test:unit": "jest tests/unit --testTimeout=10000",
     "test:integration": "jest tests/integration --testTimeout=30000",

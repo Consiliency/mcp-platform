@@ -1,16 +1,16 @@
 {
   "services": {
-    "code-indexer": {
-      "description": "Splits source code into semantic chunks",
-      "url": "http://localhost:8080/mcp/code-indexer"
+    "memory": {
+      "description": "Simple knowledge graph memory for storing and retrieving information",
+      "url": "http://localhost:8080/mcp/memory"
     },
-    "notes-parser": {
-      "description": "Indexes and retrieves meeting transcripts",
-      "url": "http://localhost:8080/mcp/notes-parser"
+    "snap-happy": {
+      "description": "Cross-platform screenshot utility - capture screenshots and list windows",
+      "url": "http://localhost:8080/mcp/snap-happy"
     },
-    "playwright": {
-      "description": "Browser automation and testing with Playwright",
-      "url": "http://localhost:8080/mcp/playwright"
+    "filesystem": {
+      "description": "Access and manipulate files and directories on the local system",
+      "url": "http://localhost:8080/mcp/filesystem"
     }
   }
 }

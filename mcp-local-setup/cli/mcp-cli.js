@@ -586,22 +586,15 @@ program
     .option('-c, --client <client>', 'Generate config for specific client')
     .action(async (options) => {
         if (options.generate) {
-            const spinner = ora('Generating client configurations...').start();
             try {
-                spinner.stop();
-                
-                const generator = new ClientConfigGenerator(MCP_HOME);
-                
-                if (options.client) {
-                    await generator.generateForClient(options.client);
-                } else {
-                    await generator.generateAll();
-                }
-                
-                console.log(chalk.green('\n✓ Client configurations generated successfully'));
+                // Use gateway commands script for config generation
+                await runCommand('bash', [
+                    path.join(__dirname, 'gateway-commands.sh'), 
+                    'generate', 
+                    options.client || 'all'
+                ]);
             } catch (error) {
-                spinner.fail('Failed to generate configurations');
-                console.error(chalk.red(error.message));
+                console.error(chalk.red('Failed to generate configurations:', error.message));
                 process.exit(1);
             }
         } else {
@@ -610,8 +603,11 @@ program
             console.log(`Config file: ${path.join(MCP_HOME, '.env')`);
             console.log(`\nAvailable clients for config generation:`);
             console.log(`  - claude-code`);
-            console.log(`  - vscode`);
             console.log(`  - cursor`);
+            console.log(`  - claude-desktop`);
+            console.log(`  - vscode`);
+            console.log(`  - chatgpt`);
+            console.log(`  - all (generate for all clients)`);
             console.log(`\nUse: mcp config --generate [-c <client>]`);
         }
     });
@@ -715,6 +711,59 @@ addTransportCommand(program);
 
 // Add server command
 addServerCommand(program);
+
+// Add gateway command
+const gateway = program
+    .command('gateway')
+    .description('Manage MCP Gateway');
+
+gateway
+    .command('start')
+    .description('Start the MCP Gateway')
+    .action(async () => {
+        try {
+            await runCommand('bash', [path.join(__dirname, 'gateway-commands.sh'), 'start']);
+        } catch (error) {
+            console.error(chalk.red('Failed to start gateway:', error.message));
+            process.exit(1);
+        }
+    });
+
+gateway
+    .command('stop')
+    .description('Stop the MCP Gateway')
+    .action(async () => {
+        try {
+            await runCommand('bash', [path.join(__dirname, 'gateway-commands.sh'), 'stop']);
+        } catch (error) {
+            console.error(chalk.red('Failed to stop gateway:', error.message));
+            process.exit(1);
+        }
+    });
+
+gateway
+    .command('status')
+    .description('Show MCP Gateway status')
+    .action(async () => {
+        try {
+            await runCommand('bash', [path.join(__dirname, 'gateway-commands.sh'), 'status']);
+        } catch (error) {
+            console.error(chalk.red('Failed to get gateway status:', error.message));
+            process.exit(1);
+        }
+    });
+
+gateway
+    .command('logs')
+    .description('Show MCP Gateway logs')
+    .action(async () => {
+        try {
+            await runCommand('bash', [path.join(__dirname, 'gateway-commands.sh'), 'logs']);
+        } catch (error) {
+            console.error(chalk.red('Failed to show gateway logs:', error.message));
+            process.exit(1);
+        }
+    });
 
 // Plugin command group
 const plugin = program

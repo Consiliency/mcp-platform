@@ -8,11 +8,13 @@ Welcome to the MCP Platform documentation! This guide will help you navigate thr
 1. **[Quick Start Guide](QUICK_START.md)** - Get up and running in 5 minutes
 2. **[Installation Guide](INSTALLATION_GUIDE.md)** - Detailed installation instructions
 3. **[User Guide](USER_GUIDE.md)** - Learn all platform features
+4. **[Gateway Setup](../mcp-local-setup/client-configs/README.md)** - Configure the unified MCP Gateway
 
 ### Developers
 1. **[API Reference](API_REFERENCE.md)** - Complete API documentation
 2. **[SDK Usage Guide](SDK_USAGE.md)** - Using the MCP SDK
 3. **[Configuration Reference](CONFIGURATION_REFERENCE.md)** - All configuration options
+4. **[Gateway Integration](../mcp-local-setup/gateway/README.md)** - Integrate with the unified gateway
 
 ### Operations Teams
 1. **[Production Deployment](PRODUCTION_DEPLOYMENT.md)** - Deploy to production
@@ -51,10 +53,17 @@ Welcome to the MCP Platform documentation! This guide will help you navigate thr
 - Production server → [Production Deployment](PRODUCTION_DEPLOYMENT.md)
 - Specific OS → [Installation Guide](INSTALLATION_GUIDE.md)
 
+#### Use the Unified Gateway
+- Set up gateway → [Gateway Setup Guide](../mcp-local-setup/client-configs/README.md)
+- Configure Claude Code → `mcp config generate --client claude-code`
+- Configure other clients → [Client Configurations](../mcp-local-setup/client-configs/)
+- View all tools → `http://localhost:8080/gateway.html`
+
 #### Configure Services
 - Basic configuration → [User Guide](USER_GUIDE.md#client-configuration)
 - Advanced settings → [Configuration Reference](CONFIGURATION_REFERENCE.md)
 - Security settings → [Security Guide](SECURITY_GUIDE.md)
+- Gateway API keys → [Gateway Config](../mcp-local-setup/client-configs/README.md#setting-up-api-keys)
 
 #### Deploy to Production
 - Docker Compose → [Production Deployment](PRODUCTION_DEPLOYMENT.md#docker-compose-production)
@@ -80,6 +89,11 @@ Welcome to the MCP Platform documentation! This guide will help you navigate thr
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
        │                   │                   │
        └───────────────────┴───────────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │ MCP Gateway │ ← Single entry point
+                    │  Port 8090  │   for all servers
+                    └──────┬──────┘
                            │
                     ┌──────▼──────┐
                     │   Traefik   │
@@ -113,8 +127,8 @@ Looking for something specific? Use these keywords:
 ## 💬 Getting Help
 
 ### Documentation Issues
-- Found an error? [Report Documentation Issue](https://github.com/your-org/mcp-platform/issues/new?labels=documentation)
-- Need clarification? [Ask in Discussions](https://github.com/your-org/mcp-platform/discussions)
+- Found an error? [Report Documentation Issue](https://github.com/Consiliency/mcp-platform/issues/new?labels=documentation)
+- Need clarification? [Ask in Discussions](https://github.com/Consiliency/mcp-platform/discussions)
 
 ### Support Channels
 - **Community Forum**: [community.mcp-platform.io](https://community.mcp-platform.io)

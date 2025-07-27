@@ -337,6 +337,96 @@ class BridgeService extends EventEmitter {
         
         return metrics;
     }
+
+    /**
+     * Get available tools from all running servers
+     * @returns {Promise<Array>} Array of tools with server information
+     */
+    async getAvailableTools() {
+        const tools = [];
+        
+        for (const [serverId, server] of this.servers) {
+            if (server.status === 'running') {
+                try {
+                    const response = await this.sendToServer(serverId, {
+                        jsonrpc: '2.0',
+                        id: `tools_list_${Date.now()}`,
+                        method: 'tools/list',
+                        params: {}
+                    });
+                    
+                    if (response.result && Array.isArray(response.result.tools)) {
+                        for (const tool of response.result.tools) {
+                            tools.push({
+                                serverId,
+                                serverName: server.name,
+                                ...tool
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Failed to get tools from ${serverId}:`, error);
+                }
+            }
+        }
+        
+        return tools;
+    }
+
+    /**
+     * Route a tool call to the appropriate server
+     * @param {string} namespacedToolName - Tool name in format "serverId:toolName"
+     * @param {Object} params - Tool parameters
+     * @returns {Promise<Object>} Tool response
+     */
+    async routeToolCall(namespacedToolName, params) {
+        const [serverId, ...toolParts] = namespacedToolName.split(':');
+        const toolName = toolParts.join(':'); // Handle tools with : in their name
+        
+        if (!serverId || !toolName) {
+            throw new Error(`Invalid namespaced tool name: ${namespacedToolName}`);
+        }
+        
+        const server = this.servers.get(serverId);
+        if (!server) {
+            throw new Error(`Server not found: ${serverId}`);
+        }
+        
+        if (server.status !== 'running') {
+            throw new Error(`Server not running: ${serverId}`);
+        }
+        
+        const message = {
+            jsonrpc: '2.0',
+            id: `tool_call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            method: 'tools/call',
+            params: {
+                name: toolName,
+                arguments: params
+            }
+        };
+        
+        return await this.sendToServer(serverId, message);
+    }
+
+    /**
+     * Get server by ID
+     * @param {string} serverId - Server ID
+     * @returns {Object|null} Server configuration
+     */
+    getServer(serverId) {
+        return this.servers.get(serverId) || null;
+    }
+
+    /**
+     * Check if a server is running
+     * @param {string} serverId - Server ID
+     * @returns {boolean} True if server is running
+     */
+    isServerRunning(serverId) {
+        const server = this.servers.get(serverId);
+        return server && server.status === 'running';
+    }
 }
 
 module.exports = BridgeService;

@@ -1,0 +1,37 @@
+{
+  "description": "Claude Desktop configuration for MCP Gateway",
+  "setup": {
+    "file_locations": {
+      "windows": "%APPDATA%\\Claude\\claude_desktop_config.json",
+      "macos": "~/Library/Application Support/Claude/claude_desktop_config.json",
+      "linux": "~/.config/Claude/claude_desktop_config.json"
+    },
+    "open_command": {
+      "windows": "Run (Win+R): %APPDATA%\\Claude",
+      "macos": "open ~/Library/Application\\ Support/Claude/"
+    }
+  },
+  "configuration": {
+    "mcpServers": {
+      "unified-gateway": {
+        "type": "sse",
+        "url": "http://localhost:8090/mcp", 
+        "headers": {
+          "X-API-Key": "your-gateway-api-key"
+        }
+      }
+    }
+  },
+  "verification": {
+    "steps": [
+      "Restart Claude Desktop after configuration",
+      "Tools should appear automatically in chat",
+      "Check for namespaced tools (serverId:toolName)"
+    ]
+  },
+  "notes": [
+    "Claude Desktop caches server connections",
+    "May need to fully quit and restart for changes to take effect",
+    "Gateway provides unified access to all configured MCP servers"
+  ]
+}

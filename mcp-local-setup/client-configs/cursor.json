@@ -1,0 +1,34 @@
+{
+  "description": "Cursor configuration for MCP Gateway",
+  "setup": {
+    "file_location": ".cursor/mcp.json",
+    "create_directory": "mkdir -p .cursor"
+  },
+  "configuration": {
+    "mcpServers": {
+      "unified-gateway": {
+        "type": "sse", 
+        "url": "http://localhost:8090/mcp",
+        "headers": {
+          "X-API-Key": "your-gateway-api-key"
+        }
+      }
+    }
+  },
+  "limitations": {
+    "tool_name_length": "60 characters max for server_name:tool_name combined",
+    "manual_approval": "Cursor asks for manual approval before executing each tool"
+  },
+  "verification": {
+    "steps": [
+      "Open Cursor Settings > MCP",
+      "Should see green active status after successful connection",
+      "Tools appear in chat with namespaced format (serverId:toolName)"
+    ]
+  },
+  "notes": [
+    "Restart Cursor after modifying configuration",
+    "Keep manual tool approval enabled for security",
+    "Gateway handles tool namespacing automatically"
+  ]
+}

@@ -1,54 +1,45 @@
-version: "3.8"
+version: '3.8'
 services:
   traefik:
     image: traefik:v2.10
     command:
-      - --entrypoints.web.address=:8080
-      - --providers.docker
-      - --providers.file.directory=/etc/traefik/dynamic
-      - --providers.file.watch=true
+      - '--entrypoints.web.address=:8080'
+      - '--providers.docker=false'
+      - '--providers.file.directory=/etc/traefik/dynamic'
+      - '--providers.file.watch=true'
+      - '--api.dashboard=true'
+      - '--api.insecure=true'
     ports:
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic_conf.yml:/etc/traefik/dynamic/dynamic_conf.yml:ro
-
-  # Example third‑party MCP server
-  code_indexer:
-    image: ghcr.io/thirdparty/mcp-code-indexer:latest
-    labels:
-      - "traefik.http.routers.code_indexer.rule=PathPrefix(`/mcp/code-indexer`)"
-      - "traefik.http.services.code_indexer.loadbalancer.server.port=8080"
+      - '8081:8080'
     networks:
-      - web
-
-  notes_parser:
-    image: ghcr.io/another/mcp-notes-parser:latest
-    labels:
-      - "traefik.http.routers.notes_parser.rule=PathPrefix(`/mcp/notes-parser`)"
-      - "traefik.http.services.notes_parser.loadbalancer.server.port=8080"
-    networks:
-      - web
-
-  # Playwright MCP server
-  playwright_mcp:
+      - mcp_network
+  gateway:
     build:
-      context: ../playwright-mcp
-      dockerfile: Dockerfile
-    labels:
-      - "traefik.http.routers.playwright_mcp.rule=PathPrefix(`/mcp/playwright`)"
-      - "traefik.http.services.playwright_mcp.loadbalancer.server.port=3000"
+      context: .
+      dockerfile: gateway/Dockerfile
     environment:
-      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      NODE_ENV: production
+      GATEWAY_PORT: '8090'
+      MCP_HOME: /app/.mcp-platform
+      MCP_GATEWAY_API_KEY: ${MCP_GATEWAY_API_KEY:-mcp-gateway-default-key}
     volumes:
-      - playwright-browsers:/ms-playwright
+      - ${HOME}/.mcp-platform:/app/.mcp-platform
+    ports:
+      - '8090:8090'
+    labels:
+      - traefik.enable=true
+      - >-
+        traefik.http.routers.gateway.rule=PathPrefix(`/mcp`) ||
+        PathPrefix(`/.well-known/mcp-manifest.json`) ||
+        PathPrefix(`/api/gateway`)
+      - traefik.http.services.gateway.loadbalancer.server.port=8090
+      - >-
+        traefik.http.routers.gateway-manifest.rule=Path(`/.well-known/mcp-manifest.json`)
+      - traefik.http.routers.gateway-api.rule=PathPrefix(`/api/gateway`)
     networks:
-      - web
-
+      - mcp_network
+    restart: unless-stopped
 networks:
-  web:
-    external: false
-
-volumes:
-  playwright-browsers:
+  mcp_network:
+    driver: bridge
+volumes: {}

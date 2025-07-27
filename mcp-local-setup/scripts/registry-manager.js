@@ -10,11 +10,22 @@ const yaml = require('js-yaml');
 
 class RegistryManager {
     constructor(basePath) {
-        this.basePath = basePath || process.env.MCP_HOME || path.join(process.env.HOME, '.mcp-platform');
+        this.basePath = basePath || process.cwd();
         this.catalogPath = path.join(this.basePath, 'registry', 'mcp-catalog.json');
         this.dockerComposePath = path.join(this.basePath, 'docker-compose.yml');
         this.envPath = path.join(this.basePath, '.env');
         this.profilesPath = path.join(this.basePath, 'profiles');
+        this.isWSL = this.detectWSL();
+    }
+
+    detectWSL() {
+        try {
+            const os = require('os');
+            const release = os.release().toLowerCase();
+            return release.includes('microsoft') || release.includes('wsl');
+        } catch (error) {
+            return false;
+        }
     }
 
     async loadCatalog() {
@@ -41,6 +52,9 @@ class RegistryManager {
     async generateDockerCompose(profile = 'default') {
         const catalog = await this.loadCatalog();
         if (!catalog) return;
+        
+        // Store catalog for use in other methods
+        this.catalog = catalog;
 
         const profileConfig = await this.loadProfile(profile);
         if (!profileConfig) return;
@@ -53,7 +67,7 @@ class RegistryManager {
                     image: 'traefik:v2.10',
                     command: [
                         '--entrypoints.web.address=:8080',
-                        '--providers.docker',
+                        '--providers.docker=false',  // Disable Docker provider in WSL
                         '--providers.file.directory=/etc/traefik/dynamic',
                         '--providers.file.watch=true',
                         '--api.dashboard=true',
@@ -61,7 +75,6 @@ class RegistryManager {
                     ],
                     ports: ['8080:8080'],
                     volumes: [
-                        '/var/run/docker.sock:/var/run/docker.sock:ro',
                         './traefik/traefik.yml:/etc/traefik/traefik.yml:ro',
                         './traefik/dynamic_conf.yml:/etc/traefik/dynamic/dynamic_conf.yml:ro'
                     ],
@@ -148,6 +161,45 @@ class RegistryManager {
             networks: ['mcp_network']
         };
 
+        // Add gateway service
+        compose.services.gateway = {
+            build: {
+                context: './gateway',
+                dockerfile: 'Dockerfile'
+            },
+            environment: {
+                NODE_ENV: 'production',
+                GATEWAY_PORT: '8090',
+                MCP_HOME: '/app/.mcp-platform',
+                MCP_GATEWAY_API_KEY: '${MCP_GATEWAY_API_KEY:-mcp-gateway-default-key}',
+                MCP_SERVERS: enabledServices.join(','),
+                ...Object.fromEntries(
+                    enabledServices.map(id => [
+                        `MCP_${id.toUpperCase().replace(/-/g, '_')}_PORT`,
+                        this.catalog.servers.find(s => s.id === id)?.config?.port || '3000'
+                    ])
+                ),
+                ...Object.fromEntries(
+                    Array.from(envVars).map(v => [v, `\${${v}}`])
+                )
+            },
+            // No volumes needed for Docker-based gateway
+            ports: ['8090:8090'],
+            labels: [
+                'traefik.enable=true',
+                'traefik.http.routers.gateway.rule=PathPrefix(`/mcp`) || PathPrefix(`/.well-known/mcp-manifest.json`) || PathPrefix(`/api/gateway`)',
+                'traefik.http.services.gateway.loadbalancer.server.port=8090',
+                'traefik.http.routers.gateway-manifest.rule=Path(`/.well-known/mcp-manifest.json`)',
+                'traefik.http.routers.gateway-api.rule=PathPrefix(`/api/gateway`)'
+            ],
+            networks: ['mcp_network'],
+            depends_on: enabledServices.map(id => id),
+            restart: 'unless-stopped'
+        };
+
+        // Add gateway API key to environment variables
+        envVars.add('MCP_GATEWAY_API_KEY');
+
         return { compose, envVars: Array.from(envVars) };
     }
 
@@ -163,14 +215,29 @@ class RegistryManager {
         console.log(`Generated docker-compose.yml for profile: ${profile}`);
 
         // Generate .env template if needed
-        if (envVars.length > 0) {
-            const envTemplate = envVars.map(v => `${v}=`).join('\n');
+        if (envVars.length > 0 || this.isWSL) {
             const envExists = await fs.access(this.envPath).then(() => true).catch(() => false);
             
             if (!envExists) {
-                await fs.writeFile(this.envPath, envTemplate);
-                console.log('Created .env template with required variables:');
-                envVars.forEach(v => console.log(`  - ${v}`));
+                // Create .env with defaults for WSL
+                const envContent = [];
+                
+                // Add WSL-specific defaults
+                if (this.isWSL) {
+                    envContent.push(`HOME=${process.env.HOME || '/home/user'}`);
+                    envContent.push(`USER=${process.env.USER || 'user'}`);
+                }
+                
+                // Add other required variables
+                envContent.push(...envVars.map(v => {
+                    if (v === 'MCP_GATEWAY_API_KEY') {
+                        return `${v}=mcp-gateway-default-key`;
+                    }
+                    return `${v}=`;
+                }));
+                
+                await fs.writeFile(this.envPath, envContent.join('\n'));
+                console.log('Created .env file with required variables');
             } else {
                 console.log('Required environment variables:');
                 envVars.forEach(v => console.log(`  - ${v}`));

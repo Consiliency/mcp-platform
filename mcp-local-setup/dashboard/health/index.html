@@ -4,15 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCP Health Monitor</title>
+    <link rel="icon" type="image/x-icon" href="../static/favicon.ico">
+    <link rel="stylesheet" href="../css/common.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0a0a0a;
             color: #e0e0e0;
             line-height: 1.6;
@@ -207,6 +202,14 @@
     </style>
 </head>
 <body>
+    <div class="nav-bar">
+        <a href="/dashboard/">Overview</a>
+        <a href="/dashboard/health/" class="active">Health Monitor</a>
+        <a href="/dashboard/transport.html">Transport Overview</a>
+        <a href="/dashboard/metrics.html">Metrics Dashboard</a>
+        <a href="/dashboard/catalog.html">Server Catalog</a>
+        <a href="/dashboard/config.html">Configuration</a>
+    </div>
     <div class="container">
         <header>
             <h1>
@@ -242,13 +245,19 @@
     
     <script>
         const HEALTH_API_URL = window.location.origin + '/health';
+        const GATEWAY_API_URL = window.location.origin + '/api/gateway';
+        const API_KEY = localStorage.getItem('gatewayApiKey') || 'mcp-gateway-default-key';
         let refreshInterval;
+        let apiKeyStatuses = {};
         
         async function fetchHealth() {
             try {
-                const [systemResponse, servicesResponse] = await Promise.all([
+                const [systemResponse, servicesResponse, apiKeysResponse] = await Promise.all([
                     fetch(HEALTH_API_URL),
-                    fetch(HEALTH_API_URL + '/services')
+                    fetch(HEALTH_API_URL + '/services'),
+                    fetch(GATEWAY_API_URL + '/apikeys', {
+                        headers: { 'x-api-key': API_KEY }
+                    })
                 ]);
                 
                 if (!systemResponse.ok || !servicesResponse.ok) {
@@ -257,6 +266,23 @@
                 
                 const systemHealth = await systemResponse.json();
                 const servicesHealth = await servicesResponse.json();
+                
+                // Process API key statuses
+                if (apiKeysResponse.ok) {
+                    const apiKeysData = await apiKeysResponse.json();
+                    if (apiKeysData.success) {
+                        // Create a map of server ID to API key status
+                        apiKeyStatuses = {};
+                        apiKeysData.servers.forEach(server => {
+                            apiKeyStatuses[server.id] = {
+                                status: server.status,
+                                totalKeys: server.totalKeys,
+                                configuredKeys: server.configuredKeys,
+                                missingKeys: server.missingKeys
+                            };
+                        });
+                    }
+                }
                 
                 return { systemHealth, servicesHealth };
             } catch (error) {
@@ -304,6 +330,33 @@
             const card = document.createElement('div');
             card.className = 'service-card';
             
+            // Get API key status for this service
+            const apiKeyStatus = apiKeyStatuses[serviceId];
+            let apiKeyHtml = '';
+            
+            if (apiKeyStatus) {
+                const apiKeyStatusClass = apiKeyStatus.status === 'configured' ? 'healthy' : 
+                                         apiKeyStatus.status === 'partial' ? 'degraded' : 'unhealthy';
+                const apiKeyMessage = apiKeyStatus.status === 'configured' ? 'All API keys configured' :
+                                     apiKeyStatus.status === 'partial' ? `${apiKeyStatus.missingKeys} keys missing` :
+                                     `${apiKeyStatus.totalKeys} API keys required`;
+                
+                apiKeyHtml = `
+                    <div class="detail-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
+                        <span>API Keys:</span>
+                        <span>
+                            <span class="status-indicator status-${apiKeyStatusClass}"></span>
+                            ${apiKeyMessage}
+                        </span>
+                    </div>
+                    ${apiKeyStatus.status !== 'configured' ? `
+                    <div class="detail-row" style="font-size: 12px; color: #9ca3af;">
+                        <span></span>
+                        <span>${apiKeyStatus.configuredKeys}/${apiKeyStatus.totalKeys} configured</span>
+                    </div>` : ''}
+                `;
+            }
+            
             const checksHtml = health.details && health.details.checks ? 
                 `<div class="checks-list">
                     ${Object.entries(health.details.checks).map(([check, status]) => 
@@ -337,6 +390,7 @@
                         <span>${health.message}</span>
                     </div>` : ''}
                     ${checksHtml}
+                    ${apiKeyHtml}
                 </div>
             `;
             

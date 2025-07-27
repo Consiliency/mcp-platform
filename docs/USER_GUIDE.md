@@ -18,19 +18,21 @@ A comprehensive guide to using the Model Context Protocol (MCP) Platform for loc
 
 The MCP Platform is a Docker-based environment that enables you to run Model Context Protocol servers locally with support for multiple AI coding assistants. It provides:
 
-- **Unified Interface**: Single endpoint for all MCP services
+- **Unified Gateway**: Single entry point for all MCP servers with automatic tool namespacing
 - **Service Discovery**: Dynamic service registration and discovery
 - **Health Monitoring**: Real-time service health checks
 - **Profile Management**: Switch between different service configurations
 - **Multi-Client Support**: Works with Claude, VS Code, Cursor, and more
+- **API Key Management**: Centralized credential management for all services
 
 ### Key Components
 
-1. **Traefik Gateway**: Reverse proxy handling all incoming requests
-2. **Service Registry**: Catalog of available MCP services
-3. **Profile Manager**: Configuration sets for different workflows
-4. **Health Monitor**: Service health and status tracking
-5. **CLI Tool**: Command-line interface for platform management
+1. **MCP Gateway**: Unified entry point for all MCP servers (port 8090)
+2. **Traefik Gateway**: Reverse proxy handling all incoming requests
+3. **Service Registry**: Catalog of available MCP services
+4. **Profile Manager**: Configuration sets for different workflows
+5. **Health Monitor**: Service health and status tracking
+6. **CLI Tool**: Command-line interface for platform management
 
 ## Architecture
 
@@ -43,6 +45,12 @@ The MCP Platform is a Docker-based environment that enables you to run Model Con
 └────────┬────────┘     └────────┬────────┘     └────────┬────────┘
          │                       │                       │
          └───────────────────────┴───────────────────────┘
+                                 │
+                    ┌────────────▼────────────┐
+                    │     MCP Gateway         │
+                    │   (localhost:8090)      │
+                    │  Single Entry Point     │
+                    └────────────┬────────────┘
                                  │
                     ┌────────────▼────────────┐
                     │   Traefik Gateway       │
@@ -187,7 +195,32 @@ environment:
 
 ## Client Configuration
 
-### Claude Code
+### Using the Unified Gateway (Recommended)
+
+The MCP Gateway provides a single configuration point for all your MCP servers:
+
+1. **Start the Gateway**
+   ```bash
+   mcp gateway start
+   ```
+
+2. **Configure Your Client**
+   ```bash
+   # Generate configuration for your client
+   mcp config generate --client claude-code
+   mcp config generate --client cursor
+   mcp config generate --client vscode
+   ```
+
+3. **Claude Code Example**
+   ```bash
+   claude mcp add unified-gateway --transport sse http://localhost:8090/mcp \
+     --header "X-API-Key: your-gateway-api-key"
+   ```
+
+### Individual Server Configuration (Legacy)
+
+If you prefer to configure servers individually:
 
 1. **Automatic Configuration**
    ```bash
@@ -332,6 +365,27 @@ Deploy your own MCP service:
    ```
 
 ## Advanced Features
+
+### Unified MCP Gateway
+
+The gateway provides advanced features for managing multiple MCP servers:
+
+```bash
+# View all available tools across servers
+curl -H "X-API-Key: your-key" http://localhost:8090/api/gateway/tools
+
+# Monitor server status
+mcp gateway status
+
+# Access gateway dashboard
+open http://localhost:8080/gateway.html
+```
+
+**Key Features:**
+- Automatic tool namespacing (e.g., `github:create_issue`)
+- Centralized API key management
+- Real-time tool discovery
+- Multi-client support
 
 ### Backup and Restore
 
@@ -532,7 +586,7 @@ mcp logs --level debug
 ## Getting Support
 
 - **Documentation**: [Full Documentation](INDEX.md)
-- **GitHub Issues**: [Report Issues](https://github.com/your-org/mcp-platform/issues)
+- **GitHub Issues**: [Report Issues](https://github.com/Consiliency/mcp-platform/issues)
 - **Community Forum**: [MCP Community](https://community.mcp-platform.io)
 - **Discord**: [Join Discord](https://discord.gg/mcp-platform)
 

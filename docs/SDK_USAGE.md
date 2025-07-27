@@ -1,14 +1,16 @@
 # MCP SDK Usage Guide
 
-The MCP SDK provides a unified interface for interacting with Model Context Protocol services across multiple programming languages.
+The MCP SDK provides a unified interface for interacting with Model Context Protocol services across multiple programming languages. The SDKs are currently available for local development and testing.
 
 ## Overview
 
 The SDK consists of:
-- **Core SDK**: Low-level interface that all language SDKs implement
-- **JavaScript/TypeScript SDK**: High-level JS/TS API
-- **Python SDK**: Async Python API
-- **Go SDK**: Go client library
+- **Core SDK**: Low-level interface that all language SDKs implement (located in `/sdk/core/`)
+- **JavaScript/TypeScript SDK**: High-level JS/TS API (located in `/sdk/js/`)
+- **Python SDK**: Async Python API (located in `/sdk/python/`)
+- **Go SDK**: Go client library (located in `/sdk/go/`)
+
+**Note**: The SDKs are not yet published to package managers. They are available for local development by referencing the source directories.
 
 ## Authentication
 
@@ -211,21 +213,43 @@ try {
 5. **Health Checks**: Periodically check service health in production
 6. **Resource Cleanup**: Properly disconnect services when done
 
+## Local Development Usage
+
+### Using the JavaScript SDK Locally
+
+```javascript
+// Reference the local SDK
+const MCPClient = require('../../sdk/js');
+
+// Or in a project, add to package.json:
+// "dependencies": {
+//   "@mcp/sdk": "file:../path/to/mcp-platform/sdk/js"
+// }
+```
+
+### Using the Python SDK Locally
+
+```python
+# Add the SDK path to Python path
+import sys
+sys.path.append('/path/to/mcp-platform/sdk/python')
+
+from mcp_sdk import MCPClient
+```
+
+### Using the Go SDK Locally
+
+```go
+// Use go.mod replace directive
+// replace github.com/modelcontextprotocol/go-sdk => ../path/to/mcp-platform/sdk/go
+```
+
 ## Integration with IDE and CLI
 
-The SDK is designed to work seamlessly with:
-- IDE extensions (VS Code, IntelliJ)
-- CLI plugins
-- CI/CD pipelines
-- Orchestration platforms
-
-Example IDE integration:
-```javascript
-// In VS Code extension
-const sdk = new SDKCoreInterface({ apiKey: process.env.MCP_API_KEY });
-const services = await sdk.listServices({});
-// Provide service completions in editor
-```
+The SDK integrates with the platform's IDE extensions and CLI tools:
+- **IDE extensions**: Located in `/ide/` directory
+- **CLI integration**: Through the `mcp` command-line tool
+- **Local testing**: Use the platform's Docker-based environment
 
 ## Security Considerations
 

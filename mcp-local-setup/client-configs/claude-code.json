@@ -1,0 +1,29 @@
+{
+  "description": "Claude Code configuration for MCP Gateway",
+  "setup": {
+    "cli_command": "claude mcp add unified-gateway --transport sse http://localhost:8090/mcp --header \"X-API-Key: your-gateway-api-key\"",
+    "alternative": "Add to project .mcp.json file"
+  },
+  "configuration": {
+    "mcpServers": {
+      "unified-gateway": {
+        "type": "sse",
+        "url": "http://localhost:8090/mcp",
+        "headers": {
+          "X-API-Key": "your-gateway-api-key"
+        }
+      }
+    }
+  },
+  "verification": {
+    "commands": [
+      "claude mcp list",
+      "/mcp (in Claude Code chat)"
+    ]
+  },
+  "notes": [
+    "Claude Code supports SSE and HTTP transports",
+    "Use /mcp command to view and authenticate with servers",
+    "Tools appear automatically once gateway connection is established"
+  ]
+}

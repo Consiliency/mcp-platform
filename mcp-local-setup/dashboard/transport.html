@@ -4,9 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCP Transport Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/transport-dashboard.css">
 </head>
 <body>
+    <div class="nav-bar">
+        <a href="/dashboard/">Overview</a>
+        <a href="/dashboard/health/">Health Monitor</a>
+        <a href="/dashboard/transport.html" class="active">Transport Overview</a>
+        <a href="/dashboard/metrics.html">Metrics Dashboard</a>
+        <a href="/dashboard/catalog.html">Server Catalog</a>
+        <a href="/dashboard/config.html">Configuration</a>
+    </div>
     <div class="dashboard-container">
         <!-- Header -->
         <header class="dashboard-header">
@@ -30,13 +40,6 @@
             </div>
         </header>
 
-        <!-- Navigation -->
-        <nav class="dashboard-nav">
-            <a href="/" class="nav-link">Services</a>
-            <a href="/health" class="nav-link">Health Monitor</a>
-            <a href="/transport.html" class="nav-link active">Transport Overview</a>
-            <a href="/metrics.html" class="nav-link">Metrics</a>
-        </nav>
 
         <!-- Main Content -->
         <main class="dashboard-main">

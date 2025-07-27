@@ -1,0 +1,16 @@
+node_modules/
+**/node_modules/
+.git/
+.gitignore
+*.log
+.env
+.DS_Store
+*.md
+docs/
+tests/
+coverage/
+.nyc_output/
+dist/
+build/
+.vscode/
+.idea/

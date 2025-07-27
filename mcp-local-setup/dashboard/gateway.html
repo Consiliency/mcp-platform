@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Gateway Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .gateway-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .gateway-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+
+        .gateway-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .info-card .label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .info-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 0.25rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+        }
+
+        .tool-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .tool-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: #4f46e5;
+            margin-bottom: 0.5rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tool-server {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-description {
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .server-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .server-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .server-info h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            color: #1f2937;
+        }
+
+        .server-info .details {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background-color: #d1fae5;
+            color: #064e3b;
+        }
+
+        .status-stopped {
+            background-color: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .config-section {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .config-section h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .config-code {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+
+        .copy-button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .copy-button:hover {
+            background: #4338ca;
+        }
+
+        .api-key-section {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .api-key-section .warning {
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/">Services</a>
+        <a href="/health">Health Monitor</a>
+        <a href="/transport.html">Transport Overview</a>
+        <a href="/metrics.html">Metrics Dashboard</a>
+        <a href="/catalog.html">Server Catalog</a>
+        <a href="/gateway.html" class="active">Gateway</a>
+        <a href="/dashboard/">Traefik Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div class="gateway-header">
+            <h1>MCP Unified Gateway</h1>
+            <p>Single entry point for all MCP servers with automatic tool namespacing</p>
+            
+            <div class="gateway-info">
+                <div class="info-card">
+                    <div class="label">Endpoint</div>
+                    <div class="value">http://localhost:8090/mcp</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Total Tools</div>
+                    <div class="value" id="totalTools">-</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Active Servers</div>
+                    <div class="value" id="activeServers">-</div>
+                </div>
+                <div class="info-card">
+                    <div class="label">Status</div>
+                    <div class="value" id="gatewayStatus">Checking...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-key-section">
+            <div class="warning">⚠️ API Key Required</div>
+            <div>The gateway requires an API key for authentication. Set your key:</div>
+            <div class="config-code">export MCP_GATEWAY_API_KEY="your-secure-gateway-api-key"</div>
+        </div>
+
+        <div class="section">
+            <h2>Server Status</h2>
+            <div id="serverStatus" class="server-status">
+                <div class="loading">Loading server status...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Available Tools</h2>
+            <div id="toolsGrid" class="tools-grid">
+                <div class="loading">Loading tools...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Client Configuration</h2>
+            <div class="config-section">
+                <h3>Claude Code</h3>
+                <div class="config-code">claude mcp add unified-gateway --transport sse http://localhost:8090/mcp --header "X-API-Key: your-key"</div>
+                <button class="copy-button" onclick="copyToClipboard(this.previousElementSibling.textContent)">Copy Command</button>
+            </div>
+
+            <div class="config-section">
+                <h3>Cursor / Claude Desktop</h3>
+                <div class="config-code">{
+  "mcpServers": {
+    "unified-gateway": {
+      "type": "sse",
+      "url": "http://localhost:8090/mcp",
+      "headers": {
+        "X-API-Key": "your-gateway-api-key"
+      }
+    }
+  }
+}</div>
+                <button class="copy-button" onclick="copyToClipboard(this.previousElementSibling.textContent)">Copy Configuration</button>
+            </div>
+
+            <div class="config-section">
+                <h3>VS Code</h3>
+                <div class="config-code">{
+  "mcp": {
+    "servers": {
+      "unified-gateway": {
+        "type": "sse",
+        "url": "http://localhost:8090/mcp",
+        "headers": {
+          "X-API-Key": "your-gateway-api-key"
+        }
+      }
+    }
+  }
+}</div>
+                <button class="copy-button" onclick="copyToClipboard(this.previousElementSibling.textContent)">Copy Configuration</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test Connection</h2>
+            <div class="config-section">
+                <h3>Check Gateway Health</h3>
+                <div class="config-code">curl http://localhost:8090/health</div>
+                <button class="copy-button" onclick="testGateway('health')">Test Now</button>
+                <div id="healthResult"></div>
+            </div>
+
+            <div class="config-section">
+                <h3>List Available Tools</h3>
+                <div class="config-code">curl -H "X-API-Key: your-key" http://localhost:8090/api/gateway/tools</div>
+                <button class="copy-button" onclick="testGateway('tools')">Test Now</button>
+                <div id="toolsResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GATEWAY_URL = 'http://localhost:8090';
+        const API_KEY = localStorage.getItem('mcp_gateway_api_key') || 'mcp-gateway-default-key';
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show temporary success message
+                event.target.textContent = 'Copied!';
+                setTimeout(() => {
+                    event.target.textContent = 'Copy Configuration';
+                }, 2000);
+            });
+        }
+
+        async function checkGatewayStatus() {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    document.getElementById('gatewayStatus').textContent = 'Online';
+                    document.getElementById('gatewayStatus').style.color = '#10b981';
+                } else {
+                    document.getElementById('gatewayStatus').textContent = 'Error';
+                    document.getElementById('gatewayStatus').style.color = '#ef4444';
+                }
+            } catch (error) {
+                document.getElementById('gatewayStatus').textContent = 'Offline';
+                document.getElementById('gatewayStatus').style.color = '#ef4444';
+            }
+        }
+
+        async function loadServerStatus() {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/api/gateway/servers`, {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load server status');
+                }
+                
+                const data = await response.json();
+                const container = document.getElementById('serverStatus');
+                
+                if (!data.servers || data.servers.length === 0) {
+                    container.innerHTML = '<div class="error">No servers configured</div>';
+                    return;
+                }
+                
+                let activeCount = 0;
+                container.innerHTML = data.servers.map(server => {
+                    const isRunning = server.status === 'running';
+                    if (isRunning) activeCount++;
+                    
+                    return `
+                        <div class="server-card">
+                            <div class="server-info">
+                                <h3>${server.name || server.id}</h3>
+                                <div class="details">
+                                    ${server.transport} • ${server.toolCount || 0} tools
+                                </div>
+                            </div>
+                            <span class="status-badge status-${isRunning ? 'running' : 'stopped'}">
+                                ${server.status}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('activeServers').textContent = `${activeCount}/${data.servers.length}`;
+                
+            } catch (error) {
+                document.getElementById('serverStatus').innerHTML = 
+                    `<div class="error">Failed to load server status: ${error.message}</div>`;
+            }
+        }
+
+        async function loadTools() {
+            try {
+                const response = await fetch(`${GATEWAY_URL}/api/gateway/tools`, {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load tools');
+                }
+                
+                const data = await response.json();
+                const container = document.getElementById('toolsGrid');
+                
+                if (!data.tools || data.tools.length === 0) {
+                    container.innerHTML = '<div class="error">No tools available. Start some MCP servers first.</div>';
+                    document.getElementById('totalTools').textContent = '0';
+                    return;
+                }
+                
+                document.getElementById('totalTools').textContent = data.tools.length;
+                
+                // Group tools by server
+                const toolsByServer = {};
+                data.tools.forEach(tool => {
+                    if (!toolsByServer[tool.serverId]) {
+                        toolsByServer[tool.serverId] = [];
+                    }
+                    toolsByServer[tool.serverId].push(tool);
+                });
+                
+                container.innerHTML = data.tools.map(tool => `
+                    <div class="tool-card">
+                        <div class="tool-name">${tool.namespacedName}</div>
+                        <div class="tool-server">Server: ${tool.serverId}</div>
+                        <div class="tool-description">${tool.description || 'No description available'}</div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                document.getElementById('toolsGrid').innerHTML = 
+                    `<div class="error">Failed to load tools: ${error.message}</div>`;
+                document.getElementById('totalTools').textContent = 'Error';
+            }
+        }
+
+        async function testGateway(endpoint) {
+            const resultId = endpoint === 'health' ? 'healthResult' : 'toolsResult';
+            const resultDiv = document.getElementById(resultId);
+            
+            resultDiv.innerHTML = '<div class="loading">Testing...</div>';
+            
+            try {
+                const url = endpoint === 'health' 
+                    ? `${GATEWAY_URL}/health`
+                    : `${GATEWAY_URL}/api/gateway/tools`;
+                    
+                const options = endpoint === 'tools' 
+                    ? { headers: { 'X-API-Key': API_KEY } }
+                    : {};
+                    
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `<div class="config-code">${JSON.stringify(data, null, 2)}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Test failed: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize dashboard
+        async function init() {
+            await checkGatewayStatus();
+            await loadServerStatus();
+            await loadTools();
+            
+            // Refresh every 5 seconds
+            setInterval(async () => {
+                await checkGatewayStatus();
+                await loadServerStatus();
+                await loadTools();
+            }, 5000);
+        }
+
+        // Start initialization
+        init();
+    </script>
+</body>
+</html>

@@ -17,6 +17,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.61",
     "@sentry/node": "^9.41.0",
     "@sentry/profiling-node": "^9.41.0",
     "axios": "^1.11.0",

@@ -1,37 +1,30 @@
 http:
   routers:
-    # Dashboard router
-    dashboard:
+    gateway:
+      rule: "PathPrefix(`/mcp`) || PathPrefix(`/.well-known/mcp-manifest.json`) || PathPrefix(`/api/gateway`)"
+      service: gateway
+      entryPoints:
+        - web
+    
+    dashboard-router:
+      rule: "PathPrefix(`/dashboard`)"
+      service: dashboard
+      entryPoints:
+        - web
+        
+    traefik-api:
       rule: "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
       service: api@internal
-    
-    # Health check router
-    health:
-      rule: "PathPrefix(`/health`)"
-      service: health-service
-      priority: 100
-    
-  middlewares:
-    # WebSocket headers middleware
-    websocket-headers:
-      headers:
-        customRequestHeaders:
-          X-Forwarded-Proto: "https"
-        customResponseHeaders:
-          Access-Control-Allow-Origin: "*"
-          Access-Control-Allow-Methods: "GET, POST, PUT, DELETE, OPTIONS"
-          Access-Control-Allow-Headers: "*"
-    
-    # Strip prefix for clean routing
-    strip-mcp:
-      stripPrefix:
-        prefixes:
-          - "/mcp"
-    
+      entryPoints:
+        - web
+
   services:
-    # Services configured via Docker labels
-    # Health check service
-    health-service:
+    gateway:
       loadBalancer:
         servers:
-          - url: "http://health-check:3999"
+          - url: "http://gateway:8090"
+    
+    dashboard:
+      loadBalancer:
+        servers:
+          - url: "http://dashboard:80"

@@ -1,0 +1,13 @@
+{
+  "name": "@local/echo-mcp",
+  "version": "1.0.0",
+  "description": "Simple echo MCP server for testing",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  }
+}

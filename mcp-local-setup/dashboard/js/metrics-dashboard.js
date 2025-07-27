@@ -455,9 +455,11 @@ function updateTransportTab() {
             </div>
         </div>
         
-        <div style="margin-top: 24px;">
+        <div class="performance-breakdown-container">
             <h4>Performance Breakdown</h4>
-            <canvas id="${activeTransportTab}PerfChart" height="200"></canvas>
+            <div class="chart-wrapper" style="position: relative; height: 200px;">
+                <canvas id="${activeTransportTab}PerfChart"></canvas>
+            </div>
         </div>
     `;
     

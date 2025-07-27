@@ -1,0 +1,42 @@
+{
+  "description": "VS Code configuration for MCP Gateway",
+  "requirements": {
+    "github_copilot": "Must be enabled on your account",
+    "extension": "GitHub Copilot Chat extension must be installed"
+  },
+  "setup": {
+    "file_location": ".vscode/mcp.json",
+    "workspace_specific": true
+  },
+  "configuration": {
+    "mcp": {
+      "servers": {
+        "unified-gateway": {
+          "type": "sse",
+          "url": "http://localhost:8090/mcp",
+          "headers": {
+            "X-API-Key": "your-gateway-api-key"
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "autodiscovery": {
+      "setting": "chat.mcp.discovery.enabled",
+      "description": "Enable to auto-discover MCP servers from other tools"
+    }
+  },
+  "verification": {
+    "steps": [
+      "Open GitHub Copilot Chat",
+      "Use @agent mode to access MCP tools",
+      "Tools appear with namespaced format"
+    ]
+  },
+  "notes": [
+    "MCP servers only work in agent mode",
+    "VS Code validates server configuration on startup",
+    "Only add servers from trusted sources"
+  ]
+}

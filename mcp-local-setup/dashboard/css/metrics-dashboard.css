@@ -207,6 +207,29 @@
     color: var(--text-secondary);
 }
 
+/* Performance Breakdown Chart Container */
+.performance-breakdown-container {
+    margin-top: 24px;
+}
+
+.performance-breakdown-container h4 {
+    margin-bottom: 16px;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 200px;
+    width: 100%;
+}
+
+.chart-wrapper canvas {
+    position: absolute !important;
+    height: 100% !important;
+    width: 100% !important;
+}
+
 /* Error Analysis */
 .error-section {
     margin-bottom: var(--spacing-xl);

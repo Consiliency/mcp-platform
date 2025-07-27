@@ -6,17 +6,17 @@ Get up and running with the MCP Platform in under 5 minutes!
 
 ### Linux/WSL
 ```bash
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 ### Windows PowerShell (Run as Administrator)
 ```powershell
-iwr -useb https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.ps1 | iex
 ```
 
 ### macOS
 ```bash
-curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Consiliency/mcp-platform/main/mcp-local-setup/install.sh | bash
 ```
 
 ## 📋 Prerequisites
@@ -33,9 +33,15 @@ curl -fsSL https://github.com/your-org/mcp-platform/raw/main/mcp-local-setup/ins
 mcp start
 ```
 
+### Start the Gateway (Recommended)
+```bash
+mcp gateway start
+```
+
 ### Check Status
 ```bash
 mcp status
+mcp gateway status
 ```
 
 ### View Available Services
@@ -43,15 +49,19 @@ mcp status
 mcp list
 ```
 
-### Open Dashboard
+### Open Dashboards
 ```bash
 mcp dashboard
 # Opens http://localhost:8080/dashboard in your browser
+
+# Gateway dashboard
+open http://localhost:8080/gateway.html
 ```
 
 ### Stop Services
 ```bash
 mcp stop
+mcp gateway stop
 ```
 
 ## 🔧 First Service Deployment
@@ -69,8 +79,23 @@ mcp install filesystem
 
 ### 3. Configure Your AI Client
 
-#### For Claude Code
-Add to your Claude configuration:
+#### Option A: Use the Unified Gateway (Recommended)
+
+Configure once, access all servers:
+
+```bash
+# For Claude Code
+claude mcp add unified-gateway --transport sse http://localhost:8090/mcp \
+  --header "X-API-Key: your-gateway-api-key"
+
+# For other clients
+mcp config generate --client cursor
+mcp config generate --client vscode
+```
+
+#### Option B: Configure Individual Servers
+
+For Claude Code:
 ```json
 {
   "mcpServers": {
@@ -81,8 +106,7 @@ Add to your Claude configuration:
 }
 ```
 
-#### For VS Code/Cursor
-Add to your `settings.json`:
+For VS Code/Cursor:
 ```json
 {
   "mcp.servers": {
@@ -97,6 +121,9 @@ Add to your `settings.json`:
 ```bash
 # Check service health
 mcp health filesystem
+
+# If using gateway, check gateway status
+mcp gateway status
 
 # View service logs
 mcp logs filesystem
@@ -205,17 +232,49 @@ mcp logs -f filesystem
 - **[Production Deployment](PRODUCTION_DEPLOYMENT.md)** - Deploy to production
 - **[API Reference](API_REFERENCE.md)** - API documentation
 
+## 🌟 Gateway Quick Start
+
+The MCP Gateway provides a single entry point for all your MCP servers:
+
+### 1. Start Gateway
+```bash
+mcp gateway start
+```
+
+### 2. Configure Once
+```bash
+# Claude Code
+claude mcp add unified-gateway --transport sse http://localhost:8090/mcp \
+  --header "X-API-Key: mcp-gateway-default-key"
+```
+
+### 3. Access All Tools
+All tools from all running MCP servers are now available with automatic namespacing:
+- `github:create_issue`
+- `filesystem:read_file`
+- `postgres:query`
+
+### 4. Monitor
+```bash
+# View dashboard
+open http://localhost:8080/gateway.html
+
+# Check status
+mcp gateway status
+```
+
 ## 💡 Quick Tips
 
 1. **Auto-start on boot**: Run `mcp enable` to start services on system boot
 2. **Update platform**: Run `mcp update` to get the latest version
 3. **Backup config**: Run `mcp backup create` before major changes
 4. **Get help**: Run `mcp help` or `mcp <command> --help`
+5. **Use the gateway**: Single configuration for all MCP servers!
 
 ## 🆘 Getting Help
 
 - **Documentation**: [Full Documentation](INDEX.md)
-- **Issues**: [GitHub Issues](https://github.com/your-org/mcp-platform/issues)
+- **Issues**: [GitHub Issues](https://github.com/Consiliency/mcp-platform/issues)
 - **Community**: [Discord Server](https://discord.gg/mcp-platform)
 
 ---

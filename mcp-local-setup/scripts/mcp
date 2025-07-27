@@ -129,6 +129,19 @@ case "${1:-help}" in
         fi
         ;;
         
+    launch)
+        shift
+        # Use the launch script in the parent directory
+        LAUNCH_SCRIPT="$MCP_HOME/launch.sh"
+        if [ -x "$LAUNCH_SCRIPT" ]; then
+            exec "$LAUNCH_SCRIPT" "$@"
+        else
+            echo -e "${RED}Launch script not found${NC}"
+            echo "Expected location: $LAUNCH_SCRIPT"
+            exit 1
+        fi
+        ;;
+        
     help|--help|-h|*)
         echo -e "${BLUE}MCP Platform CLI${NC}"
         echo ""
@@ -145,6 +158,7 @@ case "${1:-help}" in
         echo "  install <service>  Install a service (requires full CLI)"
         echo "  config             Show configuration"
         echo "  dashboard          Open web dashboard"
+        echo "  launch             Launch all services with dashboard"
         echo "  help               Show this help"
         echo ""
         echo "Examples:"

@@ -1,0 +1,9 @@
+name: default
+description: Default MCP services profile
+services:
+  - memory
+  - snap-happy
+  - filesystem
+settings:
+  auto_start: true
+  restart_policy: unless-stopped

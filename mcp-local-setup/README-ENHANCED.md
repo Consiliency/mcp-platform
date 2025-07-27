@@ -25,8 +25,16 @@ mcp dashboard      # Open web dashboard
 mcp list           # See available services
 ```
 
-## 🆕 What's New in v1.0
+## 🆕 What's New
 
+### Latest: Unified MCP Gateway
+- **Single Entry Point** - Configure once in your AI assistant, access all MCP servers
+- **Automatic Tool Namespacing** - No more conflicts between servers with similar tools
+- **Centralized API Keys** - Manage all service credentials in one place
+- **Real-time Updates** - Tools appear/disappear dynamically as servers start/stop
+- **Multi-Client Support** - Works with Claude Code, Cursor, VS Code, Claude Desktop, and ChatGPT
+
+### v1.0 Features
 - **Health Monitoring System** - Real-time service health checks with dashboard
 - **Example Services** - Three production-ready example MCP services
 - **Comprehensive Testing** - Full test suite with Jest (unit, integration, E2E)
@@ -73,8 +81,14 @@ mcp info playwright               # Get service details
 - **Linux** native support
 - **macOS** compatible (Docker Desktop required)
 
-### 5. **Easy Service Access**
-All services accessible via unified endpoints:
+### 5. **Unified MCP Gateway**
+Single entry point for all MCP servers:
+- Gateway endpoint: `http://localhost:8090/mcp`
+- Automatic tool namespacing: `serverId:toolName`
+- Gateway dashboard: `http://localhost:8080/gateway.html`
+
+### 6. **Easy Service Access**
+Individual services also accessible:
 - HTTP: `http://localhost:8080/mcp/{service-name}`
 - WebSocket: `ws://localhost:8081/mcp/{service-name}`
 - Dashboard: `http://localhost:8080/dashboard`
@@ -211,13 +225,22 @@ mcp profile create     # New profile
 mcp profile edit       # Edit profile
 ```
 
+### Gateway Commands (NEW)
+```bash
+mcp gateway start      # Start unified gateway
+mcp gateway stop       # Stop gateway
+mcp gateway status     # Show gateway status
+mcp gateway logs       # View gateway logs
+mcp config generate    # Generate client configs
+```
+
 ### Advanced Features
 ```bash
 mcp config             # Show configuration
 mcp config --generate  # Generate client configs
 mcp interactive        # Interactive mode
 
-# Service lifecycle management (NEW)
+# Service lifecycle management
 node scripts/service-manager.js start <service>
 node scripts/service-manager.js stop <service>
 node scripts/service-manager.js restart <service>
