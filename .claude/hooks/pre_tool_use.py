@@ -60,20 +60,21 @@ def is_env_file_access(tool_name, tool_input):
         # Check file paths for file-based tools
         if tool_name in ['Read', 'Edit', 'MultiEdit', 'Write']:
             file_path = tool_input.get('file_path', '')
-            if '.env' in file_path and not file_path.endswith('.env.sample'):
+            # Allow .env.sample and .env.mcp (MCP-specific non-secret config)
+            if '.env' in file_path and not (file_path.endswith('.env.sample') or file_path.endswith('.env.mcp')):
                 return True
         
         # Check bash commands for .env file access
         elif tool_name == 'Bash':
             command = tool_input.get('command', '')
-            # Pattern to detect .env file access (but allow .env.sample)
+            # Pattern to detect .env file access (but allow .env.sample and .env.mcp)
             env_patterns = [
-                r'\b\.env\b(?!\.sample)',  # .env but not .env.sample
-                r'cat\s+.*\.env\b(?!\.sample)',  # cat .env
-                r'echo\s+.*>\s*\.env\b(?!\.sample)',  # echo > .env
-                r'touch\s+.*\.env\b(?!\.sample)',  # touch .env
-                r'cp\s+.*\.env\b(?!\.sample)',  # cp .env
-                r'mv\s+.*\.env\b(?!\.sample)',  # mv .env
+                r'\b\.env\b(?!\.(?:sample|mcp))',  # .env but not .env.sample or .env.mcp
+                r'cat\s+.*\.env\b(?!\.(?:sample|mcp))',  # cat .env
+                r'echo\s+.*>\s*\.env\b(?!\.(?:sample|mcp))',  # echo > .env
+                r'touch\s+.*\.env\b(?!\.(?:sample|mcp))',  # touch .env
+                r'cp\s+.*\.env\b(?!\.(?:sample|mcp))',  # cp .env
+                r'mv\s+.*\.env\b(?!\.(?:sample|mcp))',  # mv .env
             ]
             
             for pattern in env_patterns:

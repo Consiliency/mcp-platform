@@ -1,0 +1,331 @@
+{
+  "serverId": "memory",
+  "timestamp": "2025-07-28T01:25:17.518Z",
+  "platform": "linux",
+  "tests": {
+    "serverStatus": {
+      "name": "Server Status",
+      "passed": false,
+      "details": {
+        "id": "memory",
+        "name": "memory",
+        "type": "stdio",
+        "transport": "stdio",
+        "status": "running",
+        "source": "config",
+        "toolCount": 9,
+        "autostart": false
+      },
+      "message": "Server status: running"
+    },
+    "toolDiscovery": {
+      "name": "Tool Discovery",
+      "passed": true,
+      "tools": [
+        {
+          "name": "memory:create_entities",
+          "description": "Create multiple new entities in the knowledge graph",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "entities": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the entity"
+                    },
+                    "entityType": {
+                      "type": "string",
+                      "description": "The type of the entity"
+                    },
+                    "observations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "An array of observation contents associated with the entity"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "entityType",
+                    "observations"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "entities"
+            ]
+          }
+        },
+        {
+          "name": "memory:create_relations",
+          "description": "Create multiple new relations between entities in the knowledge graph. Relations should be in active voice",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "relations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "description": "The name of the entity where the relation starts"
+                    },
+                    "to": {
+                      "type": "string",
+                      "description": "The name of the entity where the relation ends"
+                    },
+                    "relationType": {
+                      "type": "string",
+                      "description": "The type of the relation"
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                    "relationType"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "relations"
+            ]
+          }
+        },
+        {
+          "name": "memory:add_observations",
+          "description": "Add new observations to existing entities in the knowledge graph",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "observations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entityName": {
+                      "type": "string",
+                      "description": "The name of the entity to add the observations to"
+                    },
+                    "contents": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "An array of observation contents to add"
+                    }
+                  },
+                  "required": [
+                    "entityName",
+                    "contents"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "observations"
+            ]
+          }
+        },
+        {
+          "name": "memory:delete_entities",
+          "description": "Delete multiple entities and their associated relations from the knowledge graph",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "entityNames": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of entity names to delete"
+              }
+            },
+            "required": [
+              "entityNames"
+            ]
+          }
+        },
+        {
+          "name": "memory:delete_observations",
+          "description": "Delete specific observations from entities in the knowledge graph",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "deletions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entityName": {
+                      "type": "string",
+                      "description": "The name of the entity containing the observations"
+                    },
+                    "observations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "An array of observations to delete"
+                    }
+                  },
+                  "required": [
+                    "entityName",
+                    "observations"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "deletions"
+            ]
+          }
+        },
+        {
+          "name": "memory:delete_relations",
+          "description": "Delete multiple relations from the knowledge graph",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "relations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "description": "The name of the entity where the relation starts"
+                    },
+                    "to": {
+                      "type": "string",
+                      "description": "The name of the entity where the relation ends"
+                    },
+                    "relationType": {
+                      "type": "string",
+                      "description": "The type of the relation"
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                    "relationType"
+                  ]
+                },
+                "description": "An array of relations to delete"
+              }
+            },
+            "required": [
+              "relations"
+            ]
+          }
+        },
+        {
+          "name": "memory:read_graph",
+          "description": "Read the entire knowledge graph",
+          "inputSchema": {
+            "type": "object",
+            "properties": {}
+          }
+        },
+        {
+          "name": "memory:search_nodes",
+          "description": "Search for nodes in the knowledge graph based on a query",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The search query to match against entity names, types, and observation content"
+              }
+            },
+            "required": [
+              "query"
+            ]
+          }
+        },
+        {
+          "name": "memory:open_nodes",
+          "description": "Open specific nodes in the knowledge graph by their names",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "names": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of entity names to retrieve"
+              }
+            },
+            "required": [
+              "names"
+            ]
+          }
+        }
+      ],
+      "details": {
+        "totalTools": 48,
+        "serverTools": 9
+      },
+      "message": "Found 9 tools for memory"
+    },
+    "toolExecution": {
+      "name": "Tool Execution",
+      "passed": true,
+      "results": [
+        {
+          "tool": "memory:read_graph",
+          "passed": true,
+          "response": "Success",
+          "error": null
+        }
+      ]
+    },
+    "compatibilityFiltering": {
+      "name": "Compatibility Filtering",
+      "passed": true,
+      "details": {
+        "platform": "wsl",
+        "supported": true,
+        "level": "unknown",
+        "limitations": [],
+        "knownIssues": 0
+      },
+      "message": "Compatibility level: unknown"
+    },
+    "runtimeCapabilities": {
+      "name": "Runtime Capabilities",
+      "passed": true,
+      "details": {
+        "canRun": true,
+        "overallSupport": true,
+        "missingRequirements": []
+      },
+      "message": "Can run: true"
+    },
+    "performance": {
+      "name": "Performance",
+      "passed": true,
+      "metrics": {
+        "toolDiscovery": 0,
+        "toolExecution": 2
+      },
+      "message": "Performance within acceptable limits"
+    }
+  },
+  "errors": [],
+  "summary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 1,
+    "successRate": 83
+  }
+}

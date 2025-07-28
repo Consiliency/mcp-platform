@@ -189,10 +189,11 @@ class PlatformManager {
       if (!serverConfig.platforms || !serverConfig.platforms.wsl) {
         console.log(`Auto-configuring Windows PowerShell for ${serverConfig.package || 'server'}`);
         
-        // Use the PowerShell command builder
+        // Use the PowerShell command builder with environment variables
         const psCommand = this.buildWindowsPowerShellCommand(
           serverConfig.package || serverConfig.command,
-          serverConfig.args ? serverConfig.args.filter(arg => arg !== '-y' && arg !== serverConfig.package) : []
+          serverConfig.args ? serverConfig.args.filter(arg => arg !== '-y' && arg !== serverConfig.package) : [],
+          serverConfig.environment || {}
         );
         
         return {
@@ -335,20 +336,54 @@ class PlatformManager {
    * Build a PowerShell command for Windows-required MCPs when running in WSL
    * This ensures proper PATH setup for npm/npx/node executables
    */
-  buildWindowsPowerShellCommand(npmPackage, args = []) {
+  buildWindowsPowerShellCommand(npmPackage, args = [], additionalEnv = {}) {
     if (!this.platform.isWSL || !this.capabilities.hasWindowsInterop) {
       throw new Error('PowerShell command builder is only for WSL with Windows interop');
     }
 
+    // Get Windows username (may differ from WSL username)
+    const windowsUsername = this.getWindowsUsername();
+    
     // Common Windows paths for Node.js installations
     const nodePaths = [
       'C:\\Program Files\\nodejs',
       'C:\\Program Files (x86)\\nodejs',
-      `C:\\Users\\${process.env.USER || process.env.USERNAME}\\AppData\\Roaming\\npm`
+      `C:\\Users\\${windowsUsername}\\AppData\\Roaming\\npm`,
+      `C:\\Users\\${windowsUsername}\\AppData\\Local\\Programs\\node`
     ];
 
-    // Build PowerShell command that sets PATH and runs npx
+    // Build PowerShell command that sets PATH, working directory, and runs npx
     const pathSetup = `$env:PATH = '${nodePaths.join(';')}' + ';' + $env:PATH`;
+    
+    // Set working directory to Windows temp to avoid UNC path issues
+    const workingDirSetup = `Set-Location $env:TEMP`;
+    
+    // Build environment variable setup commands
+    let envSetup = '';
+    if (additionalEnv && Object.keys(additionalEnv).length > 0) {
+      const envCommands = Object.entries(additionalEnv)
+        .filter(([key, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => {
+          // Check if value looks like a path that needs translation
+          let translatedValue = value;
+          if (typeof value === 'string') {
+            // If it's already a Windows path, keep it as is
+            if (value.match(/^[A-Z]:\\/i)) {
+              translatedValue = value;
+            }
+            // If it's a WSL path, translate to Windows
+            else if (value.startsWith('/mnt/')) {
+              translatedValue = this.translatePath(value, 'wsl', 'windows');
+            }
+            // If it's a relative path or doesn't look like a path, keep as is
+          }
+          return `$env:${key} = '${translatedValue}'`;
+        });
+      if (envCommands.length > 0) {
+        envSetup = envCommands.join('; ') + '; ';
+      }
+    }
+    
     const npxCommand = args.length > 0 
       ? `npx -y ${npmPackage} ${args.join(' ')}`
       : `npx -y ${npmPackage}`;
@@ -358,9 +393,77 @@ class PlatformManager {
       args: [
         '-NoProfile',
         '-Command',
-        `${pathSetup}; ${npxCommand}`
-      ]
+        `${pathSetup}; ${workingDirSetup}; ${envSetup}${npxCommand}`
+      ],
+      environment: {
+        // Pass through display environment for screenshot tools
+        ...this.getDisplayEnvironment(),
+        // Ensure temp directory is accessible
+        TEMP: `C:\\Users\\${windowsUsername}\\AppData\\Local\\Temp`,
+        TMP: `C:\\Users\\${windowsUsername}\\AppData\\Local\\Temp`,
+        // Also include the additional environment variables here for consistency
+        // But translate any WSL paths to Windows paths
+        ...Object.entries(additionalEnv).reduce((acc, [key, value]) => {
+          let translatedValue = value;
+          if (typeof value === 'string') {
+            if (value.match(/^[A-Z]:\\/i)) {
+              translatedValue = value;
+            } else if (value.startsWith('/mnt/')) {
+              translatedValue = this.translatePath(value, 'wsl', 'windows');
+            }
+          }
+          acc[key] = translatedValue;
+          return acc;
+        }, {})
+      }
     };
+  }
+
+  /**
+   * Get Windows username from WSL environment
+   * Handles cases where WSL username differs from Windows username
+   */
+  getWindowsUsername() {
+    if (!this.platform.isWSL) {
+      return process.env.USERNAME || process.env.USER;
+    }
+    
+    // Try to detect Windows username from the Windows home path
+    try {
+      const fs = require('fs');
+      const users = fs.readdirSync('/mnt/c/Users');
+      
+      // Filter out system directories
+      const systemDirs = ['All Users', 'Default', 'Default User', 'Public', 'desktop.ini'];
+      const userDirs = users.filter(u => !systemDirs.includes(u));
+      
+      // If we have exactly one user directory, use it
+      if (userDirs.length === 1) {
+        return userDirs[0];
+      }
+      
+      // Try to match WSL username to Windows username
+      const wslUser = process.env.USER;
+      if (wslUser) {
+        // Look for exact match
+        if (userDirs.includes(wslUser)) {
+          return wslUser;
+        }
+        
+        // Look for partial match (e.g., "jenner" -> "jenne")
+        const partialMatch = userDirs.find(u => 
+          u.toLowerCase().startsWith(wslUser.toLowerCase().substring(0, 4))
+        );
+        if (partialMatch) {
+          return partialMatch;
+        }
+      }
+    } catch (e) {
+      // Fallback to environment variable
+    }
+    
+    // Default fallback
+    return process.env.USERNAME || process.env.USER || 'User';
   }
 
   /**

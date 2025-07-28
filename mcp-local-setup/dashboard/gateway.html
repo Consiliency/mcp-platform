@@ -325,7 +325,7 @@
     </div>
 
     <script>
-        const GATEWAY_URL = 'http://localhost:8090';
+        const GATEWAY_URL = window.location.port ? `http://localhost:${window.location.port}` : 'http://localhost:8090';
         const API_KEY = localStorage.getItem('mcp_gateway_api_key') || 'mcp-gateway-default-key';
 
         function copyToClipboard(text) {

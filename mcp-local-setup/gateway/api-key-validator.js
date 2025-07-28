@@ -71,7 +71,9 @@ class ApiKeyValidator extends EventEmitter {
     const availableTools = [];
     
     for (const tool of tools) {
-      const requiredKeys = this.toolRequirements.get(tool.name) || [];
+      // Use originalName or name for lookup (tools have originalName set by gateway)
+      const toolName = tool.originalName || tool.name;
+      const requiredKeys = this.toolRequirements.get(toolName) || [];
       const hasAllKeys = requiredKeys.every(key => 
         this.apiKeyManager.hasKey(key)
       );

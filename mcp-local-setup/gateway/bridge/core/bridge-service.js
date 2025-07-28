@@ -217,6 +217,37 @@ class BridgeService extends EventEmitter {
     }
 
     /**
+     * Create a connection using a specific transport
+     * @param {string} transportType - Transport type
+     * @param {Object} config - Connection configuration
+     * @returns {Promise<Object>} Connection info
+     */
+    async createConnection(transportType, config) {
+        const transport = this.transports.get(transportType);
+        if (!transport) {
+            throw new Error(`Transport not found: ${transportType}`);
+        }
+        
+        return await transport.createConnection(config);
+    }
+    
+    /**
+     * Send message using a specific transport and connection
+     * @param {string} transportType - Transport type
+     * @param {string} connectionId - Connection ID
+     * @param {Object} message - Message to send
+     * @returns {Promise<Object>} Response
+     */
+    async sendMessage(transportType, connectionId, message) {
+        const transport = this.transports.get(transportType);
+        if (!transport) {
+            throw new Error(`Transport not found: ${transportType}`);
+        }
+        
+        return await transport.sendMessage(connectionId, message);
+    }
+
+    /**
      * Send message to a server
      * @param {string} serverId - Server ID
      * @param {Object} message - Message to send

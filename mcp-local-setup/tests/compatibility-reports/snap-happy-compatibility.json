@@ -1,0 +1,91 @@
+{
+  "serverId": "snap-happy",
+  "timestamp": "2025-07-28T01:25:05.889Z",
+  "platform": "linux",
+  "tests": {
+    "serverStatus": {
+      "name": "Server Status",
+      "passed": false,
+      "details": {
+        "id": "snap-happy",
+        "name": "snap-happy",
+        "type": "stdio",
+        "transport": "stdio",
+        "status": "running",
+        "source": "config",
+        "toolCount": 1,
+        "autostart": true
+      },
+      "message": "Server status: running"
+    },
+    "toolDiscovery": {
+      "name": "Tool Discovery",
+      "passed": true,
+      "tools": [
+        {
+          "name": "snap-happy:TakeScreenshot",
+          "description": "Takes a new screenshot, stores it, and returns as base64 encoded PNG data. Optionally capture a specific window by ID (macOS only). If asked to capture a specific app, ALWAYS use ListWindows tool first, to get the windowId. Without windowId parameter, takes a full screen screenshot. (Available on: macOS, Windows, Linux, WSL)",
+          "inputSchema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        }
+      ],
+      "details": {
+        "totalTools": 48,
+        "serverTools": 1
+      },
+      "message": "Found 1 tools for snap-happy"
+    },
+    "toolExecution": {
+      "name": "Tool Execution",
+      "passed": true,
+      "results": []
+    },
+    "compatibilityFiltering": {
+      "name": "Compatibility Filtering",
+      "passed": true,
+      "details": {
+        "platform": "wsl",
+        "supported": true,
+        "level": "experimental",
+        "limitations": [
+          "Requires Windows-side execution via PowerShell",
+          "Window listing not supported",
+          "File creation issues reported",
+          "GetLastScreenshot may not work"
+        ],
+        "knownIssues": 1
+      },
+      "message": "Compatibility level: experimental"
+    },
+    "runtimeCapabilities": {
+      "name": "Runtime Capabilities",
+      "passed": true,
+      "details": {
+        "canRun": true,
+        "overallSupport": true,
+        "missingRequirements": []
+      },
+      "message": "Can run: true"
+    },
+    "performance": {
+      "name": "Performance",
+      "passed": true,
+      "metrics": {
+        "toolDiscovery": 1,
+        "toolExecution": 8
+      },
+      "message": "Performance within acceptable limits"
+    }
+  },
+  "errors": [],
+  "summary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 1,
+    "successRate": 83
+  }
+}

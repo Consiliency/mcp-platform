@@ -1,0 +1,122 @@
+{
+  "id": "snap-happy",
+  "name": "Snap Happy",
+  "version": "1.0.0",
+  "lastUpdated": "2025-07-27T22:00:00Z",
+  "compatibility": {
+    "platforms": {
+      "darwin": {
+        "supported": "full",
+        "tested": true,
+        "features": [
+          "screenshot-fullscreen",
+          "screenshot-window",
+          "list-windows",
+          "get-last-screenshot"
+        ],
+        "limitations": [],
+        "requirements": {
+          "display": true,
+          "permissions": ["screen-recording"]
+        }
+      },
+      "win32": {
+        "supported": "partial",
+        "tested": false,
+        "features": [
+          "screenshot-fullscreen",
+          "get-last-screenshot"
+        ],
+        "limitations": [
+          "Window listing not supported",
+          "Window-specific screenshots not available",
+          "May fail to create screenshot files"
+        ],
+        "requirements": {
+          "display": true,
+          "permissions": ["screen-capture"]
+        }
+      },
+      "linux": {
+        "supported": "partial",
+        "tested": false,
+        "features": [
+          "screenshot-fullscreen",
+          "get-last-screenshot"
+        ],
+        "limitations": [
+          "Window listing not supported",
+          "Window-specific screenshots not available"
+        ],
+        "requirements": {
+          "display": true,
+          "permissions": ["screen-capture"]
+        }
+      },
+      "wsl": {
+        "supported": "partial",
+        "tested": true,
+        "features": [
+          "screenshot-fullscreen",
+          "get-last-screenshot"
+        ],
+        "limitations": [
+          "Requires Windows-side execution via PowerShell",
+          "Window listing not supported",
+          "Window-specific screenshots not available",
+          "File creation issues reported"
+        ],
+        "requirements": {
+          "display": true,
+          "permissions": ["windows-interop", "screen-capture"],
+          "screenshot": true
+        }
+      }
+    },
+    "tools": {
+      "ListWindows": {
+        "platforms": ["darwin"],
+        "alternativeTool": null,
+        "deprecationNotice": null
+      },
+      "TakeScreenshot": {
+        "platforms": ["darwin", "win32", "linux", "wsl"],
+        "parameters": {
+          "windowId": {
+            "platforms": ["darwin"]
+          }
+        }
+      },
+      "GetLastScreenshot": {
+        "platforms": ["darwin", "win32", "linux", "wsl"],
+        "alternativeTool": null
+      }
+    },
+    "requirements": {
+      "node": ">=16.0.0"
+    }
+  },
+  "knownIssues": [
+    {
+      "id": "wsl-file-creation",
+      "platforms": ["wsl"],
+      "description": "Screenshot file may not be created when running through WSL PowerShell bridge",
+      "workaround": "Run directly on Windows or use alternative screenshot tool",
+      "severity": "high"
+    },
+    {
+      "id": "windows-untested",
+      "platforms": ["win32"],
+      "description": "Windows support is not officially tested by the developer",
+      "workaround": "Test thoroughly before production use",
+      "severity": "medium"
+    },
+    {
+      "id": "macos-permissions",
+      "platforms": ["darwin"],
+      "description": "Requires screen recording permissions in System Preferences",
+      "workaround": "Grant permissions when prompted or in System Preferences > Security & Privacy",
+      "severity": "low"
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Compatibility Schema",
+  "description": "Schema for defining MCP server compatibility across platforms",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the MCP server"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the MCP server"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of compatibility data",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this compatibility data was last updated"
+    },
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "platforms": {
+          "type": "object",
+          "description": "Platform-specific compatibility information",
+          "properties": {
+            "darwin": {
+              "$ref": "#/definitions/platformSupport"
+            },
+            "win32": {
+              "$ref": "#/definitions/platformSupport"
+            },
+            "linux": {
+              "$ref": "#/definitions/platformSupport"
+            },
+            "wsl": {
+              "$ref": "#/definitions/platformSupport"
+            }
+          }
+        },
+        "tools": {
+          "type": "object",
+          "description": "Tool-specific compatibility overrides",
+          "additionalProperties": {
+            "$ref": "#/definitions/toolCompatibility"
+          }
+        },
+        "requirements": {
+          "type": "object",
+          "description": "System requirements",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Minimum Node.js version"
+            },
+            "python": {
+              "type": "string",
+              "description": "Python version requirement"
+            },
+            "systemPackages": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Required system packages"
+            }
+          }
+        }
+      }
+    },
+    "knownIssues": {
+      "type": "array",
+      "description": "List of known issues",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "workaround": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "critical"]
+          }
+        },
+        "required": ["id", "description", "severity"]
+      }
+    }
+  },
+  "required": ["id", "name", "version", "compatibility"],
+  "definitions": {
+    "platformSupport": {
+      "type": "object",
+      "properties": {
+        "supported": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": ["full", "partial", "experimental", "unsupported"]
+            }
+          ],
+          "description": "Level of support on this platform"
+        },
+        "tested": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this platform has been tested"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of supported features on this platform"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Known limitations on this platform"
+        },
+        "requirements": {
+          "type": "object",
+          "description": "Platform-specific requirements",
+          "properties": {
+            "display": {
+              "type": "boolean",
+              "description": "Requires display/GUI"
+            },
+            "permissions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Required system permissions"
+            }
+          }
+        }
+      }
+    },
+    "toolCompatibility": {
+      "type": "object",
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Platforms where this tool is available"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Parameter-specific platform restrictions",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "platforms": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Platforms where this parameter is supported"
+              }
+            }
+          }
+        },
+        "alternativeTool": {
+          "type": "string",
+          "description": "Alternative tool to use on unsupported platforms"
+        },
+        "deprecationNotice": {
+          "type": "string",
+          "description": "If this tool is deprecated on certain platforms"
+        }
+      }
+    }
+  }
+}

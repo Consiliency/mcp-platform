@@ -1,0 +1,44 @@
+{
+  "id": "filesystem",
+  "name": "Filesystem MCP",
+  "version": "1.0.0",
+  "lastUpdated": "2025-07-27T22:00:00Z",
+  "compatibility": {
+    "platforms": {
+      "darwin": {
+        "supported": "full",
+        "tested": true,
+        "features": ["all"],
+        "limitations": []
+      },
+      "win32": {
+        "supported": "full",
+        "tested": true,
+        "features": ["all"],
+        "limitations": [
+          "Path separators must use forward slashes or escaped backslashes"
+        ]
+      },
+      "linux": {
+        "supported": "full",
+        "tested": true,
+        "features": ["all"],
+        "limitations": []
+      },
+      "wsl": {
+        "supported": "full",
+        "tested": true,
+        "features": ["all"],
+        "limitations": [
+          "Windows paths automatically translated to WSL paths",
+          "Some Windows system directories may not be accessible"
+        ]
+      }
+    },
+    "tools": {},
+    "requirements": {
+      "node": ">=16.0.0"
+    }
+  },
+  "knownIssues": []
+}

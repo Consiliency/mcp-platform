@@ -100,7 +100,7 @@ class PathTranslator {
   /**
    * Translate paths in tool responses
    */
-  translateToolResponse(toolName, response) {
+  translateToolResponse(toolName, response, isWindowsSide = false) {
     if (!response || typeof response !== 'object') {
       return response;
     }
@@ -112,7 +112,13 @@ class PathTranslator {
     const translateObject = (obj) => {
       if (typeof obj === 'string') {
         // Check if it looks like a path
-        if (obj.match(/^[A-Z]:\\/i) || obj.startsWith('/')) {
+        if (obj.match(/^[A-Z]:\\/i)) {
+          // Windows path - translate to WSL if needed
+          if (this.platformManager.platform.isWSL && isWindowsSide) {
+            return this.platformManager.translatePath(obj, 'windows', 'wsl');
+          }
+          return this.translatePath(obj);
+        } else if (obj.startsWith('/')) {
           return this.translatePath(obj);
         }
         return obj;
@@ -125,15 +131,7 @@ class PathTranslator {
       if (typeof obj === 'object' && obj !== null) {
         const result = {};
         for (const [key, value] of Object.entries(obj)) {
-          // Check if key suggests a path
-          if (key.toLowerCase().includes('path') || 
-              key.toLowerCase().includes('file') ||
-              key.toLowerCase().includes('directory') ||
-              key.toLowerCase().includes('folder')) {
-            result[key] = translateObject(value);
-          } else {
-            result[key] = translateObject(value);
-          }
+          result[key] = translateObject(value);
         }
         return result;
       }
@@ -141,7 +139,47 @@ class PathTranslator {
       return obj;
     };
 
-    return translateObject(translated);
+    // Translate the main response
+    const result = translateObject(translated);
+    
+    // Special handling for screenshot responses
+    if (isWindowsSide && this.platformManager.platform.isWSL) {
+      this._handleScreenshotResponse(result);
+    }
+    
+    return result;
+  }
+
+  /**
+   * Special handling for screenshot responses from Windows-side MCPs
+   * @private
+   */
+  _handleScreenshotResponse(response) {
+    // Handle error messages that contain paths
+    if (response.error && response.error.message) {
+      response.error.message = response.error.message.replace(
+        /[A-Z]:\\[^"'\s]*/gi, 
+        (match) => this.platformManager.translatePath(match, 'windows', 'wsl')
+      );
+    }
+    
+    // Handle screenshot data that might be a file path
+    if (response.screenshot && typeof response.screenshot === 'string') {
+      if (!response.screenshot.startsWith('data:') && response.screenshot.match(/^[A-Z]:\\/i)) {
+        response.screenshot = this.platformManager.translatePath(response.screenshot, 'windows', 'wsl');
+      }
+    }
+    
+    // Handle content array for MCP protocol
+    if (response.content && Array.isArray(response.content)) {
+      response.content.forEach(item => {
+        if (item.type === 'image' && item.data && typeof item.data === 'string') {
+          if (!item.data.startsWith('data:') && item.data.match(/^[A-Z]:\\/i)) {
+            item.data = this.platformManager.translatePath(item.data, 'windows', 'wsl');
+          }
+        }
+      });
+    }
   }
 
   /**

@@ -1,0 +1,17 @@
+{
+  "gateway": {
+    "apiKey": "mcp-gateway-windows-key",
+    "autoStartServers": ["snap-happy"],
+    "mode": "windows"
+  },
+  "servers": {
+    "snap-happy": {
+      "transport": "stdio",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["\\\\wsl.localhost\\Ubuntu\\home\\jenner\\code\\mcps\\mcp-local-setup\\gateway\\windows-screenshot-server.js"],
+      "environment": {},
+      "capabilities": ["screenshot", "gui"],
+      "description": "Windows native screenshot server using PowerShell"
+    }
+  }
+}

@@ -7,16 +7,18 @@ const fsSync = require('fs');
 // Import bridge components
 const BridgeService = require('./bridge/core/bridge-service');
 const StdioTransport = require('./bridge/transports/stdio');
+const HttpProxyTransport = require('./bridge/transports/http-proxy');
 const DockerDiscovery = require('./docker-discovery');
 const PlatformManager = require('./platform-manager');
 const PathTranslator = require('./path-translator');
-const ApiKeyManager = require('./api-key-manager');
+const EnvironmentManager = require('./environment-manager');
 
 // Import Phase 8 enhancements
 const ToolInventoryCache = require('./tool-inventory');
 const LifecycleManager = require('./lifecycle-manager');
 const SmartToolDiscovery = require('./smart-discovery');
 const ApiKeyValidator = require('./api-key-validator');
+const CompatibilityChecker = require('./compatibility-checker');
 
 /**
  * Unified Gateway Service that handles both HTTP and stdio servers
@@ -33,13 +35,14 @@ class UnifiedGatewayService extends EventEmitter {
     this.pathTranslator = new PathTranslator(this.platformManager);
     
     // API key management
-    this.apiKeyManager = new ApiKeyManager();
+    this.environmentManager = new EnvironmentManager();
     
     // Phase 8 enhancements
     this.toolInventoryCache = new ToolInventoryCache();
     this.lifecycleManager = new LifecycleManager();
-    this.apiKeyValidator = new ApiKeyValidator(this.apiKeyManager);
-    this.smartDiscovery = new SmartToolDiscovery(this, this.apiKeyManager, this.toolInventoryCache);
+    this.apiKeyValidator = new ApiKeyValidator(this.environmentManager);
+    this.compatibilityChecker = new CompatibilityChecker();
+    this.smartDiscovery = new SmartToolDiscovery(this, this.environmentManager, this.toolInventoryCache);
     
     // Core services
     this.discovery = new DockerDiscovery();
@@ -53,10 +56,22 @@ class UnifiedGatewayService extends EventEmitter {
     // Transport clients
     this.httpClients = new Map();
     
-    // Configuration - prefer local config, then environment, then home directory
+    // Configuration - prefer environment variable, then WSL config if in WSL, then local config, then home directory
     const localConfig = path.join(__dirname, 'gateway-config.json');
-    const homeConfig = path.join(process.env.HOME || '/home/user', '.mcp-platform', 'gateway-config.json');
-    this.configPath = process.env.CONFIG_PATH || localConfig;
+    const wslConfig = path.join(__dirname, 'gateway-config-wsl.json');
+    const homeConfig = path.join(process.env.HOME || process.env.USERPROFILE || '/home/user', '.mcp-platform', 'gateway-config.json');
+    
+    // Check for environment variable first
+    if (process.env.GATEWAY_CONFIG_FILE) {
+      this.configPath = path.join(__dirname, process.env.GATEWAY_CONFIG_FILE);
+    } else if (process.env.CONFIG_PATH) {
+      this.configPath = process.env.CONFIG_PATH;
+    } else if (this.platformManager.platform.isWSL && fsSync.existsSync(wslConfig)) {
+      // Use WSL-specific config if we're in WSL
+      this.configPath = wslConfig;
+    } else {
+      this.configPath = localConfig;
+    }
     this.config = null;
     
     // Health monitoring
@@ -66,6 +81,7 @@ class UnifiedGatewayService extends EventEmitter {
     
     // Register transports with bridge
     this.bridge.registerTransport('stdio', new StdioTransport({}));
+    this.bridge.registerTransport('http-proxy', new HttpProxyTransport({}));
     
     // Setup listeners
     this.setupDiscoveryListeners();
@@ -109,7 +125,7 @@ class UnifiedGatewayService extends EventEmitter {
     await this.loadConfiguration();
     
     // Initialize API key manager
-    await this.apiKeyManager.initialize();
+    await this.environmentManager.initialize();
     
     // Start lifecycle manager
     this.lifecycleManager.start();
@@ -236,6 +252,36 @@ class UnifiedGatewayService extends EventEmitter {
           message = error.message;
           details.checks.connectivity = 'unhealthy';
         }
+      } else if (server.type === 'http-proxy') {
+        // For HTTP proxy servers, check connection to remote gateway
+        try {
+          const connection = server.connectionId ? 
+            this.bridge.getConnection(server.connectionId) : null;
+          
+          if (connection && connection.isConnected) {
+            status = 'healthy';
+            details.checks.connectivity = 'healthy';
+          } else {
+            // Try to test the connection
+            const testUrl = new URL(server.proxyUrl || server.config.url);
+            const manifestUrl = `${testUrl.protocol}//${testUrl.host}/.well-known/mcp-manifest.json`;
+            const response = await axios.get(manifestUrl, { 
+              timeout: 5000,
+              headers: server.proxyHeaders || server.config.headers || {}
+            });
+            responseTime = Date.now() - startTime;
+            
+            if (response.status === 200) {
+              status = responseTime > 1000 ? 'degraded' : 'healthy';
+              details.checks.connectivity = 'healthy';
+              details.checks.response = status;
+            }
+          }
+        } catch (error) {
+          status = 'unhealthy';
+          message = `Remote gateway unavailable: ${error.message}`;
+          details.checks.connectivity = 'unhealthy';
+        }
       }
       
       // Check response time thresholds
@@ -355,22 +401,31 @@ class UnifiedGatewayService extends EventEmitter {
     for (const [serverId, serverConfig] of Object.entries(this.config.servers)) {
       const serverType = this.determineServerType(serverConfig);
       
-      if (serverType === 'stdio') {
-        // Register stdio server
+      if (serverType === 'stdio' || serverType === 'http-proxy') {
+        // Register server based on actual transport type
         const server = {
           id: serverId,
           name: serverId,
-          type: 'stdio',
-          transport: 'stdio',
+          type: serverType === 'http-proxy' ? 'http-proxy' : 'stdio',
+          transport: serverType,
           config: serverConfig,
           source: 'config'
         };
         
         this.servers.set(serverId, server);
         
-        // Start all stdio servers (not just auto-start ones)
-        // The auto-start configuration is used for restart behavior
-        await this.startStdioServer(server);
+        // Start servers based on transport type
+        if (serverType === 'http-proxy') {
+          // HTTP proxy servers don't need to be "started" - they connect on demand
+          console.log(`Registered HTTP proxy server: ${serverId} -> ${serverConfig.url}`);
+          // Store the proxy URL and headers for later use
+          server.proxyUrl = serverConfig.url;
+          server.proxyHeaders = serverConfig.headers || {};
+        } else {
+          // Start all stdio servers (not just auto-start ones)
+          // The auto-start configuration is used for restart behavior
+          await this.startStdioServer(server);
+        }
       }
     }
   }
@@ -405,9 +460,9 @@ class UnifiedGatewayService extends EventEmitter {
       let apiKeys = {};
       
       try {
-        apiKeyStatus = this.apiKeyManager.getServerKeyStatus(server.id);
+        apiKeyStatus = this.environmentManager.getServerStatus(server.id);
         if (apiKeyStatus.hasRequirements) {
-          apiKeys = this.apiKeyManager.getServerEnvironment(server.id);
+          apiKeys = this.environmentManager.getServerEnvironment(server.id);
           // Log warning if keys are missing but don't prevent startup
           if (apiKeyStatus.missingKeys && apiKeyStatus.missingKeys.length > 0) {
             console.log(`Warning: Server ${server.id} is missing API keys: ${apiKeyStatus.missingKeys.join(', ')}`);
@@ -416,6 +471,26 @@ class UnifiedGatewayService extends EventEmitter {
       } catch (error) {
         console.log(`Warning: Could not check API keys for ${server.id}:`, error.message);
         // Continue without API keys rather than failing
+      }
+      
+      // If this server requires Windows-side execution and we need to rebuild the command with environment
+      if (this.platformManager.platform.isWSL && 
+          this.platformManager.requiresWindowsSide(server.config) &&
+          config.command === 'powershell.exe') {
+        // Rebuild the PowerShell command with the environment variables
+        const allEnv = {
+          ...config.environment,
+          ...apiKeys
+        };
+        const psCommand = this.platformManager.buildWindowsPowerShellCommand(
+          server.config.package || server.config.command,
+          server.config.args ? server.config.args.filter(arg => arg !== '-y' && arg !== server.config.package) : [],
+          allEnv
+        );
+        // Update the config with the new command
+        config.command = psCommand.command;
+        config.args = psCommand.args;
+        config.environment = psCommand.environment;
       }
       
       // Build environment with platform-specific additions and API keys
@@ -463,7 +538,11 @@ class UnifiedGatewayService extends EventEmitter {
       server.connectionId = connectionId;
       server.status = 'running';
       
-      // Update the server in the Map to include the connectionId
+      // Store whether this server is running on Windows side
+      server.requiresWindowsSide = this.platformManager.platform.isWSL && 
+                                   this.platformManager.requiresWindowsSide(server.config);
+      
+      // Update the server in the Map to include the connectionId and flags
       this.servers.set(server.id, server);
       
       console.log(`Started stdio server: ${server.id} with connectionId: ${connectionId}`);
@@ -637,6 +716,24 @@ class UnifiedGatewayService extends EventEmitter {
         });
         response = response.data;
         
+      } else if (server.type === 'http-proxy') {
+        // HTTP proxy server - create connection on demand
+        const connection = await this.bridge.createConnection('http-proxy', {
+          id: `${serverId}_proxy`,
+          url: server.proxyUrl,
+          headers: server.proxyHeaders
+        });
+        
+        response = await this.bridge.sendMessage('http-proxy', connection.id, {
+          jsonrpc: '2.0',
+          id: `discover_${Date.now()}`,
+          method: 'tools/list',
+          params: {}
+        });
+        
+        // Store the connection for future use
+        server.connectionId = connection.id;
+        
       } else if (server.type === 'stdio') {
         // stdio server - through bridge
         response = await this.bridge.sendToServer(serverId, {
@@ -665,6 +762,48 @@ class UnifiedGatewayService extends EventEmitter {
   }
   
   /**
+   * Detect and resolve tool name conflicts
+   * @private
+   */
+  detectToolConflicts(newTools, serverId) {
+    const existingToolNames = new Set();
+    for (const [toolKey, tool] of this.tools) {
+      if (tool.serverId !== serverId) {
+        existingToolNames.add(tool.name);
+      }
+    }
+    
+    const conflicts = new Map();
+    for (const tool of newTools) {
+      if (existingToolNames.has(tool.name)) {
+        conflicts.set(tool.name, tool);
+      }
+    }
+    
+    return conflicts;
+  }
+
+  /**
+   * Generate a conflict-free name using descriptive suffix
+   * @private
+   */
+  generateConflictFreeName(toolName, serverId) {
+    // Use server-specific suffix for conflicts
+    const serverSuffix = serverId.replace(/[^a-z0-9]/g, '_');
+    return `${toolName}_${serverSuffix}`;
+  }
+
+  /**
+   * Format tool name for Claude Code compatibility
+   * @private
+   */
+  formatToolNameForClaudeCode(toolName, serverId) {
+    // Claude Code expects: mcp__<servername>__<toolname>
+    const normalizedServerId = serverId.replace(/[^a-z0-9]/g, '_');
+    return `mcp__${normalizedServerId}__${toolName}`;
+  }
+
+  /**
    * Apply server tools to internal state
    * @private
    */
@@ -677,24 +816,68 @@ class UnifiedGatewayService extends EventEmitter {
       }
     }
     
-    // Add new tools with namespacing
-    for (const tool of serverTools) {
-      const namespacedName = `${serverId}:${tool.name}`;
+    // Filter tools based on platform compatibility
+    let filteredTools = this.compatibilityChecker.filterToolsByPlatform(serverId, serverTools);
+    
+    // Enhance tool descriptions with platform information
+    filteredTools = this.compatibilityChecker.enhanceToolDescriptions(serverId, filteredTools);
+    
+    // Check server compatibility
+    const serverCompat = this.compatibilityChecker.isServerSupported(serverId);
+    if (!serverCompat.supported) {
+      console.warn(`Server ${serverId} is not supported on platform ${this.compatibilityChecker.currentPlatform}`);
+      return;
+    }
+    
+    if (serverCompat.level === 'experimental' || serverCompat.level === 'partial') {
+      console.warn(`Server ${serverId} has ${serverCompat.level} support on ${this.compatibilityChecker.currentPlatform}`);
+      if (serverCompat.limitations && serverCompat.limitations.length > 0) {
+        console.warn(`  Limitations: ${serverCompat.limitations.join(', ')}`);
+      }
+    }
+    
+    // Detect conflicts before adding new tools
+    const conflicts = this.detectToolConflicts(filteredTools, serverId);
+    
+    // Add new tools with conflict-aware namespacing
+    for (const tool of filteredTools) {
+      // Check if this tool name conflicts with existing tools
+      const hasConflict = conflicts.has(tool.name);
+      
+      // Generate appropriate name based on conflict status
+      const baseName = hasConflict 
+        ? this.generateConflictFreeName(tool.name, serverId)
+        : tool.name;
+      
+      // Format for Claude Code compatibility
+      const finalName = this.formatToolNameForClaudeCode(baseName, serverId);
+      
       const toolInfo = {
         ...tool,
         serverId,
-        namespacedName,
-        originalName: tool.name,
-        serverType: this.servers.get(serverId)?.type
+        namespacedName: finalName,
+        originalName: tool.name, // Keep original name for server communication
+        serverType: this.servers.get(serverId)?.type,
+        platformCompatibility: serverCompat.level,
+        hasConflict: hasConflict // Track if this tool was renamed due to conflict
       };
       
       const toolKey = `${serverId}:${tool.name}`;
       this.tools.set(toolKey, toolInfo);
-      this.toolRouting.set(namespacedName, serverId);
+      this.toolRouting.set(finalName, serverId);
+      
+      // Log conflict resolution
+      if (hasConflict) {
+        console.log(`Tool name conflict resolved: ${tool.name} -> ${finalName} (from ${serverId})`);
+      }
     }
     
-    console.log(`Applied ${serverTools.length} tools from ${serverId}`);
-    this.emit('tools:updated', this.getAllToolsSync());
+    // Log summary
+    if (conflicts.size > 0) {
+      console.log(`Resolved ${conflicts.size} tool name conflicts for server ${serverId}`);
+    } else {
+      console.log(`No tool name conflicts detected for server ${serverId}`);
+    }
   }
   
   /**
@@ -729,7 +912,8 @@ class UnifiedGatewayService extends EventEmitter {
       case 'tools/call':
         return this.handleToolCall(message);
       default:
-        if (message.method?.includes(':')) {
+        // Handle both formats: serverId:toolName and mcp__servername__toolname
+        if (message.method?.includes(':') || message.method?.startsWith('mcp__')) {
           return this.handleNamespacedToolCall(message);
         }
         return {
@@ -744,13 +928,26 @@ class UnifiedGatewayService extends EventEmitter {
   }
   
   async handleInitialize(message) {
+    // Get all available tools, prompts, and resources
+    const allTools = this.getAllToolsSync();
+    const availableTools = this.apiKeyValidator.filterToolsByAvailability(allTools);
+    
+    // Convert tools to MCP capabilities format
+    const toolCapabilities = {};
+    for (const tool of availableTools) {
+      toolCapabilities[tool.namespacedName] = {
+        description: tool.description,
+        inputSchema: tool.inputSchema
+      };
+    }
+    
     return {
       jsonrpc: '2.0',
       id: message.id,
       result: {
         protocolVersion: '2024-11-05',
         capabilities: {
-          tools: {},
+          tools: toolCapabilities,
           prompts: {},
           resources: {}
         },
@@ -796,13 +993,14 @@ class UnifiedGatewayService extends EventEmitter {
   async handleToolCall(message) {
     const { name, arguments: args } = message.params;
     
-    if (!name.includes(':')) {
+    // Accept both formats: serverId:toolName and mcp__servername__toolname
+    if (!name.includes(':') && !name.startsWith('mcp__')) {
       return {
         jsonrpc: '2.0',
         id: message.id,
         error: {
           code: -32602,
-          message: 'Tool name must be namespaced (format: serverId:toolName)'
+          message: 'Tool name must be namespaced (format: serverId:toolName or mcp__servername__toolname)'
         }
       };
     }
@@ -820,9 +1018,30 @@ class UnifiedGatewayService extends EventEmitter {
       args = message.params.arguments;
     }
     
-    // Get server info
-    const serverId = this.toolRouting.get(toolName);
+    // Debug logging
+    console.log(`[Gateway] handleNamespacedToolCall - toolName: ${toolName}`);
+    console.log(`[Gateway] toolRouting map has ${this.toolRouting.size} entries`);
+    console.log(`[Gateway] toolRouting keys:`, Array.from(this.toolRouting.keys()));
+    
+    // Get server info - check both the final name and original names
+    let serverId = this.toolRouting.get(toolName);
+    console.log(`[Gateway] Direct lookup for '${toolName}' returned serverId: ${serverId}`);
+    
+    // If not found by final name, check if it's a conflict-resolved name
     if (!serverId) {
+      console.log(`[Gateway] Checking tools map for matching namespacedName...`);
+      // Look for tools that might have been renamed due to conflicts
+      for (const [toolKey, tool] of this.tools) {
+        if (tool.namespacedName === toolName) {
+          serverId = tool.serverId;
+          console.log(`[Gateway] Found serverId ${serverId} by matching namespacedName`);
+          break;
+        }
+      }
+    }
+    
+    if (!serverId) {
+      console.log(`[Gateway] ERROR: No serverId found for tool: ${toolName}`);
       return {
         jsonrpc: '2.0',
         id: message.id,
@@ -834,9 +1053,19 @@ class UnifiedGatewayService extends EventEmitter {
     }
     
     const server = this.servers.get(serverId);
-    const tool = this.tools.get(toolName);
+    
+    // Find the tool by looking for one with matching namespacedName
+    let tool = null;
+    for (const [key, t] of this.tools) {
+      if (t.namespacedName === toolName && t.serverId === serverId) {
+        tool = t;
+        console.log(`[Gateway] Found tool with key ${key} matching namespacedName ${toolName}`);
+        break;
+      }
+    }
     
     if (!server || !tool) {
+      console.log(`[Gateway] ERROR: server=${!!server}, tool=${!!tool} for ${toolName}`);
       return {
         jsonrpc: '2.0',
         id: message.id,
@@ -898,6 +1127,20 @@ class UnifiedGatewayService extends EventEmitter {
         response = await client.post('', serverMessage);
         response = response.data;
         
+      } else if (server.type === 'http-proxy' || server.transport === 'http-proxy') {
+        // HTTP proxy - forward to remote gateway
+        if (!server.connectionId) {
+          // Create connection on demand
+          const connection = await this.bridge.createConnection('http-proxy', {
+            id: serverId,
+            url: server.config.url,
+            headers: server.config.headers || {}
+          });
+          server.connectionId = connection.id;
+        }
+        
+        response = await this.bridge.sendMessage('http-proxy', server.connectionId, serverMessage);
+        
       } else if (server.type === 'stdio') {
         // stdio server - through bridge
         response = await this.bridge.sendToServer(serverId, serverMessage);
@@ -905,9 +1148,14 @@ class UnifiedGatewayService extends EventEmitter {
       
       // Translate paths in response
       if (response && response.result) {
+        // Check if this server is running on Windows side
+        const isWindowsSide = server.requiresWindowsSide || 
+                            (server.platformConfig && server.platformConfig.requiresWindowsSide);
+        
         response.result = this.pathTranslator.translateToolResponse(
           tool.originalName,
-          response.result
+          response.result,
+          isWindowsSide
         );
       }
       
@@ -1155,7 +1403,7 @@ class UnifiedGatewayService extends EventEmitter {
       await this.loadConfiguration();
       
       // Restart auto-start servers
-      await this.startConfiguredServers();
+      await this.loadStdioServers();
       
       console.log('Gateway service restarted successfully');
     } catch (error) {
@@ -1372,6 +1620,23 @@ class UnifiedGatewayService extends EventEmitter {
         params: {}
       });
       response = response.data;
+    } else if (server.type === 'http-proxy') {
+      // HTTP proxy server - create connection if needed
+      if (!server.connectionId) {
+        const connection = await this.bridge.createConnection('http-proxy', {
+          id: `${serverId}_proxy`,
+          url: server.proxyUrl,
+          headers: server.proxyHeaders
+        });
+        server.connectionId = connection.id;
+      }
+      
+      response = await this.bridge.sendMessage('http-proxy', server.connectionId, {
+        jsonrpc: '2.0',
+        id: `list_tools_${Date.now()}`,
+        method: 'tools/list',
+        params: {}
+      });
     } else if (server.type === 'stdio') {
       response = await this.bridge.sendToServer(serverId, {
         jsonrpc: '2.0',

@@ -1,0 +1,73 @@
+{
+  "gateway": {
+    "apiKey": "mcp-gateway-default-key",
+    "autoStartServers": [
+      "github",
+      "snap-happy"
+    ],
+    "windowsGatewayUrl": "http://localhost:8091"
+  },
+  "servers": {
+    "snap-happy": {
+      "transport": "http-proxy",
+      "url": "http://172.22.176.1:8091/mcp/snap-happy",
+      "headers": {
+        "X-API-Key": "mcp-gateway-windows-key"
+      },
+      "capabilities": [
+        "screenshot",
+        "gui"
+      ],
+      "requiresWindowsSide": true,
+      "description": "Screenshot tool running on Windows side via HTTP proxy"
+    },
+    "memory": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-memory",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "environment": {}
+    },
+    "filesystem": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-filesystem",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/jenner/code"
+      ],
+      "environment": {},
+      "mounts": {
+        "win32": {
+          "/workspace": "${USERPROFILE}\\Documents"
+        },
+        "wsl": {
+          "/workspace": "${HOME}/code",
+          "/windows": "/mnt/c/Users"
+        },
+        "darwin": {
+          "/workspace": "${HOME}/Documents"
+        },
+        "linux": {
+          "/workspace": "${HOME}/code"
+        }
+      }
+    },
+    "github": {
+      "transport": "stdio",
+      "package": "@modelcontextprotocol/server-github",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    }
+  }
+}

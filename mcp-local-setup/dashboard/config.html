@@ -313,7 +313,7 @@
         <div class="tabs">
             <button class="tab active" onclick="showTab('servers')">Servers</button>
             <button class="tab" onclick="showTab('catalog')">Catalog</button>
-            <button class="tab" onclick="showTab('apikeys')">API Keys</button>
+            <button class="tab" onclick="showTab('apikeys')">Environment Variables</button>
             <button class="tab" onclick="showTab('settings')">Settings</button>
         </div>
 
@@ -357,10 +357,10 @@
             </div>
         </div>
 
-        <!-- API Keys Tab -->
+        <!-- Environment Variables Tab -->
         <div id="apikeys-tab" class="tab-content">
             <div class="card">
-                <h2>API Key Management</h2>
+                <h2>Gateway Authentication</h2>
                 <div class="form-group">
                     <label>Gateway API Key</label>
                     <input type="text" id="gatewayApiKey" value="mcp-gateway-default-key">
@@ -371,11 +371,27 @@
             </div>
 
             <div class="card">
-                <h2>Service API Keys</h2>
+                <h2>MCP Server Environment Variables</h2>
+                <p style="color: var(--gray-600); margin-bottom: 20px;">
+                    Configure environment variables required by MCP servers. Variables are grouped by server for easy setup.
+                </p>
+                <div style="display: flex; gap: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <span style="padding: 2px 6px; background: #fef3c7; color: #d97706; border-radius: 4px; font-size: 12px; font-weight: 500;">🔒 Secret</span>
+                        <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--gray-600);">
+                            API keys, tokens, and passwords. Stored securely and hidden in the UI.
+                        </p>
+                    </div>
+                    <div style="flex: 1;">
+                        <span style="padding: 2px 6px; background: #d1fae5; color: #065f46; border-radius: 4px; font-size: 12px; font-weight: 500;">⚙️ Config</span>
+                        <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--gray-600);">
+                            Paths, URLs, and other settings. Shown in plain text for easy editing.
+                        </p>
+                    </div>
+                </div>
                 <div id="apiKeysList">
                     <!-- Dynamic content -->
                 </div>
-                <button class="btn btn-secondary" onclick="addApiKey()">Add API Key</button>
             </div>
         </div>
 
@@ -401,7 +417,7 @@
     </div>
 
     <script>
-        const GATEWAY_URL = 'http://localhost:8090';
+        const GATEWAY_URL = window.location.port ? `http://localhost:${window.location.port}` : 'http://localhost:8090';
         const API_KEY = localStorage.getItem('gatewayApiKey') || 'mcp-gateway-default-key';
 
         // Initialize
@@ -477,63 +493,174 @@
 
         // Load catalog
         async function loadCatalog() {
-            // For now, show a static catalog
-            const catalog = [
-                {
-                    id: 'filesystem',
-                    name: 'Filesystem',
-                    description: 'Access and manipulate files and directories',
-                    category: 'data'
-                },
-                {
-                    id: 'git',
-                    name: 'Git',
-                    description: 'Perform Git operations on repositories',
-                    category: 'development'
-                },
-                {
-                    id: 'github',
-                    name: 'GitHub',
-                    description: 'Interact with GitHub repositories, issues, and PRs',
-                    category: 'development'
-                },
-                {
-                    id: 'memory',
-                    name: 'Memory',
-                    description: 'Knowledge graph for storing and retrieving information',
-                    category: 'ai-ml'
-                },
-                {
-                    id: 'postgres',
-                    name: 'PostgreSQL',
-                    description: 'Query and manage PostgreSQL databases',
-                    category: 'database'
+            try {
+                const response = await fetch(`${GATEWAY_URL}/api/gateway/catalog`, {
+                    headers: { 'x-api-key': API_KEY }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load catalog');
                 }
-            ];
-
-            const catalogGrid = document.getElementById('catalogGrid');
-            catalogGrid.innerHTML = catalog.map(item => `
-                <div class="catalog-item">
-                    <h3>${item.name}</h3>
-                    <p>${item.description}</p>
-                    <button class="btn btn-primary" onclick="installServer('${item.id}')">
-                        Install
-                    </button>
-                </div>
-            `).join('');
+                
+                const data = await response.json();
+                const catalog = data.catalog || [];
+                
+                const catalogGrid = document.getElementById('catalogGrid');
+                
+                if (catalog.length === 0) {
+                    catalogGrid.innerHTML = '<p>No servers available in catalog</p>';
+                    return;
+                }
+                
+                // Get installed servers to show different button
+                const installedResponse = await fetch(`${GATEWAY_URL}/api/gateway/servers`, {
+                    headers: { 'x-api-key': API_KEY }
+                });
+                const installedData = await installedResponse.json();
+                const installedIds = new Set((installedData.servers || []).map(s => s.id));
+                
+                catalogGrid.innerHTML = catalog.map(item => {
+                    const isInstalled = installedIds.has(item.id);
+                    return `
+                        <div class="catalog-item">
+                            <h3>${item.name}</h3>
+                            <p>${item.description}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                                <span class="category-badge" style="background: var(--gray-100); color: var(--gray-700); padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                    ${item.category || 'general'}
+                                </span>
+                                ${isInstalled 
+                                    ? '<button class="btn btn-secondary" disabled>Installed</button>'
+                                    : `<button class="btn btn-primary" onclick="installServer('${item.id}')">Install</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading catalog:', error);
+                document.getElementById('catalogGrid').innerHTML = '<p>Error loading catalog. Please check your connection.</p>';
+            }
         }
 
         // Install server
         async function installServer(serverId) {
-            showMessage('Installing server...', 'success');
+            showMessage('Checking server requirements...', 'success');
+            
+            try {
+                // First check if the server requires environment variables
+                const catalogResponse = await fetch(`${GATEWAY_URL}/api/gateway/catalog`, {
+                    headers: { 'x-api-key': API_KEY }
+                });
+                const catalogData = await catalogResponse.json();
+                
+                const server = catalogData.catalog.find(s => s.id === serverId);
+                if (!server) {
+                    showMessage('Server not found in catalog', 'error');
+                    return;
+                }
+                
+                // Check for environment requirements
+                const envCheckResponse = await fetch(`${GATEWAY_URL}/api/gateway/apikeys/check`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY
+                    },
+                    body: JSON.stringify({ serverConfig: server })
+                });
+                
+                const envCheck = await envCheckResponse.json();
+                
+                if (envCheck.success && envCheck.requirements && envCheck.requirements.hasRequirements) {
+                    // Show popup about required environment variables
+                    const requiredVars = Object.keys(envCheck.requirements.requirements);
+                    const varCount = requiredVars.length;
+                    
+                    const popup = document.createElement('div');
+                    popup.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: white;
+                        padding: 30px;
+                        border-radius: 12px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                        z-index: 1000;
+                        max-width: 500px;
+                        width: 90%;
+                    `;
+                    
+                    popup.innerHTML = `
+                        <h2 style="margin: 0 0 20px 0; color: var(--gray-900);">Environment Variables Required</h2>
+                        <p style="margin-bottom: 20px; color: var(--gray-600);">
+                            <strong>${server.name}</strong> requires ${varCount} environment variable${varCount > 1 ? 's' : ''} to be configured:
+                        </p>
+                        <ul style="margin: 0 0 20px 0; padding-left: 20px;">
+                            ${requiredVars.map(varName => `
+                                <li style="margin: 5px 0;">
+                                    <code style="background: var(--gray-100); padding: 2px 6px; border-radius: 3px;">${varName}</code>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <p style="margin-bottom: 20px; color: var(--gray-600);">
+                            You can configure these variables in the Environment Variables tab after installation.
+                        </p>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove(); document.getElementById('overlay').remove();">
+                                Cancel
+                            </button>
+                            <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove(); document.getElementById('overlay').remove(); proceedWithInstall('${serverId}');">
+                                Install Anyway
+                            </button>
+                            <button class="btn btn-primary" style="background: var(--success);" onclick="this.parentElement.parentElement.remove(); document.getElementById('overlay').remove(); showTab('apikeys');">
+                                Configure Now
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Add overlay
+                    const overlay = document.createElement('div');
+                    overlay.id = 'overlay';
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0,0,0,0.5);
+                        z-index: 999;
+                    `;
+                    overlay.onclick = () => {
+                        popup.remove();
+                        overlay.remove();
+                    };
+                    
+                    document.body.appendChild(overlay);
+                    document.body.appendChild(popup);
+                } else {
+                    // No environment variables required, proceed with installation
+                    proceedWithInstall(serverId);
+                }
+            } catch (error) {
+                showMessage('Error checking server requirements: ' + error.message, 'error');
+            }
+        }
+        
+        // Actually install the server
+        function proceedWithInstall(serverId) {
+            showMessage(`Installing ${serverId}...`, 'success');
             // Implementation would call the gateway API to install the server
             setTimeout(() => {
                 showMessage(`Server ${serverId} installed successfully!`, 'success');
                 loadServers();
+                loadCatalog(); // Refresh catalog to update installed status
             }, 2000);
         }
 
-        // API Keys management
+        // Environment Variables management
         async function loadApiKeys() {
             try {
                 const response = await fetch(`${GATEWAY_URL}/api/gateway/apikeys`, {
@@ -546,100 +673,113 @@
                     const stats = data.stats;
                     document.getElementById('apiKeysList').innerHTML = `
                         <div style="margin-bottom: 20px; padding: 15px; background: var(--gray-100); border-radius: 8px;">
-                            <h3 style="margin-bottom: 10px;">API Key Statistics</h3>
+                            <h3 style="margin-bottom: 10px;">Environment Configuration Overview</h3>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
                                 <div>
                                     <strong>Total Servers:</strong> ${stats.totalServers}
                                 </div>
                                 <div>
-                                    <strong>Configured:</strong> <span style="color: var(--success)">${stats.configured}</span>
+                                    <strong>Fully Configured:</strong> <span style="color: var(--success)">${stats.configuredServers}</span>
                                 </div>
                                 <div>
-                                    <strong>Partial:</strong> <span style="color: var(--warning)">${stats.partial}</span>
+                                    <strong>Total Variables:</strong> ${stats.totalVariables}
                                 </div>
                                 <div>
-                                    <strong>Missing:</strong> <span style="color: var(--danger)">${stats.missing}</span>
-                                </div>
-                                <div>
-                                    <strong>Total Keys:</strong> ${stats.totalKeys}
-                                </div>
-                                <div>
-                                    <strong>Configured Keys:</strong> ${stats.configuredKeys}
+                                    <strong>Configured Variables:</strong> <span style="color: var(--success)">${stats.configuredVariables}</span>
                                 </div>
                             </div>
                         </div>
                         <div id="serverKeysList"></div>
                     `;
 
-                    // Group servers by status
-                    const serversByStatus = {
-                        missing: data.servers.filter(s => s.status === 'missing'),
-                        partial: data.servers.filter(s => s.status === 'partial'),
-                        configured: data.servers.filter(s => s.status === 'configured')
-                    };
-
                     const serverKeysHtml = [];
                     
-                    // Show missing first
-                    if (serversByStatus.missing.length > 0) {
-                        serverKeysHtml.push('<h4 style="color: var(--danger); margin: 20px 0 10px 0;">Missing API Keys</h4>');
-                        serversByStatus.missing.forEach(server => {
-                            serverKeysHtml.push(createServerKeyCard(server));
-                        });
-                    }
-
-                    // Then partial
-                    if (serversByStatus.partial.length > 0) {
-                        serverKeysHtml.push('<h4 style="color: var(--warning); margin: 20px 0 10px 0;">Partially Configured</h4>');
-                        serversByStatus.partial.forEach(server => {
-                            serverKeysHtml.push(createServerKeyCard(server));
-                        });
-                    }
-
-                    // Finally configured
-                    if (serversByStatus.configured.length > 0) {
-                        serverKeysHtml.push('<h4 style="color: var(--success); margin: 20px 0 10px 0;">Fully Configured</h4>');
-                        serversByStatus.configured.forEach(server => {
-                            serverKeysHtml.push(createServerKeyCard(server));
-                        });
-                    }
+                    // Show all servers grouped by category
+                    const serversByCategory = {};
+                    data.servers.forEach(server => {
+                        const category = server.category || 'other';
+                        if (!serversByCategory[category]) {
+                            serversByCategory[category] = [];
+                        }
+                        serversByCategory[category].push(server);
+                    });
+                    
+                    // Display categories in order - now showing all categories
+                    const allCategories = [...new Set(data.servers.map(s => s.category || 'Other'))].sort();
+                    
+                    allCategories.forEach(category => {
+                        if (serversByCategory[category] && serversByCategory[category].length > 0) {
+                            serverKeysHtml.push(`<h3 style="margin: 30px 0 15px 0; color: var(--gray-700);">${category}</h3>`);
+                            
+                            serversByCategory[category].forEach(server => {
+                                serverKeysHtml.push(createServerKeyCard(server));
+                            });
+                        }
+                    });
 
                     document.getElementById('serverKeysList').innerHTML = serverKeysHtml.join('');
                 } else {
-                    document.getElementById('apiKeysList').innerHTML = '<p>Error loading API keys</p>';
+                    document.getElementById('apiKeysList').innerHTML = '<p>Error loading environment variables</p>';
                 }
             } catch (error) {
-                console.error('Error loading API keys:', error);
-                document.getElementById('apiKeysList').innerHTML = '<p>Error loading API keys</p>';
+                console.error('Error loading environment variables:', error);
+                document.getElementById('apiKeysList').innerHTML = '<p>Error loading environment variables</p>';
             }
         }
 
         function createServerKeyCard(server) {
-            const statusColors = {
-                missing: 'var(--danger)',
-                partial: 'var(--warning)',
-                configured: 'var(--success)'
-            };
-
-            const keyInputs = Object.entries(server.keys).map(([keyName, keyInfo]) => {
-                const isConfigured = server.configured[keyName];
-                const value = isConfigured ? '••••••••' : '';
+            const hasMissing = server.status.missing && server.status.missing.length > 0;
+            const borderColor = hasMissing ? 'var(--danger)' : 'var(--success)';
+            
+            const varInputs = Object.entries(server.status.requirements).map(([varName, varInfo]) => {
+                const isConfigured = server.status.configured.includes(varName);
+                // Show actual value for non-secrets, dots for secrets
+                const value = isConfigured 
+                    ? (varInfo.storageType === 'secret' ? '••••••••' : (varInfo.value || ''))
+                    : '';
+                // Use password input for secrets, text for config vars
+                const inputType = varInfo.storageType === 'secret' ? 'password' : 'text';
+                
+                let docLink = '';
+                if (varInfo.docUrl) {
+                    docLink = `<a href="${varInfo.docUrl}" target="_blank" style="margin-left: 10px; font-size: 12px; color: var(--primary);">📖 Documentation</a>`;
+                }
+                
+                let exampleText = '';
+                if (varInfo.example) {
+                    exampleText = `<div style="font-size: 11px; color: var(--gray-500); margin-top: 3px;">Example: ${varInfo.example}</div>`;
+                }
+                
+                let defaultText = '';
+                if (varInfo.default) {
+                    defaultText = `<div style="font-size: 11px; color: var(--gray-500); margin-top: 3px;">Default: ${varInfo.default}</div>`;
+                }
+                
                 return `
-                    <div style="margin: 10px 0;">
-                        <label style="display: block; margin-bottom: 5px;">
-                            <code>${keyName}</code>
-                            ${keyInfo.required ? '<span style="color: var(--danger)">*</span>' : ''}
-                        </label>
-                        <div style="font-size: 12px; color: var(--gray-600); margin-bottom: 5px;">
-                            ${keyInfo.description}
+                    <div style="margin: 15px 0; padding: 10px; background: ${isConfigured ? '#f0f9ff' : '#f9fafb'}; border-radius: 6px;">
+                        <div style="display: flex; align-items: start; justify-content: space-between;">
+                            <label style="display: block; margin-bottom: 5px;">
+                                <code style="font-size: 14px;">${varName}</code>
+                                ${varInfo.required ? '<span style="color: var(--danger)">*</span>' : ''}
+                                <span style="margin-left: 10px; padding: 2px 6px; background: var(--gray-200); border-radius: 4px; font-size: 11px;">${varInfo.type}</span>
+                                <span style="margin-left: 5px; padding: 2px 6px; background: ${varInfo.storageType === 'secret' ? '#fef3c7' : '#d1fae5'}; color: ${varInfo.storageType === 'secret' ? '#d97706' : '#065f46'}; border-radius: 4px; font-size: 11px; font-weight: 500;">
+                                    ${varInfo.storageType === 'secret' ? '🔒 Secret' : '⚙️ Config'}
+                                </span>
+                            </label>
+                            ${docLink}
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="font-size: 13px; color: var(--gray-600); margin-bottom: 8px;">
+                            ${varInfo.description}
+                        </div>
+                        ${exampleText}
+                        ${defaultText}
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
                             <input 
-                                type="password" 
-                                id="${server.id}_${keyName}"
-                                placeholder="${isConfigured ? 'Configured (enter to update)' : 'Enter API key'}"
+                                type="${inputType}" 
+                                id="${server.serverId}_${varName}"
+                                placeholder="${isConfigured ? 'Configured (enter to update)' : varInfo.placeholder || 'Enter value'}"
                                 value="${value}"
-                                style="flex: 1; ${isConfigured ? 'background: #f0f9ff;' : ''}"
+                                style="flex: 1; ${isConfigured ? 'background: white;' : ''}"
                             >
                             ${isConfigured ? '<span style="color: var(--success);">✓</span>' : ''}
                         </div>
@@ -647,30 +787,36 @@
                 `;
             }).join('');
 
+            const totalVars = Object.keys(server.status.requirements).length;
+            const configuredVars = server.status.configured.length;
+            const missingVars = server.status.missing.length;
+
             return `
-                <div class="api-key-item" style="border: 2px solid ${statusColors[server.status]}; margin-bottom: 15px;">
-                    <div style="padding: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                <div class="api-key-item" style="border: 2px solid ${borderColor}; margin-bottom: 20px;">
+                    <div style="padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
                             <div>
-                                <h3 style="margin: 0;">${server.name}</h3>
+                                <h3 style="margin: 0; font-size: 20px;">${server.name}</h3>
                                 <p style="color: var(--gray-600); margin: 5px 0; font-size: 14px;">${server.package}</p>
-                                <div style="display: flex; gap: 15px; font-size: 14px; margin-top: 5px;">
-                                    <span>Total Keys: ${server.totalKeys}</span>
-                                    <span style="color: var(--success);">Configured: ${server.configuredKeys}</span>
-                                    <span style="color: var(--danger);">Missing: ${server.missingKeys}</span>
+                                <div style="display: flex; gap: 20px; font-size: 14px; margin-top: 8px;">
+                                    <span>Total Variables: ${totalVars}</span>
+                                    <span style="color: var(--success);">Configured: ${configuredVars}</span>
+                                    ${missingVars > 0 ? `<span style="color: var(--danger);">Missing: ${missingVars}</span>` : ''}
                                 </div>
                             </div>
                             <button 
                                 class="btn btn-primary" 
-                                onclick="saveServerKeys('${server.id}')"
-                                ${server.missingKeys === 0 ? 'style="background: var(--gray-400);"' : ''}
+                                onclick="saveServerKeys('${server.serverId}')"
+                                ${missingVars === 0 ? 'style="background: var(--gray-400);"' : ''}
                             >
-                                ${server.missingKeys === 0 ? 'Update Keys' : 'Save Keys'}
+                                ${missingVars === 0 ? 'Update Variables' : 'Save Variables'}
                             </button>
                         </div>
-                        <div style="border-top: 1px solid var(--gray-200); padding-top: 15px;">
-                            ${keyInputs}
-                        </div>
+                        ${totalVars > 0 ? `
+                            <div style="border-top: 1px solid var(--gray-200); padding-top: 20px;">
+                                ${varInputs}
+                            </div>
+                        ` : '<p style="color: var(--gray-500);">No environment variables required.</p>'}
                     </div>
                 </div>
             `;
@@ -678,21 +824,21 @@
 
         async function saveServerKeys(serverId) {
             try {
-                // Get all key inputs for this server
+                // Get all variable inputs for this server
                 const inputs = document.querySelectorAll(`input[id^="${serverId}_"]`);
                 const keys = {};
                 
                 inputs.forEach(input => {
-                    const keyName = input.id.replace(`${serverId}_`, '');
+                    const varName = input.id.replace(`${serverId}_`, '');
                     const value = input.value.trim();
                     // Only save non-empty values that aren't the placeholder dots
                     if (value && value !== '••••••••') {
-                        keys[keyName] = value;
+                        keys[varName] = value;
                     }
                 });
 
                 if (Object.keys(keys).length === 0) {
-                    showMessage('No keys to save', 'error');
+                    showMessage('No variables to save', 'error');
                     return;
                 }
 
@@ -708,14 +854,14 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage(`API keys saved for ${serverId}`, 'success');
+                    showMessage(`Environment variables saved for ${serverId}`, 'success');
                     // Reload to show updated status
                     loadApiKeys();
                 } else {
-                    showMessage(data.error || 'Failed to save API keys', 'error');
+                    showMessage(data.error || 'Failed to save environment variables', 'error');
                 }
             } catch (error) {
-                showMessage('Error saving API keys: ' + error.message, 'error');
+                showMessage('Error saving environment variables: ' + error.message, 'error');
             }
         }
 

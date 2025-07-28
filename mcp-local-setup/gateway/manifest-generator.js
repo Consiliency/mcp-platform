@@ -4,8 +4,9 @@ const path = require('path');
 class ManifestGenerator {
   constructor(gatewayService) {
     this.gatewayService = gatewayService;
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '/tmp';
     this.manifestPath = path.join(
-      process.env.MCP_HOME || path.join(process.env.HOME, '.mcp-platform'),
+      process.env.MCP_HOME || path.join(homeDir, '.mcp-platform'),
       '.well-known',
       'mcp-manifest.json'
     );

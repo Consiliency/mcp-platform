@@ -141,7 +141,11 @@ app.get('/api/gateway/tools', validateApiKey, async (req, res) => {
     const tools = await gatewayService.getAllTools();
     res.json({
       success: true,
-      tools,
+      tools: tools.map(tool => ({
+        name: tool.namespacedName, // Use namespacedName instead of name
+        description: tool.description,
+        inputSchema: tool.inputSchema
+      })),
       count: tools.length,
       timestamp: new Date().toISOString()
     });
@@ -432,12 +436,89 @@ app.post('/api/gateway/catalog/discover', validateApiKey, async (req, res) => {
   }
 });
 
+// Compatibility endpoints
+app.get('/api/gateway/compatibility/:serverId', validateApiKey, async (req, res) => {
+  try {
+    const { serverId } = req.params;
+    const { enhanced } = req.query;
+    
+    let report;
+    if (enhanced === 'true') {
+      // Include runtime capability detection
+      report = await gatewayService.compatibilityChecker.generateEnhancedCompatibilityReport(serverId);
+    } else {
+      // Static compatibility only
+      report = gatewayService.compatibilityChecker.generateCompatibilityReport(serverId);
+    }
+    
+    res.json({
+      success: true,
+      compatibility: report,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/gateway/compatibility', validateApiKey, async (req, res) => {
+  try {
+    const platform = gatewayService.compatibilityChecker.currentPlatform;
+    const servers = [];
+    
+    // Get compatibility for all known servers
+    for (const [serverId] of gatewayService.servers) {
+      const report = gatewayService.compatibilityChecker.generateCompatibilityReport(serverId);
+      servers.push(report);
+    }
+    
+    res.json({
+      success: true,
+      platform,
+      servers,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Runtime capabilities endpoint
+app.get('/api/gateway/capabilities', validateApiKey, async (req, res) => {
+  try {
+    const capabilities = await gatewayService.compatibilityChecker.getAllRuntimeCapabilities();
+    
+    res.json({
+      success: true,
+      platform: gatewayService.compatibilityChecker.currentPlatform,
+      capabilities,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // API Key management endpoints
 app.get('/api/gateway/apikeys', validateApiKey, async (req, res) => {
   try {
-    const apiKeyManager = gatewayService.apiKeyManager;
-    const servers = apiKeyManager.getRequiredServers();
-    const stats = apiKeyManager.getStats();
+    const environmentManager = gatewayService.environmentManager;
+    const servers = environmentManager.getAllServersStatus();
+    const stats = {
+      totalServers: servers.length,
+      configuredServers: servers.filter(s => s.status.missing.length === 0).length,
+      totalVariables: servers.reduce((sum, s) => sum + Object.keys(s.status.requirements).length, 0),
+      configuredVariables: servers.reduce((sum, s) => sum + s.status.configured.length, 0)
+    };
     
     res.json({
       success: true,
@@ -457,8 +538,8 @@ app.get('/api/gateway/apikeys', validateApiKey, async (req, res) => {
 app.get('/api/gateway/apikeys/:serverId', validateApiKey, async (req, res) => {
   try {
     const { serverId } = req.params;
-    const apiKeyManager = gatewayService.apiKeyManager;
-    const status = apiKeyManager.getServerKeyStatus(serverId);
+    const environmentManager = gatewayService.environmentManager;
+    const status = environmentManager.getServerStatus(serverId);
     
     res.json({
       success: true,
@@ -487,8 +568,8 @@ app.post('/api/gateway/apikeys/:serverId', validateApiKey, async (req, res) => {
       });
     }
     
-    const apiKeyManager = gatewayService.apiKeyManager;
-    const saved = await apiKeyManager.saveServerKeys(serverId, keys);
+    const environmentManager = gatewayService.environmentManager;
+    const saved = await environmentManager.saveServerVariables(serverId, keys);
     
     res.json({
       success: saved,
@@ -515,8 +596,26 @@ app.post('/api/gateway/apikeys/check', validateApiKey, async (req, res) => {
       });
     }
     
-    const apiKeyManager = gatewayService.apiKeyManager;
-    const requirements = await apiKeyManager.checkServerRequirements(serverConfig);
+    const environmentManager = gatewayService.environmentManager;
+    // Check if this server has environment requirements
+    const requirements = {
+      hasRequirements: false,
+      requirements: {}
+    };
+    
+    if (serverConfig.config && serverConfig.config.environment) {
+      const envVars = serverConfig.config.environment;
+      for (const [key, value] of Object.entries(envVars)) {
+        if (value === '') {
+          requirements.hasRequirements = true;
+          requirements.requirements[key] = {
+            type: environmentManager.getVariableType(key),
+            required: true,
+            description: environmentManager.getVariableDescription(serverConfig.id, key)
+          };
+        }
+      }
+    }
     
     res.json({
       success: true,
@@ -590,8 +689,9 @@ async function start() {
     await gatewayService.initialize();
     
     // Start Express server
-    app.listen(PORT, () => {
-      console.log(`MCP Gateway server running on port ${PORT}`);
+    const HOST = process.env.GATEWAY_HOST || '0.0.0.0';  // Bind to all interfaces
+    app.listen(PORT, HOST, () => {
+      console.log(`MCP Gateway server running on ${HOST}:${PORT}`);
       console.log(`SSE endpoint: http://localhost:${PORT}/mcp`);
       console.log(`Tools API: http://localhost:${PORT}/api/gateway/tools`);
       console.log(`Manifest: http://localhost:${PORT}/.well-known/mcp-manifest.json`);

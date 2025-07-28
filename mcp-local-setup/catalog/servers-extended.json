@@ -9,7 +9,9 @@
     "config": {
       "command": "npx",
       "args": ["-y", "@mariozechner/snap-happy"],
-      "environment": {}
+      "environment": {
+        "SNAP_HAPPY_SCREENSHOT_PATH": ""
+      }
     }
   },
   {
