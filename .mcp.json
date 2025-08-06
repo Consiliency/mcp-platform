@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "hub": {
+      "type": "sse",
+      "url": "http://127.0.0.1:8090/mcp",
+      "description": "Unified MCP Gateway providing access to all local MCP servers"
+    }
+  }
+}

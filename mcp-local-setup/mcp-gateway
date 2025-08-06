@@ -1,0 +1,138 @@
+#!/bin/bash
+# MCP Gateway Unified Launcher
+# Starts both Windows and WSL gateways with a single command
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+WINDOWS_GATEWAY_PORT=8091
+WSL_GATEWAY_PORT=8090
+WINDOWS_HOST=$(ip route | grep default | awk '{print $3}')
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GATEWAY_DIR="$SCRIPT_DIR/gateway"
+
+echo -e "${BLUE}MCP Gateway Launcher${NC}"
+echo -e "${BLUE}===================${NC}\n"
+
+# Function to check if a port is listening
+check_port() {
+    local host=$1
+    local port=$2
+    nc -z -w2 "$host" "$port" 2>/dev/null
+}
+
+# Function to get WSL path as Windows path
+get_windows_path() {
+    local wsl_path=$1
+    wslpath -w "$wsl_path" 2>/dev/null || echo "C:\\mcp-local-setup"
+}
+
+# Function to start Windows gateway
+start_windows_gateway() {
+    echo -e "${YELLOW}Starting Windows gateway...${NC}"
+    
+    # Get the Windows path for our repository
+    local win_path=$(get_windows_path "$SCRIPT_DIR")
+    
+    # Start the Windows gateway using our helper script
+    local helper_script="$(wslpath -w "$SCRIPT_DIR/start-windows-gateway-from-wsl.ps1")"
+    
+    # Try localhost first since we have localhost forwarding enabled
+    local test_host="localhost"
+    
+    # Start using a simpler approach that avoids path issues
+    # Create a temporary batch file to launch PowerShell
+    local temp_batch="/tmp/start-windows-gateway-$$.bat"
+    local win_script_dir=$(wslpath -m "$SCRIPT_DIR")
+    
+    cat > "$temp_batch" << EOF
+@echo off
+cd /d "$win_script_dir"
+powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -Command "& { cd '$win_script_dir'; ./start-windows-gateway.ps1 }"
+EOF
+    
+    # Convert to Windows path and execute
+    local win_batch=$(wslpath -w "$temp_batch")
+    cmd.exe /c "$win_batch" &
+    
+    # Clean up temp file after a delay
+    (sleep 2 && rm -f "$temp_batch") &
+    
+    # Wait for Windows gateway to be ready
+    echo -n "Waiting for Windows gateway to start"
+    local attempts=0
+    while ! check_port "$test_host" "$WINDOWS_GATEWAY_PORT" && [ $attempts -lt 30 ]; do
+        echo -n "."
+        sleep 1
+        ((attempts++))
+    done
+    echo ""
+    
+    if check_port "$test_host" "$WINDOWS_GATEWAY_PORT"; then
+        echo -e "${GREEN}✓ Windows gateway started on localhost:$WINDOWS_GATEWAY_PORT${NC}"
+        return 0
+    else
+        # Fallback to IP if localhost fails
+        if check_port "$WINDOWS_HOST" "$WINDOWS_GATEWAY_PORT"; then
+            echo -e "${GREEN}✓ Windows gateway started on $WINDOWS_HOST:$WINDOWS_GATEWAY_PORT${NC}"
+            echo -e "${YELLOW}Note: Consider enabling WSL localhost forwarding for better performance${NC}"
+            return 0
+        else
+            echo -e "${RED}✗ Failed to start Windows gateway${NC}"
+            return 1
+        fi
+    fi
+}
+
+# Function to stop gateways
+stop_gateways() {
+    echo -e "\n${YELLOW}Stopping gateways...${NC}"
+    
+    # Kill WSL gateway
+    pkill -f "node.*server.js" 2>/dev/null || true
+    
+    # Kill Windows gateway
+    powershell.exe -Command "Get-Process node -ErrorAction SilentlyContinue | Where-Object { \$_.CommandLine -like '*server.js*' -and \$_.CommandLine -like '*8091*' } | Stop-Process -Force" 2>/dev/null || true
+    
+    echo -e "${GREEN}Gateways stopped${NC}"
+}
+
+# Trap to handle Ctrl+C
+trap 'stop_gateways; exit 0' INT TERM
+
+# Check if Windows gateway is already running
+if check_port "localhost" "$WINDOWS_GATEWAY_PORT"; then
+    echo -e "${GREEN}✓ Windows gateway already running on localhost:$WINDOWS_GATEWAY_PORT${NC}"
+elif check_port "$WINDOWS_HOST" "$WINDOWS_GATEWAY_PORT"; then
+    echo -e "${GREEN}✓ Windows gateway already running on $WINDOWS_HOST:$WINDOWS_GATEWAY_PORT${NC}"
+else
+    # Start Windows gateway
+    if ! start_windows_gateway; then
+        echo -e "${RED}Failed to start Windows gateway. Please check the logs.${NC}"
+        exit 1
+    fi
+fi
+
+# Start WSL gateway
+echo -e "\n${YELLOW}Starting WSL gateway...${NC}"
+cd "$GATEWAY_DIR"
+
+# Set environment variables for WSL gateway
+export GATEWAY_PORT=$WSL_GATEWAY_PORT
+export GATEWAY_CONFIG_FILE="gateway-config-wsl.json"
+export GATEWAY_API_KEY="mcp-gateway-default-key"
+
+echo -e "${GREEN}✓ Starting WSL gateway on port $WSL_GATEWAY_PORT${NC}"
+echo -e "${BLUE}Dashboard: http://localhost:$WSL_GATEWAY_PORT/dashboard${NC}"
+echo -e "${BLUE}API: http://localhost:$WSL_GATEWAY_PORT/api/gateway/tools${NC}"
+echo -e "\n${YELLOW}Press Ctrl+C to stop both gateways${NC}\n"
+
+# Start the WSL gateway (this will run in foreground)
+exec node server.js

@@ -1,0 +1,76 @@
+#!/bin/bash
+# Check status of both MCP gateways
+
+# Colors
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# Configuration
+WINDOWS_HOST=$(ip route | grep default | awk '{print $3}')
+WINDOWS_PORT=8091
+WSL_PORT=8090
+
+echo "MCP Gateway Status"
+echo "=================="
+echo ""
+
+# Function to check if a port is listening
+check_port() {
+    local host=$1
+    local port=$2
+    nc -z -w1 "$host" "$port" 2>/dev/null
+}
+
+# Check WSL Gateway
+echo -n "WSL Gateway (port $WSL_PORT): "
+if check_port localhost $WSL_PORT; then
+    echo -e "${GREEN}✓ Running${NC}"
+    # Get more details
+    health=$(curl -s -H "X-API-Key: mcp-gateway-default-key" http://localhost:$WSL_PORT/health 2>/dev/null)
+    if [ $? -eq 0 ]; then
+        echo "  Dashboard: http://localhost:$WSL_PORT/dashboard"
+        servers=$(echo "$health" | grep -o '"total":[0-9]*' | cut -d: -f2)
+        echo "  Servers: $servers"
+    fi
+else
+    echo -e "${RED}✗ Not running${NC}"
+fi
+
+echo ""
+
+# Check Windows Gateway
+echo -n "Windows Gateway (port $WINDOWS_PORT): "
+if check_port "$WINDOWS_HOST" $WINDOWS_PORT; then
+    echo -e "${GREEN}✓ Running${NC}"
+    echo "  Host: $WINDOWS_HOST"
+    # Try to get health info
+    health=$(curl -s -m 2 -H "X-API-Key: mcp-gateway-windows-key" http://$WINDOWS_HOST:$WINDOWS_PORT/health 2>/dev/null)
+    if [ $? -eq 0 ]; then
+        echo "  Status: Connected"
+    else
+        echo "  Status: Running but not responding to HTTP"
+    fi
+else
+    echo -e "${RED}✗ Not running${NC}"
+    echo "  To start: ./mcp-gateway"
+fi
+
+echo ""
+
+# Check snap-happy availability
+echo -n "snap-happy tools: "
+if check_port localhost $WSL_PORT; then
+    tools=$(curl -s -H "X-API-Key: mcp-gateway-default-key" http://localhost:$WSL_PORT/api/gateway/servers 2>/dev/null | grep -o '"id":"snap-happy"')
+    if [ -n "$tools" ]; then
+        echo -e "${GREEN}✓ Available${NC}"
+    else
+        echo -e "${YELLOW}⚠ Not discovered${NC}"
+        echo "  Windows gateway may need to be started"
+    fi
+else
+    echo -e "${RED}✗ Cannot check (WSL gateway not running)${NC}"
+fi
+
+echo ""

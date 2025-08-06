@@ -1,25 +1,21 @@
 {
   "gateway": {
-    "apiKey": "mcp-gateway-default-key",
     "autoStartServers": [
       "github",
       "snap-happy"
     ],
-    "windowsGatewayUrl": "http://localhost:8091"
+    "windowsGatewayUrl": "http://localhost:{{WINDOWS_GATEWAY_PORT}}"
   },
   "servers": {
     "snap-happy": {
-      "transport": "http-proxy",
-      "url": "http://172.22.176.1:8091/mcp/snap-happy",
-      "headers": {
-        "X-API-Key": "mcp-gateway-windows-key"
-      },
+      "transport": "sse",
+      "url": "http://{{WINDOWS_HOST_IP}}:{{WINDOWS_GATEWAY_PORT}}/mcp",
       "capabilities": [
         "screenshot",
         "gui"
       ],
       "requiresWindowsSide": true,
-      "description": "Screenshot tool running on Windows side via HTTP proxy"
+      "description": "Screenshot tool running on Windows side via SSE proxy"
     },
     "memory": {
       "transport": "stdio",
